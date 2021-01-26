@@ -1,1 +1,1 @@
-# bucketeer-go-sdk
+# bucketeer-go-server-sdk
