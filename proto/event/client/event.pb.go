@@ -5,8 +5,8 @@ package client
 
 import (
 	fmt "fmt"
-	feature "github.com/ca-dp/bucketeer-go-sdk/proto/feature"
-	user "github.com/ca-dp/bucketeer-go-sdk/proto/user"
+	feature "github.com/ca-dp/bucketeer-go-server-sdk/proto/feature"
+	user "github.com/ca-dp/bucketeer-go-server-sdk/proto/user"
 	proto "github.com/golang/protobuf/proto"
 	anypb "google.golang.org/protobuf/types/known/anypb"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"

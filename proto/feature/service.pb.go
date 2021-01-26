@@ -6,7 +6,7 @@ package feature
 import (
 	context "context"
 	fmt "fmt"
-	user "github.com/ca-dp/bucketeer-go-sdk/proto/user"
+	user "github.com/ca-dp/bucketeer-go-server-sdk/proto/user"
 	proto "github.com/golang/protobuf/proto"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"

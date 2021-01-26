@@ -2,7 +2,7 @@ PROTO_TOP_DIR := $(shell cd ../bucketeer && pwd)
 PROTO_FOLDERS := event/client feature gateway user
 PROTO_OUTPUT := proto_output
 IMPORT_PATH_FROM := github.com/ca-dp/bucketeer
-IMPORT_PATH_TO := github.com/ca-dp/bucketeer-go-sdk
+IMPORT_PATH_TO := github.com/ca-dp/bucketeer-go-server-sdk
 
 .PHONY: copy-protos
 copy-protos: .gen-protos

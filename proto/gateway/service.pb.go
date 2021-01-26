@@ -6,9 +6,9 @@ package gateway
 import (
 	context "context"
 	fmt "fmt"
-	client "github.com/ca-dp/bucketeer-go-sdk/proto/event/client"
-	feature "github.com/ca-dp/bucketeer-go-sdk/proto/feature"
-	user "github.com/ca-dp/bucketeer-go-sdk/proto/user"
+	client "github.com/ca-dp/bucketeer-go-server-sdk/proto/event/client"
+	feature "github.com/ca-dp/bucketeer-go-server-sdk/proto/feature"
+	user "github.com/ca-dp/bucketeer-go-server-sdk/proto/user"
 	proto "github.com/golang/protobuf/proto"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	grpc "google.golang.org/grpc"
