@@ -22,3 +22,7 @@ copy-protos: .gen-protos
 	for file in $$(find ./${PROTO_OUTPUT} -name "*.go"); do \
 		sed -i '' 's|${IMPORT_PATH_FROM}|${IMPORT_PATH_TO}|g' $$file; \
 	done
+
+.PHONY: test
+test:
+	go test ./...
