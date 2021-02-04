@@ -1,1 +1,1 @@
-# Bucketeer Server SDK for Go
+# Bucketeer Server-side SDK for Go
