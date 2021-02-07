@@ -1,6 +1,10 @@
-package bucketeer_go_sdk
+package bucketeer
 
-import "context"
+import (
+	"context"
+
+	"github.com/google/uuid"
+)
 
 type key int
 
@@ -9,9 +13,19 @@ const (
 	keyAttributes
 )
 
-func NewContext(ctx context.Context, userID string, attrs map[string]string) context.Context {
+var DefaultUserID = newDefaultUserID()
+
+func newDefaultUserID() string {
+	return uuid.New().String()
+}
+
+func New(ctx context.Context, userID string, attrs map[string]string) context.Context {
 	ctx = context.WithValue(ctx, keyUserID, userID)
 	return context.WithValue(ctx, keyAttributes, attrs)
+}
+
+func NewDefault(ctx context.Context) context.Context {
+	return context.WithValue(ctx, keyUserID, DefaultUserID)
 }
 
 func userID(ctx context.Context) string {

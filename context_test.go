@@ -1,4 +1,4 @@
-package bucketeer_go_sdk
+package bucketeer
 
 import (
 	"context"
@@ -12,8 +12,14 @@ func TestContext(t *testing.T) {
 	attrs := map[string]string{"foo": "bar"}
 
 	ctx := context.Background()
-	ctx = NewContext(ctx, id, attrs)
+	ctx = New(ctx, id, attrs)
 
+	// test: success
 	require.Equal(t, id, userID(ctx))
 	require.Equal(t, attrs, attributes(ctx))
+
+	// test: nil
+	ctx = context.Background()
+	require.Empty(t, userID(ctx))
+	require.Empty(t, attributes(ctx))
 }

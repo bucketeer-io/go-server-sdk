@@ -1,7 +1,7 @@
-package bucketeer_go_sdk
+package bucketeer
 
 import (
-	"context"
+	"fmt"
 
 	event "github.com/ca-dp/bucketeer-go-sdk/proto/event/client"
 )
@@ -11,21 +11,16 @@ type Error struct {
 	UserAttributes map[string]string
 	FeatureID      string
 	Message        string
-	Experiment     *event.ExperimentEvent
+	Goal           *event.GoalEvent
+	Evaluation     *event.EvaluationEvent
+	Retryable      bool
 	originalErr    error
 }
 
 func (e *Error) Error() string {
-	return e.Message
+	return fmt.Sprintf("bucketeer: %s", e.Message)
 }
 
-func newError(ctx context.Context, err error, featureID string, experiment *event.ExperimentEvent, message string) *Error {
-	return &Error{
-		UserID:         userID(ctx),
-		UserAttributes: attributes(ctx),
-		FeatureID:      featureID,
-		Message:        message,
-		Experiment:     experiment,
-		originalErr:    err,
-	}
+func (e *Error) Unwrap() error {
+	return e.originalErr
 }
