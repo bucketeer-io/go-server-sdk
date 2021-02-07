@@ -1,4 +1,4 @@
-package bucketeer_go_sdk
+package bucketeer
 
 import (
 	"context"
@@ -16,7 +16,9 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
 )
 
 // Client is bucketeer API client.
@@ -40,6 +42,8 @@ type Client interface {
 	// JSONVariation fetches variation using specified feature ID and marshals to destination.
 	// A tracker can be used to track metrics which associates with the variation.
 	JSONVariation(ctx context.Context, featureID string, dst interface{}) Tracker
+
+	Close()
 }
 
 type (
@@ -58,17 +62,24 @@ type Config struct {
 	EventBufferSize    int           // EventBufferSize is a buffer size of events channel as queue. Default: 65536
 }
 
+const (
+	defaultBufferSize    = 1 << 16
+	defaultFlushInterval = time.Second
+	defaultFlushSize     = 100
+)
+
 type client struct {
 	grpc               gateway.GatewayClient
 	apiKey             string
 	tag                string
 	logFunc            func(error)
-	eventsCh           chan *event.ExperimentEvent
+	eventsCh           chan *event.Event
+	closeCh            chan struct{}
 	eventBufferSize    int
 	eventFlushSize     int
 	eventFlushInterval time.Duration
 	events             []*event.Event
-	experiments        map[string]*event.ExperimentEvent
+	eventMap           map[string]*event.Event
 	now                func() time.Time
 }
 
@@ -88,17 +99,20 @@ func NewClient(ctx context.Context, cfg *Config) (Client, error) {
 		logFunc:            cfg.Log,
 		eventBufferSize:    cfg.EventBufferSize,
 		eventFlushInterval: cfg.EventFlushInterval,
+		closeCh:            make(chan struct{}),
 		now:                time.Now,
 	}
-	if cli.eventBufferSize < 0 {
-		cli.eventBufferSize = 1 << 16
+	if cli.eventBufferSize <= 0 {
+		cli.eventBufferSize = defaultBufferSize
 	}
-	if cli.eventFlushInterval < 0 {
-		cli.eventFlushInterval = time.Second
+	if cli.eventFlushInterval <= 0 {
+		cli.eventFlushInterval = defaultFlushInterval
 	}
-	cli.eventsCh = make(chan *event.ExperimentEvent, cli.eventBufferSize)
+	if cli.eventFlushSize <= 0 {
+		cli.eventFlushSize = defaultFlushSize
+	}
+	cli.eventsCh = make(chan *event.Event, cli.eventBufferSize)
 	cli.resetEvents()
-	cli.resetExperiments()
 	go cli.start(ctx)
 	return cli, nil
 }
@@ -107,37 +121,33 @@ func (c *client) log(err error) {
 	if c.logFunc == nil {
 		return
 	}
-	c.log(err)
+	c.logFunc(err)
 }
 
 func (c *client) start(ctx context.Context) {
+	defer close(c.closeCh)
 	ticker := time.NewTicker(c.eventFlushInterval)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			c.flushEvents(context.Background())
+			return
 		case <-ticker.C:
 			c.flushEvents(ctx)
-		case experiment := <-c.eventsCh:
-			eventAny, err := ptypes.MarshalAny(experiment)
-			if err != nil {
-				const msg = "Failed marshal protobuf any"
-				c.log(newError(ctx, err, experiment.FeatureId, experiment, msg))
-				continue
-			}
-			e := &event.Event{
-				Id:    uuid.New().String(),
-				Event: eventAny,
-			}
+		case e := <-c.eventsCh:
 			c.events = append(c.events, e)
-			c.experiments[e.Id] = experiment
+			c.eventMap[e.Id] = e
 			if len(c.events) < c.eventFlushSize {
 				continue
 			}
 			c.flushEvents(ctx)
 		}
 	}
+}
+
+func (c *client) Close() {
+	<-c.closeCh
 }
 
 func (c *client) flushEvents(ctx context.Context) {
@@ -147,37 +157,40 @@ func (c *client) flushEvents(ctx context.Context) {
 		if c.retriable(err) {
 			return
 		}
-		const msg = "Failed to register events"
-		c.log(newError(ctx, err, "", nil, msg))
-		c.resetExperiments()
+		c.log(&Error{
+			Message:     "failed to register events",
+			originalErr: err,
+		})
 		c.resetEvents()
 		return
 	}
 	for id, err := range resp.Errors {
-		e := c.experiments[id]
+		e := c.eventMap[id]
 		if e == nil {
 			continue
 		}
 		if !err.GetRetriable() {
-			c.log(newError(ctx, nil, e.FeatureId, e, err.Message))
+			c.log(&Error{Message: err.Message})
 			continue
 		}
 		c.eventsCh <- e
 	}
-	c.resetExperiments()
 	c.resetEvents()
 }
 
 func (c *client) retriable(err error) bool {
+	code := status.Code(err)
+	switch code {
+	case codes.Internal,
+		codes.Unavailable:
+		return true
+	}
 	return false
 }
 
 func (c *client) resetEvents() {
 	c.events = make([]*event.Event, 0, c.eventFlushSize)
-}
-
-func (c *client) resetExperiments() {
-	c.experiments = make(map[string]*event.ExperimentEvent, c.eventFlushSize)
+	c.eventMap = make(map[string]*event.Event, c.eventFlushSize)
 }
 
 func (c *client) fetchVariation(ctx context.Context, featureID string) (string, Tracker, error) {
@@ -190,18 +203,31 @@ func (c *client) fetchVariation(ctx context.Context, featureID string) (string, 
 	}
 	resp, err := c.grpc.GetEvaluations(ctx, req)
 	if err != nil {
-		const msg = "Failed to get evaluations"
-		err = newError(ctx, err, featureID, nil, msg)
-		c.log(err)
-		return "", nil, err
+		e := &Error{
+			Message:        "failed to get evaluations",
+			UserID:         userID,
+			UserAttributes: attrs,
+			FeatureID:      featureID,
+			originalErr:    err,
+		}
+		c.log(e)
+		return "", nil, e
 	}
 	if resp.State != feature.UserEvaluations_FULL {
-		msg := fmt.Sprintf("Unexpected state, %s", resp.State.String())
-		err := newError(ctx, nil, featureID, nil, msg)
-		c.log(err)
-		return "", nil, err
+		e := &Error{
+			Message:        fmt.Sprintf("unexpected state, %s", resp.State.String()),
+			UserID:         userID,
+			UserAttributes: attrs,
+			FeatureID:      featureID,
+		}
+		c.log(e)
+		return "", nil, e
 	}
-	var evaluation *feature.Evaluation
+	evaluation := &feature.Evaluation{
+		FeatureId: featureID,
+		UserId:    userID,
+		Variation: &feature.Variation{},
+	}
 	for _, e := range resp.Evaluations.Evaluations {
 		if e.FeatureId != featureID {
 			continue
@@ -209,22 +235,52 @@ func (c *client) fetchVariation(ctx context.Context, featureID string) (string, 
 		evaluation = e
 	}
 	if evaluation == nil || evaluation.Variation == nil {
-		const msg = "Evaluation or variation not found"
-		err := newError(ctx, nil, featureID, nil, msg)
-		c.log(err)
-		return "", nil, err
+		c.log(&Error{
+			Message:        "evaluation or variation not found",
+			UserID:         userID,
+			UserAttributes: attrs,
+			FeatureID:      featureID,
+		})
 	}
+	c.sendEvaluationEvent(ctx, evaluation)
+
 	t := &tracker{
-		ch:             c.eventsCh,
-		now:            c.now,
-		experimentID:   evaluation.Id,
-		featureID:      featureID,
-		featureVersion: evaluation.FeatureVersion,
-		variationID:    evaluation.VariationId,
-		userID:         userID,
-		attributes:     attrs,
+		ch:          c.eventsCh,
+		now:         c.now,
+		userID:      userID,
+		attributes:  attrs,
+		evaluations: resp.Evaluations.Evaluations,
+		logFunc:     c.logFunc,
 	}
 	return evaluation.Variation.Value, t, nil
+}
+
+func (c *client) sendEvaluationEvent(ctx context.Context, evaluation *feature.Evaluation) {
+	userID, attrs := userID(ctx), attributes(ctx)
+	e := &event.EvaluationEvent{
+		Timestamp:      c.now().Unix(),
+		FeatureId:      evaluation.FeatureId,
+		FeatureVersion: evaluation.FeatureVersion,
+		UserId:         userID,
+		VariationId:    evaluation.VariationId,
+		User:           &user.User{Id: userID, Data: attrs},
+		Reason:         evaluation.Reason,
+	}
+	any, err := ptypes.MarshalAny(e)
+	if err != nil {
+		c.log(&Error{
+			Message:        "failed to marshal evaluation event",
+			UserID:         userID,
+			UserAttributes: attrs,
+			FeatureID:      evaluation.FeatureId,
+			Evaluation:     e,
+			originalErr:    err,
+		})
+	}
+	c.eventsCh <- &event.Event{
+		Id:    uuid.New().String(),
+		Event: any,
+	}
 }
 
 func (c *client) BoolVariation(ctx context.Context, featureID string, def bool) (bool, Tracker) {
@@ -232,12 +288,20 @@ func (c *client) BoolVariation(ctx context.Context, featureID string, def bool) 
 	if err != nil {
 		return def, t
 	}
+	if variation == "" {
+		return def, t
+	}
 	v, err := strconv.ParseBool(variation)
 	if err == nil {
 		return v, t
 	}
-	const msg = "Failed to parse bool"
-	c.log(newError(ctx, err, featureID, nil, msg))
+	c.log(&Error{
+		Message:        "failed to parse bool",
+		UserID:         userID(ctx),
+		UserAttributes: attributes(ctx),
+		FeatureID:      featureID,
+		originalErr:    err,
+	})
 	return v, t
 }
 
@@ -246,13 +310,21 @@ func (c *client) Int64Variation(ctx context.Context, featureID string, def int64
 	if err != nil {
 		return def, t
 	}
+	if variation == "" {
+		return def, t
+	}
 	const base, bitSize = 10, 64
 	v, err := strconv.ParseInt(variation, base, bitSize)
 	if err == nil {
 		return v, t
 	}
-	const msg = "Failed to parse int"
-	c.log(newError(ctx, err, featureID, nil, msg))
+	c.log(&Error{
+		Message:        "failed to parse int",
+		UserID:         userID(ctx),
+		UserAttributes: attributes(ctx),
+		FeatureID:      featureID,
+		originalErr:    err,
+	})
 	return v, t
 }
 
@@ -261,19 +333,30 @@ func (c *client) Float64Variation(ctx context.Context, featureID string, def flo
 	if err != nil {
 		return def, t
 	}
+	if variation == "" {
+		return def, t
+	}
 	const bitSize = 64
 	v, err := strconv.ParseFloat(variation, bitSize)
 	if err == nil {
 		return v, t
 	}
-	const msg = "Failed to parse float"
-	c.log(newError(ctx, err, featureID, nil, msg))
+	c.log(&Error{
+		Message:        "failed to parse float",
+		UserID:         userID(ctx),
+		UserAttributes: attributes(ctx),
+		FeatureID:      featureID,
+		originalErr:    err,
+	})
 	return v, t
 }
 
 func (c *client) StringVariation(ctx context.Context, featureID string, def string) (string, Tracker) {
 	variation, t, err := c.fetchVariation(ctx, featureID)
 	if err != nil {
+		return def, t
+	}
+	if variation == "" {
 		return def, t
 	}
 	return variation, t
@@ -284,10 +367,18 @@ func (c *client) JSONVariation(ctx context.Context, featureID string, dst interf
 	if err != nil {
 		return t
 	}
+	if variation == "" {
+		return t
+	}
 	err = json.NewDecoder(strings.NewReader(variation)).Decode(dst)
-	if err == nil {
-		const msg = "Failed to decode json"
-		c.log(newError(ctx, err, featureID, nil, msg))
+	if err != nil {
+		c.log(&Error{
+			Message:        "failed to decode json",
+			UserID:         userID(ctx),
+			UserAttributes: attributes(ctx),
+			FeatureID:      featureID,
+			originalErr:    err,
+		})
 	}
 	return t
 }
@@ -302,7 +393,7 @@ func newPerRPCCredentials(apiKey string) (credentials.PerRPCCredentials, error) 
 	}, nil
 }
 
-func (c perRPCCredentials) GetRequestMetadata(ctx context.Context, uri ...string) (map[string]string, error) {
+func (c perRPCCredentials) GetRequestMetadata(_ context.Context, _ ...string) (map[string]string, error) {
 	return map[string]string{
 		"authorization": c.APIKey,
 	}, nil

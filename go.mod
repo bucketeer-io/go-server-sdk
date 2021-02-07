@@ -3,6 +3,7 @@ module github.com/ca-dp/bucketeer-go-sdk
 go 1.15
 
 require (
+	github.com/brianvoe/gofakeit/v6 v6.0.3
 	github.com/golang/protobuf v1.4.3
 	github.com/google/uuid v1.1.2
 	github.com/stretchr/testify v1.5.1
