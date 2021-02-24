@@ -1,3 +1,14 @@
+#############################
+# Go
+#############################
+.PHONY: deps
+deps:
+	go mod tidy
+	go mod vendor
+
+#############################
+# Proto
+#############################
 PROTO_TOP_DIR := $(shell cd ../bucketeer && pwd)
 PROTO_FOLDERS := event/client feature gateway user
 PROTO_OUTPUT := proto_output
@@ -22,7 +33,3 @@ copy-protos: .gen-protos
 	for file in $$(find ./${PROTO_OUTPUT} -name "*.go"); do \
 		sed -i '' 's|${IMPORT_PATH_FROM}|${IMPORT_PATH_TO}|g' $$file; \
 	done
-
-.PHONY: test
-test:
-	go test ./...
