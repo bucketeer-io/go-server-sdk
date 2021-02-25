@@ -13,6 +13,10 @@ deps:
 fmt:
 	gofmt -s -w ./pkg
 
+.PHONY: fmt-check
+fmt-check:
+	test -z "$$(gofmt -d ./pkg)"
+
 .PHONY: lint
 lint:
 	golangci-lint run ./pkg/...
