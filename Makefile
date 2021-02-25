@@ -1,10 +1,33 @@
 #############################
 # Go
 #############################
+.PHONY: all
+all: deps fmt lint build test
+
 .PHONY: deps
 deps:
 	go mod tidy
 	go mod vendor
+
+.PHONY: fmt
+fmt:
+	gofmt -s -w ./pkg
+
+.PHONY: lint
+lint:
+	golangci-lint run ./pkg/...
+
+.PHONY: build
+build:
+	go build ./pkg/...
+
+.PHONY: test
+test:
+	go test -race -v ./pkg/...
+
+.PHONY: coverage
+coverage:
+	go test -race -v -coverpkg=./pkg/... -covermode=atomic -coverprofile=coverage.out ./pkg/...
 
 #############################
 # Proto
