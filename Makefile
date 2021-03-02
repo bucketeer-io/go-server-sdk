@@ -27,7 +27,7 @@ build:
 
 .PHONY: test
 test:
-	go test -race -v ./pkg/...
+	go test -race ./pkg/...
 
 .PHONY: coverage
 coverage:
