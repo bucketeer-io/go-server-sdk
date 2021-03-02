@@ -2,9 +2,7 @@ package bucketeer
 
 import (
 	"errors"
-	"fmt"
 
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/internal/uuid"
 	protouser "github.com/ca-dp/bucketeer-go-server-sdk/proto/user"
 )
 
@@ -24,20 +22,6 @@ func NewUser(id string, attributes map[string]string) (*User, error) {
 	}
 	return &User{User: &protouser.User{
 		Id:   id,
-		Data: attributes,
-	}}, nil
-}
-
-// NewRandomUser creates a new User with a random id.
-//
-// attributes is optional.
-func NewRandomUser(attributes map[string]string) (*User, error) {
-	id, err := uuid.NewV4()
-	if err != nil {
-		return nil, fmt.Errorf("bucketeer: failed to create uuid: %w", err)
-	}
-	return &User{User: &protouser.User{
-		Id:   id.String(),
 		Data: attributes,
 	}}, nil
 }

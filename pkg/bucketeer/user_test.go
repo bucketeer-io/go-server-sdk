@@ -54,27 +54,3 @@ func TestNewUser(t *testing.T) {
 		})
 	}
 }
-
-func TestNewRandomUser(t *testing.T) {
-	tests := []struct {
-		desc       string
-		attributes map[string]string
-	}{
-		{
-			desc:       "user without attributes",
-			attributes: nil,
-		},
-		{
-			desc:       "user with attributes",
-			attributes: map[string]string{"foo": "bar"},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			u, err := NewRandomUser(tt.attributes)
-			assert.NoError(t, err)
-			assert.NotEmpty(t, u.Id)
-			assert.Equal(t, tt.attributes, u.Data)
-		})
-	}
-}
