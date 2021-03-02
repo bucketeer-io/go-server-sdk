@@ -33,13 +33,13 @@ type processor struct {
 	evtQueue *queue
 }
 
-type processorConfig struct {
-	evtQueueCapacity int
+type ProcessorConfig struct {
+	EventQueueCapacity int
 }
 
-func NewProcessor(conf *processorConfig) Processor {
+func NewProcessor(conf *ProcessorConfig) Processor {
 	return &processor{
-		evtQueue: newQueue(conf.evtQueueCapacity),
+		evtQueue: newQueue(conf.EventQueueCapacity),
 	}
 }
 
