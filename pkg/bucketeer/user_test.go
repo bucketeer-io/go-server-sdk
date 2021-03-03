@@ -8,6 +8,7 @@ import (
 )
 
 func TestNewUser(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		desc       string
 		id         string
