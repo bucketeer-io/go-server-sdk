@@ -11,27 +11,33 @@ deps:
 
 .PHONY: fmt
 fmt:
-	gofmt -s -w ./pkg
+	gofmt -s -w ./internal ./pkg ./test
 
 .PHONY: fmt-check
 fmt-check:
-	test -z "$$(gofmt -d ./pkg)"
+	test -z "$$(gofmt -d ./internal ./pkg ./test)"
 
 .PHONY: lint
 lint:
-	golangci-lint run ./pkg/...
+	golangci-lint run ./internal/... ./pkg/... ./test/...
 
 .PHONY: build
 build:
-	go build ./pkg/...
+	go build ./internal/... ./pkg/... ./test/...
 
 .PHONY: test
 test:
-	go test -race ./pkg/...
+	go test -race ./internal/... ./pkg/...
 
 .PHONY: coverage
 coverage:
-	go test -race -v -coverpkg=./pkg/... -covermode=atomic -coverprofile=coverage.out ./pkg/...
+	go test -race -covermode=atomic -coverprofile=coverage.out \
+		-coverpkg=./internal/...,./pkg/... ./internal/... ./pkg/...
+
+.PHONY: e2e
+e2e:
+	go test -race ./test/e2e/... \
+		-args -api-key=${API_KEY} -host=${HOST} -port=${PORT}
 
 #############################
 # Proto
