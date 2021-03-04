@@ -37,7 +37,7 @@ type ClientConfig struct {
 // NewClient creates a new Client.
 //
 // NewClient returns error if failed to dial gRPC.
-func NewClient(ctx context.Context, conf ClientConfig) (Client, error) {
+func NewClient(ctx context.Context, conf *ClientConfig) (Client, error) {
 	perRPCCreds := newPerRPCCredentials(conf.APIKey)
 	transportCreds := newTransportCredentials()
 	dialOptions := []grpc.DialOption{

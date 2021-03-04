@@ -85,7 +85,7 @@ func newAPIClient(t *testing.T) api.Client {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	conf := api.ClientConfig{
+	conf := &api.ClientConfig{
 		APIKey: *apiKey,
 		Host:   *host,
 		Port:   *port,

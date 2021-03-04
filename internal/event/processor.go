@@ -24,7 +24,7 @@ type Processor interface {
 	// PushEvaluationEvent pushes the given metrics event to the event queue.
 	PushMetricsEvent(ctx context.Context, evt protoevent.MetricsEvent)
 
-	// Close shuts down all Processor activity, after ensuring that all events have been delivered.
+	// Close tears down all Processor activities, after ensuring that all events have been delivered.
 	Close()
 }
 
