@@ -16,3 +16,4 @@ linters:
     - gofmt
     - goimports
     - golint
+    - lll
