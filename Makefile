@@ -2,12 +2,16 @@
 # Go
 #############################
 .PHONY: all
-all: deps fmt lint build test
+all: deps mockgen fmt lint build test
 
 .PHONY: deps
 deps:
 	go mod tidy
 	go mod vendor
+
+.PHONY: mockgen
+mockgen:
+	go generate -run="mockgen" ./internal/... ./pkg/...
 
 .PHONY: fmt
 fmt:
