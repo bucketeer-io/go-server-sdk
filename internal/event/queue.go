@@ -10,9 +10,13 @@ type queue struct {
 	evtCh chan *protoevent.Event
 }
 
-func newQueue(capacity int) *queue {
+type queueConfig struct {
+	capacity int
+}
+
+func newQueue(conf *queueConfig) *queue {
 	return &queue{
-		evtCh: make(chan *protoevent.Event, capacity),
+		evtCh: make(chan *protoevent.Event, conf.capacity),
 	}
 }
 
@@ -23,7 +27,7 @@ func (q *queue) push(evt *protoevent.Event) error {
 	case q.evtCh <- evt:
 		return nil
 	default:
-		return errors.New("event: queue is full")
+		return errors.New("queue is full")
 	}
 }
 
