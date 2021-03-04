@@ -11,6 +11,7 @@ import (
 
 // Client is the client interface for the Bucketeer APIGateway service.
 type Client interface {
+	// GatewayClient defines GetEvaluations and RegisterEvents methods.
 	protogateway.GatewayClient
 
 	// Close tears down the connection.
@@ -37,7 +38,7 @@ type ClientConfig struct {
 // NewClient creates a new Client.
 //
 // NewClient returns error if failed to dial gRPC.
-func NewClient(ctx context.Context, conf ClientConfig) (Client, error) {
+func NewClient(ctx context.Context, conf *ClientConfig) (Client, error) {
 	perRPCCreds := newPerRPCCredentials(conf.APIKey)
 	transportCreds := newTransportCredentials()
 	dialOptions := []grpc.DialOption{
@@ -51,7 +52,7 @@ func NewClient(ctx context.Context, conf ClientConfig) (Client, error) {
 		dialOptions...,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("client: failed to dial gRPC: %w", err)
+		return nil, fmt.Errorf("api: failed to dial gRPC: %w", err)
 	}
 	return &client{
 		GatewayClient: protogateway.NewGatewayClient(conn),
