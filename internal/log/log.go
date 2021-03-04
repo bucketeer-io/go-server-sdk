@@ -2,22 +2,30 @@ package log
 
 import "fmt"
 
-// OutputFunc is a output function to log a given string argument.
-type OutputFunc func(string)
+type outputFunc func(string)
 
 // Logger is a logging compornent used in the Bucketeer SDK.
 type Logger struct {
-	warnFunc  OutputFunc
-	errorFunc OutputFunc
+	warnFunc  outputFunc
+	errorFunc outputFunc
+}
+
+// LoggerConfig is the config for Logger.
+//
+// Each output func is optional, and they are used in the logging method corresponding to their log level.
+type LoggerConfig struct {
+	// WarnFunc is a function to output warn log
+	WarnFunc outputFunc
+
+	// ErrorFunc is a function to output error log
+	ErrorFunc outputFunc
 }
 
 // NewLogger creates a new Logger.
-//
-// Each output func is optional, and they are used in the logging method corresponding to their log level.
-func NewLogger(warnFunc OutputFunc, errorFunc OutputFunc) *Logger {
+func NewLogger(conf *LoggerConfig) *Logger {
 	return &Logger{
-		warnFunc:  warnFunc,
-		errorFunc: errorFunc,
+		warnFunc:  conf.WarnFunc,
+		errorFunc: conf.ErrorFunc,
 	}
 }
 
@@ -31,7 +39,7 @@ func (l *Logger) Error(msg string) {
 	l.output(l.errorFunc, msg)
 }
 
-func (l *Logger) output(f OutputFunc, msg string) {
+func (l *Logger) output(f outputFunc, msg string) {
 	if f == nil {
 		return
 	}
@@ -48,7 +56,7 @@ func (l *Logger) Errorf(format string, args ...interface{}) {
 	l.outputf(l.errorFunc, format, args...)
 }
 
-func (l *Logger) outputf(f OutputFunc, format string, args ...interface{}) {
+func (l *Logger) outputf(f outputFunc, format string, args ...interface{}) {
 	if f == nil {
 		return
 	}

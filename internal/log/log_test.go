@@ -36,9 +36,9 @@ func TestWarn(t *testing.T) {
 			var buf bytes.Buffer
 			var l *Logger
 			if lt.hasOutputFunc {
-				l = NewLogger(bufferedOutputFunc(t, &buf), nil)
+				l = NewLogger(&LoggerConfig{WarnFunc: bufferedOutputFunc(t, &buf)})
 			} else {
-				l = NewLogger(nil, nil)
+				l = NewLogger(&LoggerConfig{})
 			}
 			l.Warn(lt.msg)
 			assert.Equal(t, lt.expected, buf.String())
@@ -53,9 +53,9 @@ func TestError(t *testing.T) {
 			var buf bytes.Buffer
 			var l *Logger
 			if lt.hasOutputFunc {
-				l = NewLogger(nil, bufferedOutputFunc(t, &buf))
+				l = NewLogger(&LoggerConfig{ErrorFunc: bufferedOutputFunc(t, &buf)})
 			} else {
-				l = NewLogger(nil, nil)
+				l = NewLogger(&LoggerConfig{})
 			}
 			l.Error(lt.msg)
 			assert.Equal(t, lt.expected, buf.String())
@@ -95,9 +95,9 @@ func TestWarnf(t *testing.T) {
 			var buf bytes.Buffer
 			var l *Logger
 			if lt.hasOutputFunc {
-				l = NewLogger(bufferedOutputFunc(t, &buf), nil)
+				l = NewLogger(&LoggerConfig{WarnFunc: bufferedOutputFunc(t, &buf)})
 			} else {
-				l = NewLogger(nil, nil)
+				l = NewLogger(&LoggerConfig{})
 			}
 			l.Warnf(lt.format, lt.args...)
 			assert.Equal(t, lt.expected, buf.String())
@@ -112,9 +112,9 @@ func TestErrorf(t *testing.T) {
 			var buf bytes.Buffer
 			var l *Logger
 			if lt.hasOutputFunc {
-				l = NewLogger(nil, bufferedOutputFunc(t, &buf))
+				l = NewLogger(&LoggerConfig{ErrorFunc: bufferedOutputFunc(t, &buf)})
 			} else {
-				l = NewLogger(nil, nil)
+				l = NewLogger(&LoggerConfig{})
 			}
 			l.Errorf(lt.format, lt.args...)
 			assert.Equal(t, lt.expected, buf.String())
@@ -122,7 +122,7 @@ func TestErrorf(t *testing.T) {
 	}
 }
 
-func bufferedOutputFunc(t *testing.T, buf *bytes.Buffer) OutputFunc {
+func bufferedOutputFunc(t *testing.T, buf *bytes.Buffer) outputFunc {
 	t.Helper()
 	return func(msg string) {
 		buf.WriteString(msg)

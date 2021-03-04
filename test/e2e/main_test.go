@@ -8,6 +8,7 @@ import (
 const (
 	timeout = 10 * time.Second
 
+	tag                 = "go-server"
 	userID              = "bucketeer-go-server-user-id-1"
 	featureID           = "feature-go-server-e2e-1"
 	featureIDVariation1 = "value-1"
