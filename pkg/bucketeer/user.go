@@ -18,7 +18,7 @@ type User struct {
 // id is mandatory and attributes is optional.
 func NewUser(id string, attributes map[string]string) (*User, error) {
 	if id == "" {
-		return nil, errors.New("bucketeer: id is empty")
+		return nil, errors.New("bucketeer: user id is empty")
 	}
 	return &User{User: &protouser.User{
 		Id:   id,
