@@ -9,6 +9,8 @@ import (
 
 func TestNewUser(t *testing.T) {
 	t.Parallel()
+	userID := "user-id"
+	userAttrs := map[string]string{"foo": "bar"}
 	tests := []struct {
 		desc       string
 		id         string
@@ -25,20 +27,20 @@ func TestNewUser(t *testing.T) {
 		},
 		{
 			desc:       "user without attributes",
-			id:         "id",
+			id:         userID,
 			attributes: nil,
 			expected: &User{User: &protouser.User{
-				Id: "id",
+				Id: userID,
 			}},
 			isErr: false,
 		},
 		{
 			desc:       "user with attributes",
-			id:         "id",
-			attributes: map[string]string{"foo": "bar"},
+			id:         userID,
+			attributes: userAttrs,
 			expected: &User{User: &protouser.User{
-				Id:   "id",
-				Data: map[string]string{"foo": "bar"},
+				Id:   userID,
+				Data: userAttrs,
 			}},
 			isErr: false,
 		},
