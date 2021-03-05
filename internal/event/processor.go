@@ -3,26 +3,40 @@ package event
 
 import (
 	"context"
+	"time"
 
-	protoevent "github.com/ca-dp/bucketeer-go-server-sdk/proto/event/client"
+	protofeature "github.com/ca-dp/bucketeer-go-server-sdk/proto/feature"
+	protouser "github.com/ca-dp/bucketeer-go-server-sdk/proto/user"
 )
 
 // Processor defines the interface for processing events.
 //
-// When one of the Push method called, Processor pushes the given event to the event queue.
+// When one of the Push method called, Processor pushes an event to the event queue.
 //
 // In the background, Processor pulls the events from the event queue,
 // and sends them to the Bucketeer server using the Bucketeer API Client
 // every time the specified time elapses or the specified capacity is exceeded.
 type Processor interface {
-	// PushEvaluationEvent pushes the given evaluation event to the event queue.
-	PushEvaluationEvent(ctx context.Context, evt protoevent.EvaluationEvent)
+	// PushEvaluationEvent pushes the evaluation event to the event queue.
+	PushEvaluationEvent(ctx context.Context, user *protouser.User, evaluation *protofeature.Evaluation)
 
-	// PushEvaluationEvent pushes the given goal event to the event queue.
-	PushGoalEvent(ctx context.Context, evt protoevent.GoalEvent)
+	// PushDefaultEvaluationEvent pushes the default evaluation event to the event queue.
+	PushDefaultEvaluationEvent(ctx context.Context, user *protouser.User, featureID string)
 
-	// PushEvaluationEvent pushes the given metrics event to the event queue.
-	PushMetricsEvent(ctx context.Context, evt protoevent.MetricsEvent)
+	// PushEvaluationEvent pushes the goal event to the event queue.
+	PushGoalEvent(ctx context.Context, user *protouser.User, goalID string, value float64)
+
+	// PushGetEvaluationLatencyMetricsEvent pushes the get evaluation latency metrics event to the event queue.
+	PushGetEvaluationLatencyMetricsEvent(ctx context.Context, duration time.Duration, tag, state string)
+
+	// PushGetEvaluationSizeMetricsEvent pushes the get evaluation size metrics event to the event queue.
+	PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeByte int, tag, state string)
+
+	// PushTimeoutErrorCountMetricsEvent pushes the timeout error count metrics event to the event queue.
+	PushTimeoutErrorCountMetricsEvent(ctx context.Context, tag string)
+
+	// PushInternalErrorCountMetricsEvent pushes the internal error count metrics event to the event queue.
+	PushInternalErrorCountMetricsEvent(ctx context.Context, tag string)
 
 	// Close tears down all Processor activities, after ensuring that all events have been delivered.
 	Close()
@@ -45,10 +59,34 @@ func NewProcessor(conf *ProcessorConfig) Processor {
 	}
 }
 
-func (p *processor) PushEvaluationEvent(ctx context.Context, evt protoevent.EvaluationEvent) {}
+func (p *processor) PushEvaluationEvent(
+	ctx context.Context,
+	user *protouser.User,
+	evaluation *protofeature.Evaluation,
+) {
+}
 
-func (p *processor) PushGoalEvent(ctx context.Context, evt protoevent.GoalEvent) {}
+func (p *processor) PushDefaultEvaluationEvent(ctx context.Context, user *protouser.User, featureID string) {
+}
 
-func (p *processor) PushMetricsEvent(ctx context.Context, evt protoevent.MetricsEvent) {}
+func (p *processor) PushGoalEvent(ctx context.Context, user *protouser.User, goalID string, value float64) {
+}
 
-func (p *processor) Close() {}
+func (p *processor) PushGetEvaluationLatencyMetricsEvent(
+	ctx context.Context,
+	duration time.Duration,
+	tag, state string,
+) {
+}
+
+func (p *processor) PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeByte int, tag, state string) {
+}
+
+func (p *processor) PushTimeoutErrorCountMetricsEvent(ctx context.Context, tag string) {
+}
+
+func (p *processor) PushInternalErrorCountMetricsEvent(ctx context.Context, tag string) {
+}
+
+func (p *processor) Close() {
+}
