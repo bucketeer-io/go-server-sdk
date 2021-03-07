@@ -816,7 +816,10 @@ func newSDKWithMock(t *testing.T, mockCtrl *gomock.Controller) *sdk {
 		tag:            sdkTag,
 		apiClient:      mockapi.NewMockClient(mockCtrl),
 		eventProcessor: mockevent.NewMockProcessor(mockCtrl),
-		logger:         log.NewLogger(&log.LoggerConfig{}),
+		loggers: log.NewLoggers(&log.LoggersConfig{
+			EnableDebugLog: false,
+			ErrorLogger:    log.DiscardErrorLogger,
+		}),
 	}
 }
 
