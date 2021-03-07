@@ -2,129 +2,64 @@ package log
 
 import (
 	"bytes"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-var (
-	loggerTests = []struct {
-		desc          string
-		hasOutputFunc bool
-		msg           string
-		expected      string
-	}{
-		{
-			desc:          "output func is nil",
-			hasOutputFunc: false,
-			msg:           "test logger",
-			expected:      "",
-		},
-		{
-			desc:          "output func is not nil",
-			hasOutputFunc: true,
-			msg:           "test logger",
-			expected:      "test logger",
-		},
-	}
-)
-
-func TestWarn(t *testing.T) {
+func TestDebug(t *testing.T) {
 	t.Parallel()
-	for _, lt := range loggerTests {
-		t.Run(lt.desc, func(t *testing.T) {
-			var buf bytes.Buffer
-			var l *Logger
-			if lt.hasOutputFunc {
-				l = NewLogger(&LoggerConfig{WarnFunc: bufferedOutputFunc(t, &buf)})
-			} else {
-				l = NewLogger(&LoggerConfig{})
-			}
-			l.Warn(lt.msg)
-			assert.Equal(t, lt.expected, buf.String())
-		})
+	var buf bytes.Buffer
+	l := Loggers{
+		debugLogger: &bufLogger{&buf},
 	}
+	msg := "message"
+	l.Debug(msg)
+	assert.Equal(t, msg, buf.String())
+}
+
+func TestDebugf(t *testing.T) {
+	t.Parallel()
+	var buf bytes.Buffer
+	l := Loggers{
+		debugLogger: &bufLogger{&buf},
+	}
+	l.Debugf("message: %d", 1)
+	expected := "message: 1"
+	assert.Equal(t, expected, buf.String())
 }
 
 func TestError(t *testing.T) {
 	t.Parallel()
-	for _, lt := range loggerTests {
-		t.Run(lt.desc, func(t *testing.T) {
-			var buf bytes.Buffer
-			var l *Logger
-			if lt.hasOutputFunc {
-				l = NewLogger(&LoggerConfig{ErrorFunc: bufferedOutputFunc(t, &buf)})
-			} else {
-				l = NewLogger(&LoggerConfig{})
-			}
-			l.Error(lt.msg)
-			assert.Equal(t, lt.expected, buf.String())
-		})
+	var buf bytes.Buffer
+	l := Loggers{
+		errorLogger: &bufLogger{&buf},
 	}
-}
-
-var (
-	loggerfTests = []struct {
-		desc          string
-		hasOutputFunc bool
-		format        string
-		args          []interface{}
-		expected      string
-	}{
-		{
-			desc:          "output func is nil",
-			hasOutputFunc: false,
-			format:        "test logger %v",
-			args:          []interface{}{"arg"},
-			expected:      "",
-		},
-		{
-			desc:          "output func is not nil",
-			hasOutputFunc: true,
-			format:        "test logger %v",
-			args:          []interface{}{"arg"},
-			expected:      "test logger arg",
-		},
-	}
-)
-
-func TestWarnf(t *testing.T) {
-	t.Parallel()
-	for _, lt := range loggerfTests {
-		t.Run(lt.desc, func(t *testing.T) {
-			var buf bytes.Buffer
-			var l *Logger
-			if lt.hasOutputFunc {
-				l = NewLogger(&LoggerConfig{WarnFunc: bufferedOutputFunc(t, &buf)})
-			} else {
-				l = NewLogger(&LoggerConfig{})
-			}
-			l.Warnf(lt.format, lt.args...)
-			assert.Equal(t, lt.expected, buf.String())
-		})
-	}
+	msg := "message"
+	l.Error(msg)
+	assert.Equal(t, msg, buf.String())
 }
 
 func TestErrorf(t *testing.T) {
 	t.Parallel()
-	for _, lt := range loggerfTests {
-		t.Run(lt.desc, func(t *testing.T) {
-			var buf bytes.Buffer
-			var l *Logger
-			if lt.hasOutputFunc {
-				l = NewLogger(&LoggerConfig{ErrorFunc: bufferedOutputFunc(t, &buf)})
-			} else {
-				l = NewLogger(&LoggerConfig{})
-			}
-			l.Errorf(lt.format, lt.args...)
-			assert.Equal(t, lt.expected, buf.String())
-		})
+	var buf bytes.Buffer
+	l := Loggers{
+		errorLogger: &bufLogger{&buf},
 	}
+	l.Errorf("message: %d", 1)
+	expected := "message: 1"
+	assert.Equal(t, expected, buf.String())
 }
 
-func bufferedOutputFunc(t *testing.T, buf *bytes.Buffer) outputFunc {
-	t.Helper()
-	return func(msg string) {
-		buf.WriteString(msg)
-	}
+type bufLogger struct {
+	b *bytes.Buffer
+}
+
+func (l *bufLogger) Print(values ...interface{}) {
+	l.b.WriteString(fmt.Sprint(values...))
+}
+
+func (l *bufLogger) Printf(format string, values ...interface{}) {
+	l.b.WriteString(fmt.Sprintf(format, values...))
 }
