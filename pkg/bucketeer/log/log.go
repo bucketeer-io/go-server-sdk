@@ -1,64 +1,93 @@
 package log
 
-import "fmt"
+import (
+	"io/ioutil"
+	stdlog "log"
+	"os"
+)
 
-type outputFunc func(string)
-
-// Logger is a logging compornent used in the Bucketeer SDK.
-type Logger struct {
-	warnFunc  outputFunc
-	errorFunc outputFunc
-}
-
-// LoggerConfig is the config for Logger.
+// BaseLogger is a generic logger interface with no level mechanism.
 //
-// Each output func is optional, and they are used in the logging method corresponding to their log level.
-type LoggerConfig struct {
-	// WarnFunc is a function to output warn log
-	WarnFunc outputFunc
+// Since BaseLogger's methods are a subset of log.Logger in the standard library,
+// you can use log.New() to create a BaseLogger, or you can implement a custom BaseLogger.
+type BaseLogger interface {
+	// Print outputs a message.
+	//
+	// Print is equivalent to log.Logger.Print in the standard library.
+	Print(values ...interface{})
 
-	// ErrorFunc is a function to output error log
-	ErrorFunc outputFunc
+	// Printf outputs a message, applying a format string.
+	//
+	// Printf is equivalent to log.Logger.Printf in the standard library.
+	Printf(format string, values ...interface{})
 }
 
-// NewLogger creates a new Logger.
-func NewLogger(conf *LoggerConfig) *Logger {
-	return &Logger{
-		warnFunc:  conf.WarnFunc,
-		errorFunc: conf.ErrorFunc,
+var (
+	flags = stdlog.LstdFlags | stdlog.Lshortfile
+
+	defaultDebugLogger = stdlog.New(os.Stdout, "[DEBUG] ", flags)
+	discardDebugLogger = stdlog.New(ioutil.Discard, "[DEBUG] ", flags)
+
+	// DefaultErrorLogger is a default logger for Bucketeer SDK error logs.
+	// For example, DefaultErrorLogger outputs,
+	//   [ERROR] 2021/01/01 10:00:00 prog.go:8 message
+	//
+	// DefaultErrorLoger implements BaseLogger interface.
+	DefaultErrorLogger = stdlog.New(os.Stderr, "[ERROR] ", flags)
+
+	// DiscardErrorLogger discards all Bucketeer SDK error logs.
+	//
+	// DiscardErrorLoger implements BaseLogger interface.
+	DiscardErrorLogger = stdlog.New(ioutil.Discard, "[ERROR] ", flags)
+)
+
+// Loggers is a logging compornent used in the Bucketeer SDK.
+//
+// Debug logs are for Bucketeer SDK developers.
+// Error logs are for Bucketeer SDK users.
+type Loggers struct {
+	debugLogger BaseLogger
+	errorLogger BaseLogger
+}
+
+// LoggersConfig is the config for Loggers.
+type LoggersConfig struct {
+	// EnableDebugLog enables debug logs if true.
+	EnableDebugLog bool
+
+	// ErrorLogger is used to output error logs.
+	ErrorLogger BaseLogger
+}
+
+// NewLoggers creates a new Loggers.
+func NewLoggers(conf *LoggersConfig) *Loggers {
+	dbgLogger := discardDebugLogger
+	if conf.EnableDebugLog {
+		dbgLogger = defaultDebugLogger
+	}
+	errLogger := conf.ErrorLogger
+	return &Loggers{
+		debugLogger: dbgLogger,
+		errorLogger: errLogger,
 	}
 }
 
-// Warn outputs msg if warnFunc is not nil, otherwise do nothing.
-func (l *Logger) Warn(msg string) {
-	l.output(l.warnFunc, msg)
+// Debug outputs a debug log.
+func (l *Loggers) Debug(values ...interface{}) {
+	l.debugLogger.Print(values...)
 }
 
-// Error outputs msg if errorFunc is not nil, otherwise do nothing.
-func (l *Logger) Error(msg string) {
-	l.output(l.errorFunc, msg)
+// Debugf outputs a formatted debug log.
+func (l *Loggers) Debugf(format string, values ...interface{}) {
+	l.debugLogger.Printf(format, values...)
 }
 
-func (l *Logger) output(f outputFunc, msg string) {
-	if f == nil {
-		return
-	}
-	f(msg)
+// Error outputs a error log.
+func (l *Loggers) Error(values ...interface{}) {
+	l.errorLogger.Print(values...)
 }
 
-// Warnf outputs formatted message if warnFunc is not nil, otherwise do nothing.
-func (l *Logger) Warnf(format string, args ...interface{}) {
-	l.outputf(l.warnFunc, format, args...)
-}
-
-// Errorf outputs formatted message if errorFunc is not nil, otherwise do nothing.
-func (l *Logger) Errorf(format string, args ...interface{}) {
-	l.outputf(l.errorFunc, format, args...)
-}
-
-func (l *Logger) outputf(f outputFunc, format string, args ...interface{}) {
-	if f == nil {
-		return
-	}
-	f(fmt.Sprintf(format, args...))
+// Errorf outputs a formatted error log.
+func (l *Loggers) Errorf(format string, values ...interface{}) {
+	l.errorLogger.Printf(format, values...)
 }
