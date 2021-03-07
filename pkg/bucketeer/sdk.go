@@ -23,7 +23,7 @@ import (
 // SDK represents the ability to get the value of a feature flag and to track goal events
 // by communicating with the Bucketeer service.
 //
-// A customer Application should instantiate a single SDK instance for the lifetime of the application and share it.
+// A user application should instantiate a single SDK instance for the lifetime of the application and share it.
 // SDK is safe for concurrent use by multiple goroutines.
 type SDK interface {
 	// BoolVariation returns the value of a feature flag (whose variations are booleans) for the given user.
@@ -69,7 +69,7 @@ type sdk struct {
 	tag            string
 	apiClient      api.Client
 	eventProcessor event.Processor
-	logger         *log.Logger
+	loggers        *log.Loggers
 }
 
 // NewSDK creates a new Bucketeer SDK.
@@ -91,30 +91,30 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		EventQueueCapacity: dopts.eventQueueCapacity,
 	}
 	processor := event.NewProcessor(processorConf)
-	loggerConf := &log.LoggerConfig{
-		WarnFunc:  dopts.warnLogFunc,
-		ErrorFunc: dopts.errorLogFunc,
+	loggerConf := &log.LoggersConfig{
+		EnableDebugLog: dopts.enableDebugLog,
+		ErrorLogger:    dopts.errorLogger,
 	}
-	logger := log.NewLogger(loggerConf)
+	l := log.NewLoggers(loggerConf)
 	return &sdk{
 		tag:            dopts.tag,
 		apiClient:      client,
 		eventProcessor: processor,
-		logger:         logger,
+		loggers:        l,
 	}, nil
 }
 
 func (s *sdk) BoolVariation(ctx context.Context, user *User, featureID string, defaultValue bool) bool {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
-		s.logger.Warnf("bucketeer: failed to get evaluation: %v", err)
+		s.logVariationError(err, "BoolVariation", user.Id, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
 		return defaultValue
 	}
 	variation := evaluation.Variation.Value
 	v, err := strconv.ParseBool(variation)
 	if err != nil {
-		s.logger.Warnf("bucketeer: failed to parse variation (%s) to bool: %v", variation, err)
+		s.logVariationError(err, "BoolVariation", user.Id, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
 		return defaultValue
 	}
@@ -129,14 +129,14 @@ func (s *sdk) IntVariation(ctx context.Context, user *User, featureID string, de
 func (s *sdk) Int64Variation(ctx context.Context, user *User, featureID string, defaultValue int64) int64 {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
-		s.logger.Warnf("bucketeer: failed to get evaluation: %v", err)
+		s.logVariationError(err, "(Int|Int64)Variation", user.Id, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
 		return defaultValue
 	}
 	variation := evaluation.Variation.Value
 	v, err := strconv.ParseInt(variation, 10, 64)
 	if err != nil {
-		s.logger.Warnf("bucketeer: failed to parse variation (%s) to int: %v", variation, err)
+		s.logVariationError(err, "(Int|Int64)Variation", user.Id, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
 		return defaultValue
 	}
@@ -147,14 +147,14 @@ func (s *sdk) Int64Variation(ctx context.Context, user *User, featureID string, 
 func (s *sdk) Float64Variation(ctx context.Context, user *User, featureID string, defaultValue float64) float64 {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
-		s.logger.Warnf("bucketeer: failed to get evaluation: %v", err)
+		s.logVariationError(err, "Float64Variation", user.Id, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
 		return defaultValue
 	}
 	variation := evaluation.Variation.Value
 	v, err := strconv.ParseFloat(variation, 64)
 	if err != nil {
-		s.logger.Warnf("bucketeer: failed to parse variation (%s) to float: %v", variation, err)
+		s.logVariationError(err, "Float64Variation", user.Id, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
 		return defaultValue
 	}
@@ -165,7 +165,7 @@ func (s *sdk) Float64Variation(ctx context.Context, user *User, featureID string
 func (s *sdk) StringVariation(ctx context.Context, user *User, featureID, defaultValue string) string {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
-		s.logger.Warnf("bucketeer: failed to get evaluation: %v", err)
+		s.logVariationError(err, "StringVariation", user.Id, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
 		return defaultValue
 	}
@@ -177,14 +177,14 @@ func (s *sdk) StringVariation(ctx context.Context, user *User, featureID, defaul
 func (s *sdk) JSONVariation(ctx context.Context, user *User, featureID string, dst interface{}) {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
-		s.logger.Warnf("bucketeer: failed to get evaluation: %v", err)
+		s.logVariationError(err, "JSONVariation", user.Id, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
 		return
 	}
 	variation := evaluation.Variation.Value
 	err = json.Unmarshal([]byte(variation), dst)
 	if err != nil {
-		s.logger.Warnf("bucketeer: failed to unmarshal variation (%s): %v", variation, err)
+		s.logVariationError(err, "JSONVariation", user.Id, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
 		return
 	}
@@ -234,6 +234,16 @@ func (s *sdk) validateGetEvaluationResponse(res *protogateway.GetEvaluationsResp
 		return errors.New("variation is nil")
 	}
 	return nil
+}
+
+func (s *sdk) logVariationError(err error, methodName, userID, featureID string) {
+	s.loggers.Errorf(
+		"bucketeer: %s returns default value (err: %v, userID: %s, featureID: %s)",
+		methodName,
+		err,
+		userID,
+		featureID,
+	)
 }
 
 func (s *sdk) Track(ctx context.Context, user *User, goalID string) {
