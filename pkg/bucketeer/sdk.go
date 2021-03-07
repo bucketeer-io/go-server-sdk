@@ -8,9 +8,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ca-dp/bucketeer-go-server-sdk/internal/api"
-	"github.com/ca-dp/bucketeer-go-server-sdk/internal/event"
-	"github.com/ca-dp/bucketeer-go-server-sdk/internal/log"
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/event"
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
 	protofeature "github.com/ca-dp/bucketeer-go-server-sdk/proto/feature"
 	protogateway "github.com/ca-dp/bucketeer-go-server-sdk/proto/gateway"
 	"github.com/golang/protobuf/proto" // nolint:staticcheck

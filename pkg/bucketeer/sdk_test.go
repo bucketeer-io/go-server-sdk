@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/ca-dp/bucketeer-go-server-sdk/internal/log"
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
 	protofeature "github.com/ca-dp/bucketeer-go-server-sdk/proto/feature"
 	protogateway "github.com/ca-dp/bucketeer-go-server-sdk/proto/gateway"
 	mockapi "github.com/ca-dp/bucketeer-go-server-sdk/test/mock/api"
