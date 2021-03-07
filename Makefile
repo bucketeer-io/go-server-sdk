@@ -11,32 +11,31 @@ deps:
 
 .PHONY: mockgen
 mockgen:
-	go generate -run="mockgen" ./internal/... ./pkg/...
+	go generate -run="mockgen" ./pkg/...
 
 .PHONY: fmt
 fmt:
-	gofmt -s -w ./internal ./pkg ./test
+	gofmt -s -w ./pkg ./test
 
 .PHONY: fmt-check
 fmt-check:
-	test -z "$$(gofmt -d ./internal ./pkg ./test)"
+	test -z "$$(gofmt -d ./pkg ./test)"
 
 .PHONY: lint
 lint:
-	golangci-lint run ./internal/... ./pkg/... ./test/...
+	golangci-lint run ./pkg/... ./test/...
 
 .PHONY: build
 build:
-	go build ./internal/... ./pkg/... ./test/...
+	go build ./pkg/... ./test/...
 
 .PHONY: test
 test:
-	go test -race ./internal/... ./pkg/...
+	go test -race ./pkg/...
 
 .PHONY: coverage
 coverage:
-	go test -race -covermode=atomic -coverprofile=coverage.out \
-		-coverpkg=./internal/...,./pkg/... ./internal/... ./pkg/...
+	go test -race -covermode=atomic -coverprofile=coverage.out -coverpkg=./pkg/... ./pkg/...
 
 .PHONY: e2e
 e2e:
