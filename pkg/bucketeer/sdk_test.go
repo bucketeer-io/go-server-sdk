@@ -19,8 +19,9 @@ import (
 
 const (
 	sdkTag       = "go-server"
-	sdkFeatureID = "feature-id"
 	sdkUserID    = "user-id"
+	sdkFeatureID = "feature-id"
+	sdkGoalID    = "goal-id"
 )
 
 func TestBoolVariation(t *testing.T) {
@@ -808,6 +809,29 @@ func TestGetEvaluation(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestTrack(t *testing.T) {
+	t.Parallel()
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ctx := context.Background()
+	user := newUser(t, sdkUserID)
+	s := newSDKWithMock(t, mockCtrl)
+	s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGoalEvent(ctx, user.User, sdkGoalID, 0.0)
+	s.Track(ctx, user, sdkGoalID)
+}
+
+func TestTrackValue(t *testing.T) {
+	t.Parallel()
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ctx := context.Background()
+	user := newUser(t, sdkUserID)
+	value := 1.1
+	s := newSDKWithMock(t, mockCtrl)
+	s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGoalEvent(ctx, user.User, sdkGoalID, value)
+	s.TrackValue(ctx, user, sdkGoalID, value)
 }
 
 func newSDKWithMock(t *testing.T, mockCtrl *gomock.Controller) *sdk {

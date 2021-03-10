@@ -56,9 +56,13 @@ type SDK interface {
 	JSONVariation(ctx context.Context, user *User, featureID string, dst interface{})
 
 	// Track reports that a user has performed a goal event.
+	//
+	// TODO: Track doesn't work correctly until Bucketeer service implements the new goal tracking architecture.
 	Track(ctx context.Context, user *User, goalID string)
 
 	// TrackValue reports that a user has performed a goal event, and associates it with a custom value.
+	//
+	// TODO: TrackValue doesn't work correctly until Bucketeer service implements the new goal tracking architecture.
 	TrackValue(ctx context.Context, user *User, goalID string, value float64)
 
 	// Close tears down all SDK activities and resources, after ensuring that all events have been delivered.
@@ -247,9 +251,11 @@ func (s *sdk) logVariationError(err error, methodName, userID, featureID string)
 }
 
 func (s *sdk) Track(ctx context.Context, user *User, goalID string) {
+	s.TrackValue(ctx, user, goalID, 0.0)
 }
 
 func (s *sdk) TrackValue(ctx context.Context, user *User, goalID string, value float64) {
+	s.eventProcessor.PushGoalEvent(ctx, user.User, goalID, value)
 }
 
 func (s *sdk) Close() {
