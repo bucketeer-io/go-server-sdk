@@ -75,6 +75,26 @@ func (mr *MockClientMockRecorder) GetEvaluations(ctx, in interface{}, opts ...in
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEvaluations", reflect.TypeOf((*MockClient)(nil).GetEvaluations), varargs...)
 }
 
+// GetEvaluation mocks base method
+func (m *MockClient) GetEvaluation(ctx context.Context, in *gateway.GetEvaluationRequest, opts ...grpc.CallOption) (*gateway.GetEvaluationResponse, error) {
+	m.ctrl.T.Helper()
+	varargs := []interface{}{ctx, in}
+	for _, a := range opts {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "GetEvaluation", varargs...)
+	ret0, _ := ret[0].(*gateway.GetEvaluationResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetEvaluation indicates an expected call of GetEvaluation
+func (mr *MockClientMockRecorder) GetEvaluation(ctx, in interface{}, opts ...interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]interface{}{ctx, in}, opts...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEvaluation", reflect.TypeOf((*MockClient)(nil).GetEvaluation), varargs...)
+}
+
 // RegisterEvents mocks base method
 func (m *MockClient) RegisterEvents(ctx context.Context, in *gateway.RegisterEventsRequest, opts ...grpc.CallOption) (*gateway.RegisterEventsResponse, error) {
 	m.ctrl.T.Helper()

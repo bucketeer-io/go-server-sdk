@@ -11,7 +11,7 @@ import (
 
 // Client is the client interface for the Bucketeer APIGateway service.
 type Client interface {
-	// GatewayClient defines GetEvaluations and RegisterEvents methods.
+	// GatewayClient defines GetEvaluation and RegisterEvents methods.
 	protogateway.GatewayClient
 
 	// Close tears down the connection.

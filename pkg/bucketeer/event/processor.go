@@ -27,10 +27,10 @@ type Processor interface {
 	PushGoalEvent(ctx context.Context, user *protouser.User, goalID string, value float64)
 
 	// PushGetEvaluationLatencyMetricsEvent pushes the get evaluation latency metrics event to the queue.
-	PushGetEvaluationLatencyMetricsEvent(ctx context.Context, duration time.Duration, tag, state string)
+	PushGetEvaluationLatencyMetricsEvent(ctx context.Context, duration time.Duration, tag string)
 
 	// PushGetEvaluationSizeMetricsEvent pushes the get evaluation size metrics event to the queue.
-	PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeByte int, tag, state string)
+	PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeByte int, tag string)
 
 	// PushTimeoutErrorCountMetricsEvent pushes the timeout error count metrics event to the queue.
 	PushTimeoutErrorCountMetricsEvent(ctx context.Context, tag string)
@@ -72,14 +72,10 @@ func (p *processor) PushDefaultEvaluationEvent(ctx context.Context, user *protou
 func (p *processor) PushGoalEvent(ctx context.Context, user *protouser.User, goalID string, value float64) {
 }
 
-func (p *processor) PushGetEvaluationLatencyMetricsEvent(
-	ctx context.Context,
-	duration time.Duration,
-	tag, state string,
-) {
+func (p *processor) PushGetEvaluationLatencyMetricsEvent(ctx context.Context, duration time.Duration, tag string) {
 }
 
-func (p *processor) PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeByte int, tag, state string) {
+func (p *processor) PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeByte int, tag string) {
 }
 
 func (p *processor) PushTimeoutErrorCountMetricsEvent(ctx context.Context, tag string) {

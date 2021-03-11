@@ -25,7 +25,7 @@ var defaultOptions = options{
 	errorLogger:        log.DefaultErrorLogger,
 }
 
-// WithTag sets tag specified in getting evaluations. (Default: "")
+// WithTag sets tag specified in getting evaluation. (Default: "")
 func WithTag(tag string) Option {
 	return func(opts *options) {
 		opts.tag = tag
