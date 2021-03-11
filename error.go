@@ -3,7 +3,7 @@ package bucketeer
 import (
 	"fmt"
 
-	event "github.com/ca-dp/bucketeer-go-sdk/proto/event/client"
+	event "github.com/ca-dp/bucketeer-go-server-sdk/proto/event/client"
 )
 
 type Error struct {
