@@ -6,9 +6,9 @@ import (
 	"time"
 
 	gofakeit "github.com/brianvoe/gofakeit/v6"
-	event "github.com/ca-dp/bucketeer-go-sdk/proto/event/client"
-	"github.com/ca-dp/bucketeer-go-sdk/proto/feature"
-	"github.com/ca-dp/bucketeer-go-sdk/proto/user"
+	event "github.com/ca-dp/bucketeer-go-server-sdk/proto/event/client"
+	"github.com/ca-dp/bucketeer-go-server-sdk/proto/feature"
+	"github.com/ca-dp/bucketeer-go-server-sdk/proto/user"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/require"
 )
