@@ -4,15 +4,14 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"strings"
 	"time"
 
-	event "github.com/ca-dp/bucketeer-go-sdk/proto/event/client"
-	"github.com/ca-dp/bucketeer-go-sdk/proto/feature"
-	"github.com/ca-dp/bucketeer-go-sdk/proto/gateway"
-	"github.com/ca-dp/bucketeer-go-sdk/proto/user"
+	event "github.com/ca-dp/bucketeer-go-server-sdk/proto/event/client"
+	"github.com/ca-dp/bucketeer-go-server-sdk/proto/feature"
+	"github.com/ca-dp/bucketeer-go-server-sdk/proto/gateway"
+	"github.com/ca-dp/bucketeer-go-server-sdk/proto/user"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/google/uuid"
 	"google.golang.org/grpc"
@@ -196,15 +195,15 @@ func (c *client) resetEvents() {
 func (c *client) fetchVariation(ctx context.Context, featureID string) (string, Tracker, error) {
 	userID := userID(ctx)
 	attrs := attributes(ctx)
-	req := &gateway.GetEvaluationsRequest{
+	req := &gateway.GetEvaluationRequest{
 		Tag:       c.tag,
 		User:      &user.User{Id: userID, Data: attrs},
 		FeatureId: featureID,
 	}
-	resp, err := c.grpc.GetEvaluations(ctx, req)
+	resp, err := c.grpc.GetEvaluation(ctx, req)
 	if err != nil {
 		e := &Error{
-			Message:        "failed to get evaluations",
+			Message:        "failed to get evaluation",
 			UserID:         userID,
 			UserAttributes: attrs,
 			FeatureID:      featureID,
@@ -213,46 +212,25 @@ func (c *client) fetchVariation(ctx context.Context, featureID string) (string, 
 		c.log(e)
 		return "", nil, e
 	}
-	if resp.State != feature.UserEvaluations_FULL {
-		e := &Error{
-			Message:        fmt.Sprintf("unexpected state, %s", resp.State.String()),
-			UserID:         userID,
-			UserAttributes: attrs,
-			FeatureID:      featureID,
-		}
-		c.log(e)
-		return "", nil, e
-	}
-	evaluation := &feature.Evaluation{
-		FeatureId: featureID,
-		UserId:    userID,
-		Variation: &feature.Variation{},
-	}
-	for _, e := range resp.Evaluations.Evaluations {
-		if e.FeatureId != featureID {
-			continue
-		}
-		evaluation = e
-	}
-	if evaluation == nil || evaluation.Variation == nil {
+	if resp.Evaluation == nil || resp.Evaluation.FeatureId != featureID {
 		c.log(&Error{
-			Message:        "evaluation or variation not found",
+			Message:        "evaluation not found",
 			UserID:         userID,
 			UserAttributes: attrs,
 			FeatureID:      featureID,
 		})
 	}
-	c.sendEvaluationEvent(ctx, evaluation)
+	c.sendEvaluationEvent(ctx, resp.Evaluation)
 
 	t := &tracker{
 		ch:          c.eventsCh,
 		now:         c.now,
 		userID:      userID,
 		attributes:  attrs,
-		evaluations: resp.Evaluations.Evaluations,
+		evaluations: []*feature.Evaluation{resp.Evaluation},
 		logFunc:     c.logFunc,
 	}
-	return evaluation.Variation.Value, t, nil
+	return resp.Evaluation.Variation.Value, t, nil
 }
 
 func (c *client) sendEvaluationEvent(ctx context.Context, evaluation *feature.Evaluation) {
