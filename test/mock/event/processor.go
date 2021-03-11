@@ -73,27 +73,27 @@ func (mr *MockProcessorMockRecorder) PushGoalEvent(ctx, user, goalID, value inte
 }
 
 // PushGetEvaluationLatencyMetricsEvent mocks base method
-func (m *MockProcessor) PushGetEvaluationLatencyMetricsEvent(ctx context.Context, duration time.Duration, tag, state string) {
+func (m *MockProcessor) PushGetEvaluationLatencyMetricsEvent(ctx context.Context, duration time.Duration, tag string) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PushGetEvaluationLatencyMetricsEvent", ctx, duration, tag, state)
+	m.ctrl.Call(m, "PushGetEvaluationLatencyMetricsEvent", ctx, duration, tag)
 }
 
 // PushGetEvaluationLatencyMetricsEvent indicates an expected call of PushGetEvaluationLatencyMetricsEvent
-func (mr *MockProcessorMockRecorder) PushGetEvaluationLatencyMetricsEvent(ctx, duration, tag, state interface{}) *gomock.Call {
+func (mr *MockProcessorMockRecorder) PushGetEvaluationLatencyMetricsEvent(ctx, duration, tag interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushGetEvaluationLatencyMetricsEvent", reflect.TypeOf((*MockProcessor)(nil).PushGetEvaluationLatencyMetricsEvent), ctx, duration, tag, state)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushGetEvaluationLatencyMetricsEvent", reflect.TypeOf((*MockProcessor)(nil).PushGetEvaluationLatencyMetricsEvent), ctx, duration, tag)
 }
 
 // PushGetEvaluationSizeMetricsEvent mocks base method
-func (m *MockProcessor) PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeByte int, tag, state string) {
+func (m *MockProcessor) PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeByte int, tag string) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PushGetEvaluationSizeMetricsEvent", ctx, sizeByte, tag, state)
+	m.ctrl.Call(m, "PushGetEvaluationSizeMetricsEvent", ctx, sizeByte, tag)
 }
 
 // PushGetEvaluationSizeMetricsEvent indicates an expected call of PushGetEvaluationSizeMetricsEvent
-func (mr *MockProcessorMockRecorder) PushGetEvaluationSizeMetricsEvent(ctx, sizeByte, tag, state interface{}) *gomock.Call {
+func (mr *MockProcessorMockRecorder) PushGetEvaluationSizeMetricsEvent(ctx, sizeByte, tag interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushGetEvaluationSizeMetricsEvent", reflect.TypeOf((*MockProcessor)(nil).PushGetEvaluationSizeMetricsEvent), ctx, sizeByte, tag, state)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushGetEvaluationSizeMetricsEvent", reflect.TypeOf((*MockProcessor)(nil).PushGetEvaluationSizeMetricsEvent), ctx, sizeByte, tag)
 }
 
 // PushTimeoutErrorCountMetricsEvent mocks base method

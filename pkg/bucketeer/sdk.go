@@ -196,13 +196,13 @@ func (s *sdk) JSONVariation(ctx context.Context, user *User, featureID string, d
 }
 
 func (s *sdk) getEvaluation(ctx context.Context, user *User, featureID string) (*protofeature.Evaluation, error) {
-	req := &protogateway.GetEvaluationsRequest{
+	req := &protogateway.GetEvaluationRequest{
 		Tag:       s.tag,
 		User:      user.User,
 		FeatureId: featureID,
 	}
 	reqStart := time.Now()
-	res, err := s.apiClient.GetEvaluations(ctx, req)
+	res, err := s.apiClient.GetEvaluation(ctx, req)
 	if err != nil || res == nil {
 		if status.Code(err) == codes.DeadlineExceeded {
 			s.eventProcessor.PushTimeoutErrorCountMetricsEvent(ctx, s.tag)
@@ -211,30 +211,27 @@ func (s *sdk) getEvaluation(ctx context.Context, user *User, featureID string) (
 		}
 		return nil, fmt.Errorf("failed to get evaluation: %w", err)
 	}
-	s.eventProcessor.PushGetEvaluationLatencyMetricsEvent(ctx, time.Since(reqStart), s.tag, res.State.String())
-	s.eventProcessor.PushGetEvaluationSizeMetricsEvent(ctx, proto.Size(res), s.tag, res.State.String())
+	s.eventProcessor.PushGetEvaluationLatencyMetricsEvent(ctx, time.Since(reqStart), s.tag)
+	s.eventProcessor.PushGetEvaluationSizeMetricsEvent(ctx, proto.Size(res), s.tag)
 	if err := s.validateGetEvaluationResponse(res, featureID); err != nil {
 		return nil, fmt.Errorf("invalid get evaluation response: %w", err)
 	}
-	return res.Evaluations.Evaluations[0], nil
+	return res.Evaluation, nil
 }
 
 // Require res is not nil.
-func (s *sdk) validateGetEvaluationResponse(res *protogateway.GetEvaluationsResponse, featureID string) error {
-	if res.Evaluations == nil {
-		return errors.New("user evaluations are nil")
+func (s *sdk) validateGetEvaluationResponse(res *protogateway.GetEvaluationResponse, featureID string) error {
+	if res.Evaluation == nil {
+		return errors.New("evaluation is nil")
 	}
-	if len(res.Evaluations.Evaluations) != 1 {
-		return fmt.Errorf("evaluations length is not 1: %d", len(res.Evaluations.Evaluations))
-	}
-	if res.Evaluations.Evaluations[0].FeatureId != featureID {
+	if res.Evaluation.FeatureId != featureID {
 		return fmt.Errorf(
 			"feature id doesn't match: actual %s != expected %s",
-			res.Evaluations.Evaluations[0].FeatureId,
+			res.Evaluation.FeatureId,
 			featureID,
 		)
 	}
-	if res.Evaluations.Evaluations[0].Variation == nil {
+	if res.Evaluation.Variation == nil {
 		return errors.New("variation is nil")
 	}
 	return nil
