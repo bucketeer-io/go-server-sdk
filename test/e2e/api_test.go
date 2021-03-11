@@ -24,16 +24,15 @@ func TestGetEvaluation(t *testing.T) {
 	defer cancel()
 	user, err := bucketeer.NewUser(userID, nil)
 	require.NoError(t, err)
-	req := &protogateway.GetEvaluationsRequest{
+	req := &protogateway.GetEvaluationRequest{
 		Tag:       tag,
 		User:      user.User,
 		FeatureId: featureID,
 	}
-	res, err := client.GetEvaluations(ctx, req)
+	res, err := client.GetEvaluation(ctx, req)
 	require.NoError(t, err)
-	assert.Equal(t, protofeature.UserEvaluations_FULL, res.State)
-	assert.Len(t, res.Evaluations.Evaluations, 1)
-	assert.Equal(t, featureIDVariation2, res.Evaluations.Evaluations[0].Variation.Value)
+	assert.Equal(t, featureID, res.Evaluation.FeatureId)
+	assert.Equal(t, featureIDVariation2, res.Evaluation.Variation.Value)
 }
 
 func TestRegisterEvents(t *testing.T) {
@@ -55,12 +54,11 @@ func TestRegisterEvents(t *testing.T) {
 	})
 	require.NoError(t, err)
 	goalEvent, err := ptypes.MarshalAny(&protoevent.GoalEvent{
-		Timestamp:   time.Now().Unix(),
-		GoalId:      goalID,
-		UserId:      user.Id,
-		Value:       0.0,
-		User:        user.User,
-		Evaluations: []*protofeature.Evaluation{},
+		Timestamp: time.Now().Unix(),
+		GoalId:    goalID,
+		UserId:    user.Id,
+		Value:     0.0,
+		User:      user.User,
 	})
 	req := &protogateway.RegisterEventsRequest{
 		Events: []*protoevent.Event{
