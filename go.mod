@@ -1,4 +1,4 @@
-module github.com/ca-dp/bucketeer-go-sdk
+module github.com/ca-dp/bucketeer-go-server-sdk
 
 go 1.15
 
