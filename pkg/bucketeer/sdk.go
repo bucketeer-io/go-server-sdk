@@ -82,6 +82,11 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 	for _, opt := range opts {
 		opt(&dopts)
 	}
+	loggerConf := &log.LoggersConfig{
+		EnableDebugLog: dopts.enableDebugLog,
+		ErrorLogger:    dopts.errorLogger,
+	}
+	loggers := log.NewLoggers(loggerConf)
 	clientConf := &api.ClientConfig{
 		APIKey: dopts.apiKey,
 		Host:   dopts.host,
@@ -93,18 +98,14 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 	}
 	processorConf := &event.ProcessorConfig{
 		EventQueueCapacity: dopts.eventQueueCapacity,
+		Loggers:            loggers,
 	}
 	processor := event.NewProcessor(processorConf)
-	loggerConf := &log.LoggersConfig{
-		EnableDebugLog: dopts.enableDebugLog,
-		ErrorLogger:    dopts.errorLogger,
-	}
-	l := log.NewLoggers(loggerConf)
 	return &sdk{
 		tag:            dopts.tag,
 		apiClient:      client,
 		eventProcessor: processor,
-		loggers:        l,
+		loggers:        loggers,
 	}, nil
 }
 
@@ -127,20 +128,34 @@ func (s *sdk) BoolVariation(ctx context.Context, user *User, featureID string, d
 }
 
 func (s *sdk) IntVariation(ctx context.Context, user *User, featureID string, defaultValue int) int {
-	return int(s.Int64Variation(ctx, user, featureID, int64(defaultValue)))
-}
-
-func (s *sdk) Int64Variation(ctx context.Context, user *User, featureID string, defaultValue int64) int64 {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
-		s.logVariationError(err, "(Int|Int64)Variation", user.Id, featureID)
+		s.logVariationError(err, "IntVariation", user.Id, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
 		return defaultValue
 	}
 	variation := evaluation.Variation.Value
 	v, err := strconv.ParseInt(variation, 10, 64)
 	if err != nil {
-		s.logVariationError(err, "(Int|Int64)Variation", user.Id, featureID)
+		s.logVariationError(err, "IntVariation", user.Id, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
+		return defaultValue
+	}
+	s.eventProcessor.PushEvaluationEvent(ctx, user.User, evaluation)
+	return int(v)
+}
+
+func (s *sdk) Int64Variation(ctx context.Context, user *User, featureID string, defaultValue int64) int64 {
+	evaluation, err := s.getEvaluation(ctx, user, featureID)
+	if err != nil {
+		s.logVariationError(err, "Int64Variation", user.Id, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
+		return defaultValue
+	}
+	variation := evaluation.Variation.Value
+	v, err := strconv.ParseInt(variation, 10, 64)
+	if err != nil {
+		s.logVariationError(err, "Int64Variation", user.Id, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
 		return defaultValue
 	}
