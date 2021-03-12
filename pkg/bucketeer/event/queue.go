@@ -20,8 +20,6 @@ func newQueue(conf *queueConfig) *queue {
 	}
 }
 
-// TODO: remove nolint comment
-// nolint
 func (q *queue) push(evt *protoevent.Event) error {
 	select {
 	case q.evtCh <- evt:
@@ -31,8 +29,6 @@ func (q *queue) push(evt *protoevent.Event) error {
 	}
 }
 
-// TODO: remove nolint comment
-// nolint
-func (q *queue) eventCh() <-chan *protoevent.Event {
-	return q.evtCh
-}
+// func (q *queue) eventCh() <-chan *protoevent.Event {
+// 	return q.evtCh
+// }
