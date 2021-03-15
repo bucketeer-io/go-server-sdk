@@ -3,8 +3,9 @@ package bucketeer
 import (
 	"testing"
 
-	protouser "github.com/ca-dp/bucketeer-go-server-sdk/proto/user"
 	"github.com/stretchr/testify/assert"
+
+	protouser "github.com/ca-dp/bucketeer-go-server-sdk/proto/user"
 )
 
 func TestNewUser(t *testing.T) {

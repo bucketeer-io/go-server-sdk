@@ -6,10 +6,12 @@ package api
 
 import (
 	context "context"
-	gateway "github.com/ca-dp/bucketeer-go-server-sdk/proto/gateway"
+	reflect "reflect"
+
 	gomock "github.com/golang/mock/gomock"
 	grpc "google.golang.org/grpc"
-	reflect "reflect"
+
+	gateway "github.com/ca-dp/bucketeer-go-server-sdk/proto/gateway"
 )
 
 // MockClient is a mock of Client interface

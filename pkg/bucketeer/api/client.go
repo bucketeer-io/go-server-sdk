@@ -5,8 +5,9 @@ import (
 	"context"
 	"fmt"
 
-	protogateway "github.com/ca-dp/bucketeer-go-server-sdk/proto/gateway"
 	"google.golang.org/grpc"
+
+	protogateway "github.com/ca-dp/bucketeer-go-server-sdk/proto/gateway"
 )
 
 // Client is the client interface for the Bucketeer APIGateway service.

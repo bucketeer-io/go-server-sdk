@@ -6,11 +6,13 @@ package event
 
 import (
 	context "context"
-	feature "github.com/ca-dp/bucketeer-go-server-sdk/proto/feature"
-	user "github.com/ca-dp/bucketeer-go-server-sdk/proto/user"
-	gomock "github.com/golang/mock/gomock"
 	reflect "reflect"
 	time "time"
+
+	gomock "github.com/golang/mock/gomock"
+
+	feature "github.com/ca-dp/bucketeer-go-server-sdk/proto/feature"
+	user "github.com/ca-dp/bucketeer-go-server-sdk/proto/user"
 )
 
 // MockProcessor is a mock of Processor interface

@@ -5,14 +5,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
-	protoevent "github.com/ca-dp/bucketeer-go-server-sdk/proto/event/client"
-	protofeature "github.com/ca-dp/bucketeer-go-server-sdk/proto/feature"
-	protouser "github.com/ca-dp/bucketeer-go-server-sdk/proto/user"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/anypb"
+
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
+	protoevent "github.com/ca-dp/bucketeer-go-server-sdk/proto/event/client"
+	protofeature "github.com/ca-dp/bucketeer-go-server-sdk/proto/feature"
+	protouser "github.com/ca-dp/bucketeer-go-server-sdk/proto/user"
 )
 
 const (
