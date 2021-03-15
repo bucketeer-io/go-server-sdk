@@ -29,6 +29,8 @@ func (q *queue) push(evt *protoevent.Event) error {
 	}
 }
 
-// func (q *queue) eventCh() <-chan *protoevent.Event {
-// 	return q.evtCh
-// }
+// TODO: remove nolint comment
+// nolint
+func (q *queue) eventCh() <-chan *protoevent.Event {
+	return q.evtCh
+}
