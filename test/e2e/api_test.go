@@ -5,15 +5,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/protobuf/ptypes"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/uuid"
 	protoevent "github.com/ca-dp/bucketeer-go-server-sdk/proto/event/client"
 	protofeature "github.com/ca-dp/bucketeer-go-server-sdk/proto/feature"
 	protogateway "github.com/ca-dp/bucketeer-go-server-sdk/proto/gateway"
-	"github.com/golang/protobuf/ptypes"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGetEvaluation(t *testing.T) {

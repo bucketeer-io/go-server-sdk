@@ -6,13 +6,14 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/golang/protobuf/ptypes"
+	"google.golang.org/protobuf/types/known/anypb"
+
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/uuid"
 	protoevent "github.com/ca-dp/bucketeer-go-server-sdk/proto/event/client"
 	protofeature "github.com/ca-dp/bucketeer-go-server-sdk/proto/feature"
 	protouser "github.com/ca-dp/bucketeer-go-server-sdk/proto/user"
-	"github.com/golang/protobuf/ptypes"
-	"google.golang.org/protobuf/types/known/anypb"
 )
 
 // Processor defines the interface for processing events.
