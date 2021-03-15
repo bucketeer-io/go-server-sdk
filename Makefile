@@ -1,4 +1,13 @@
 #############################
+# Variables
+#############################
+PROTO_TOP_DIR := $(shell cd ../bucketeer && pwd)
+PROTO_FOLDERS := event/client feature gateway user
+PROTO_OUTPUT := proto_output
+IMPORT_PATH_FROM := github.com/ca-dp/bucketeer
+IMPORT_PATH_TO := github.com/ca-dp/bucketeer-go-server-sdk
+
+#############################
 # Go
 #############################
 .PHONY: all
@@ -15,11 +24,11 @@ mockgen:
 
 .PHONY: fmt
 fmt:
-	gofmt -s -w ./pkg ./test
+	goimports -local $(IMPORT_PATH_TO) -w ./pkg ./test
 
 .PHONY: fmt-check
 fmt-check:
-	test -z "$$(gofmt -d ./pkg ./test)"
+	test -z "$$(goimports -local $(IMPORT_PATH_TO) -d ./pkg ./test)"
 
 .PHONY: lint
 lint:
@@ -45,12 +54,6 @@ e2e:
 #############################
 # Proto
 #############################
-PROTO_TOP_DIR := $(shell cd ../bucketeer && pwd)
-PROTO_FOLDERS := event/client feature gateway user
-PROTO_OUTPUT := proto_output
-IMPORT_PATH_FROM := github.com/ca-dp/bucketeer
-IMPORT_PATH_TO := github.com/ca-dp/bucketeer-go-server-sdk
-
 .PHONY: copy-protos
 copy-protos: .gen-protos
 	rm -rf proto

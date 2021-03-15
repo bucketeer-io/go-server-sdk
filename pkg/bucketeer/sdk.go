@@ -8,14 +8,15 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/golang/protobuf/proto" // nolint:staticcheck
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/event"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
 	protofeature "github.com/ca-dp/bucketeer-go-server-sdk/proto/feature"
 	protogateway "github.com/ca-dp/bucketeer-go-server-sdk/proto/gateway"
-	"github.com/golang/protobuf/proto" // nolint:staticcheck
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // SDK is the Bucketeer SDK.

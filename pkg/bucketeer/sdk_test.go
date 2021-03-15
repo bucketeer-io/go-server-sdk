@@ -4,17 +4,18 @@ import (
 	"context"
 	"testing"
 
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
-	protofeature "github.com/ca-dp/bucketeer-go-server-sdk/proto/feature"
-	protogateway "github.com/ca-dp/bucketeer-go-server-sdk/proto/gateway"
-	mockapi "github.com/ca-dp/bucketeer-go-server-sdk/test/mock/api"
-	mockevent "github.com/ca-dp/bucketeer-go-server-sdk/test/mock/event"
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
+	protofeature "github.com/ca-dp/bucketeer-go-server-sdk/proto/feature"
+	protogateway "github.com/ca-dp/bucketeer-go-server-sdk/proto/gateway"
+	mockapi "github.com/ca-dp/bucketeer-go-server-sdk/test/mock/api"
+	mockevent "github.com/ca-dp/bucketeer-go-server-sdk/test/mock/event"
 )
 
 const (

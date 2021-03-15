@@ -3,8 +3,9 @@ package bucketeer
 import (
 	"testing"
 
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
 )
 
 func TestWithOptions(t *testing.T) {
