@@ -56,7 +56,22 @@ type processor struct {
 
 // ProcessorConfig is the config for Processor.
 type ProcessorConfig struct {
-	// EventQueueCapacity is the capacity of the event queue.
+	// NumEventFlushWorkers is a number of workers to flush events.
+	NumEventFlushWorkers int
+
+	// EventFlushInterval is a interval of flushing events.
+	//
+	// Each worker sends the events to Bucketeer service every time eventFlushInterval elapses or
+	// its buffer exceeds eventFlushSize.
+	EventFlushInterval time.Duration
+
+	// EventFlushSize is a size of the buffer for each worker.
+	//
+	// Each worker sends the events to Bucketeer service every time EventFlushInterval elapses or
+	// its buffer exceeds EventFlushSize is exceeded.
+	EventFlushSize int
+
+	// EventQueueCapacity is a capacity of the event queue.
 	//
 	// The queue buffers events up to the capacity in memory before processing.
 	// If the capacity is exceeded, events will be discarded.
