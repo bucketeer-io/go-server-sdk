@@ -98,8 +98,11 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		return nil, fmt.Errorf("bucketeer: failed to new api client: %w", err)
 	}
 	processorConf := &event.ProcessorConfig{
-		EventQueueCapacity: dopts.eventQueueCapacity,
-		Loggers:            loggers,
+		NumEventFlushWorkers: dopts.numEventFlushWorkers,
+		EventFlushInterval:   dopts.eventFlushInterval,
+		EventFlushSize:       dopts.eventFlushSize,
+		EventQueueCapacity:   dopts.eventQueueCapacity,
+		Loggers:              loggers,
 	}
 	processor := event.NewProcessor(processorConf)
 	return &sdk{
