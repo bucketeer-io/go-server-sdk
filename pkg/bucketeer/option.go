@@ -1,28 +1,38 @@
 package bucketeer
 
-import "github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
+import (
+	"time"
+
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
+)
 
 // Option is the functional options type (Functional Options Pattern) to set sdk options.
 type Option func(*options)
 
 type options struct {
-	tag                string
-	apiKey             string
-	host               string
-	port               int
-	eventQueueCapacity int
-	enableDebugLog     bool
-	errorLogger        log.BaseLogger
+	tag                  string
+	apiKey               string
+	host                 string
+	port                 int
+	eventQueueCapacity   int
+	numEventFlushWorkers int
+	eventFlushInterval   time.Duration
+	eventFlushSize       int
+	enableDebugLog       bool
+	errorLogger          log.BaseLogger
 }
 
 var defaultOptions = options{
-	tag:                "",
-	apiKey:             "",
-	host:               "",
-	port:               443,
-	eventQueueCapacity: 100_000,
-	enableDebugLog:     false,
-	errorLogger:        log.DefaultErrorLogger,
+	tag:                  "",
+	apiKey:               "",
+	host:                 "",
+	port:                 443,
+	eventQueueCapacity:   100_000,
+	numEventFlushWorkers: 10,
+	eventFlushInterval:   1 * time.Minute,
+	eventFlushSize:       1_000,
+	enableDebugLog:       false,
+	errorLogger:          log.DefaultErrorLogger,
 }
 
 // WithTag sets tag specified in getting evaluation. (Default: "")
@@ -50,6 +60,33 @@ func WithHost(host string) Option {
 func WithPort(port int) Option {
 	return func(opts *options) {
 		opts.port = port
+	}
+}
+
+// WithNumEventFlushWorkers sets a number of workers to flush events. (Default: 10)
+func WithNumEventFlushWorkers(numEventFlushWorkers int) Option {
+	return func(opts *options) {
+		opts.numEventFlushWorkers = numEventFlushWorkers
+	}
+}
+
+// WithEventFlushInterval sets a interval of flushing events. (Default: 1 min)
+//
+// Each worker sends the events to Bucketeer service every time eventFlushInterval elapses or
+// its buffer exceeds eventFlushSize.
+func WithEventFlushInterval(eventFlushInterval time.Duration) Option {
+	return func(opts *options) {
+		opts.eventFlushInterval = eventFlushInterval
+	}
+}
+
+// WithEventFlushSize sets a size of the buffer for each worker. (Default: 10_000)
+//
+// Each worker sends the events to Bucketeer service every time eventFlushInterval elapses or
+// its buffer exceeds eventFlushSize.
+func WithEventFlushSize(eventFlushSize int) Option {
+	return func(opts *options) {
+		opts.eventFlushSize = eventFlushSize
 	}
 }
 
