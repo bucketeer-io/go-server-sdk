@@ -9,10 +9,12 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	"google.golang.org/protobuf/types/known/anypb"
 
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/uuid"
 	protoevent "github.com/ca-dp/bucketeer-go-server-sdk/proto/event/client"
 	protofeature "github.com/ca-dp/bucketeer-go-server-sdk/proto/feature"
+	protogateway "github.com/ca-dp/bucketeer-go-server-sdk/proto/gateway"
 	protouser "github.com/ca-dp/bucketeer-go-server-sdk/proto/user"
 )
 
@@ -50,32 +52,40 @@ type Processor interface {
 }
 
 type processor struct {
-	evtQueue *queue
-	loggers  *log.Loggers
+	evtQueue        *queue
+	numFlushWorkers int
+	flushInterval   time.Duration
+	flushSize       int
+	flushTimeout    time.Duration
+	apiClient       api.Client
+	loggers         *log.Loggers
 }
 
 // ProcessorConfig is the config for Processor.
 type ProcessorConfig struct {
-	// NumEventFlushWorkers is a number of workers to flush events.
-	NumEventFlushWorkers int
+	// NumFlushWorkers is a number of workers to flush events.
+	NumFlushWorkers int
 
-	// EventFlushInterval is a interval of flushing events.
+	// FlushInterval is a interval of flushing events.
 	//
 	// Each worker sends the events to Bucketeer service every time eventFlushInterval elapses or
 	// its buffer exceeds eventFlushSize.
-	EventFlushInterval time.Duration
+	FlushInterval time.Duration
 
-	// EventFlushSize is a size of the buffer for each worker.
+	// FlushSize is a size of the buffer for each worker.
 	//
 	// Each worker sends the events to Bucketeer service every time EventFlushInterval elapses or
 	// its buffer exceeds EventFlushSize is exceeded.
-	EventFlushSize int
+	FlushSize int
 
-	// EventQueueCapacity is a capacity of the event queue.
+	// QueueCapacity is a capacity of the event queue.
 	//
 	// The queue buffers events up to the capacity in memory before processing.
 	// If the capacity is exceeded, events will be discarded.
-	EventQueueCapacity int
+	QueueCapacity int
+
+	// APIClient is the client for Bucketeer service.
+	APIClient api.Client
 
 	// Loggers is the Bucketeer SDK Loggers.
 	Loggers *log.Loggers
@@ -84,12 +94,20 @@ type ProcessorConfig struct {
 // NewProcessor creates a new Processor.
 func NewProcessor(conf *ProcessorConfig) Processor {
 	q := newQueue(&queueConfig{
-		capacity: conf.EventQueueCapacity},
-	)
-	return &processor{
-		evtQueue: q,
-		loggers:  conf.Loggers,
+		capacity: conf.QueueCapacity,
+	})
+	flushTimeout := 10 * time.Second
+	p := &processor{
+		evtQueue:        q,
+		numFlushWorkers: conf.NumFlushWorkers,
+		flushInterval:   conf.FlushInterval,
+		flushSize:       conf.FlushSize,
+		flushTimeout:    flushTimeout,
+		apiClient:       conf.APIClient,
+		loggers:         conf.Loggers,
 	}
+	p.startWorkers()
+	return p
 }
 
 func (p *processor) PushEvaluationEvent(
@@ -299,4 +317,72 @@ func (p *processor) pushEvent(anyEvt *anypb.Any) error {
 }
 
 func (p *processor) Close() {
+	// TODO: implement later
+}
+
+func (p *processor) startWorkers() {
+	for i := 0; i < p.numFlushWorkers; i++ {
+		go p.runWorkerProcessLoop()
+	}
+}
+
+func (p *processor) runWorkerProcessLoop() {
+	events := make([]*protoevent.Event, 0, p.flushSize)
+	ticker := time.NewTicker(p.flushInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case evt, ok := <-p.evtQueue.eventCh():
+			if !ok {
+				p.flushEvents(events)
+				return
+			}
+			events = append(events, evt)
+			if len(events) < p.flushSize {
+				continue
+			}
+			p.flushEvents(events)
+			events = make([]*protoevent.Event, 0, p.flushSize)
+		case <-ticker.C:
+			p.flushEvents(events)
+			events = make([]*protoevent.Event, 0, p.flushSize)
+		}
+	}
+}
+
+func (p *processor) flushEvents(events []*protoevent.Event) {
+	if len(events) == 0 {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), p.flushTimeout)
+	defer cancel()
+	req := &protogateway.RegisterEventsRequest{Events: events}
+	res, err := p.apiClient.RegisterEvents(ctx, req)
+	if err != nil {
+		p.loggers.Debugf("bucketeer/event: failed to register events: %v", err)
+		// Re-push all events to the event queue.
+		for _, evt := range events {
+			if err := p.evtQueue.push(evt); err != nil {
+				p.loggers.Errorf("bucketeer/event: failed to re-push event: %v", err)
+			}
+		}
+		return
+	}
+	if len(res.Errors) > 0 {
+		p.loggers.Debugf("bucketeer/event: register events response contains errors, len: %d", len(res.Errors))
+		// Re-push events returned retriable error to the event queue.
+		for _, evt := range events {
+			resErr, ok := res.Errors[evt.Id]
+			if !ok {
+				continue
+			}
+			if !resErr.Retriable {
+				p.loggers.Errorf("bucketeer/event: non retriable error: %s", resErr.Message)
+				continue
+			}
+			if err := p.evtQueue.push(evt); err != nil {
+				p.loggers.Errorf("bucketeer/event: failed to re-push retriable event: %v", err)
+			}
+		}
+	}
 }
