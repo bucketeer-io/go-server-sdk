@@ -28,9 +28,9 @@ var defaultOptions = options{
 	host:                 "",
 	port:                 443,
 	eventQueueCapacity:   100_000,
-	numEventFlushWorkers: 10,
+	numEventFlushWorkers: 50,
 	eventFlushInterval:   1 * time.Minute,
-	eventFlushSize:       1_000,
+	eventFlushSize:       100,
 	enableDebugLog:       false,
 	errorLogger:          log.DefaultErrorLogger,
 }
@@ -63,7 +63,7 @@ func WithPort(port int) Option {
 	}
 }
 
-// WithNumEventFlushWorkers sets a number of workers to flush events. (Default: 10)
+// WithNumEventFlushWorkers sets a number of workers to flush events. (Default: 50)
 func WithNumEventFlushWorkers(numEventFlushWorkers int) Option {
 	return func(opts *options) {
 		opts.numEventFlushWorkers = numEventFlushWorkers
@@ -80,7 +80,7 @@ func WithEventFlushInterval(eventFlushInterval time.Duration) Option {
 	}
 }
 
-// WithEventFlushSize sets a size of the buffer for each worker. (Default: 10_000)
+// WithEventFlushSize sets a size of the buffer for each worker. (Default: 100)
 //
 // Each worker sends the events to Bucketeer service every time eventFlushInterval elapses or
 // its buffer exceeds eventFlushSize.
