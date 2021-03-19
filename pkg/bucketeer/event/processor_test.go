@@ -5,15 +5,20 @@ import (
 	"testing"
 	"time"
 
+	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
 	protoevent "github.com/ca-dp/bucketeer-go-server-sdk/proto/event/client"
 	protofeature "github.com/ca-dp/bucketeer-go-server-sdk/proto/feature"
+	protogateway "github.com/ca-dp/bucketeer-go-server-sdk/proto/gateway"
 	protouser "github.com/ca-dp/bucketeer-go-server-sdk/proto/user"
+	mockapi "github.com/ca-dp/bucketeer-go-server-sdk/test/mock/api"
 )
 
 const (
@@ -26,7 +31,7 @@ const (
 
 func TestPushEvaluationEvent(t *testing.T) {
 	t.Parallel()
-	p := newProcessor(t, 10)
+	p := newProcessorForTestPushEvent(t, 10)
 	user := newUser(t, processorUserID)
 	evaluation := newEvaluation(t, processorFeatureID, processorVariationID)
 	p.PushEvaluationEvent(context.Background(), user, evaluation)
@@ -38,7 +43,7 @@ func TestPushEvaluationEvent(t *testing.T) {
 
 func TestPushDefaultEvaluationEvent(t *testing.T) {
 	t.Parallel()
-	p := newProcessor(t, 10)
+	p := newProcessorForTestPushEvent(t, 10)
 	user := newUser(t, processorUserID)
 	p.PushDefaultEvaluationEvent(context.Background(), user, processorFeatureID)
 	evt := <-p.evtQueue.eventCh()
@@ -49,7 +54,7 @@ func TestPushDefaultEvaluationEvent(t *testing.T) {
 
 func TestPushGoalEvent(t *testing.T) {
 	t.Parallel()
-	p := newProcessor(t, 10)
+	p := newProcessorForTestPushEvent(t, 10)
 	user := newUser(t, processorUserID)
 	p.PushGoalEvent(context.Background(), user, processorGoalID, 1.1)
 	evt := <-p.evtQueue.eventCh()
@@ -60,7 +65,7 @@ func TestPushGoalEvent(t *testing.T) {
 
 func TestPushGetEvaluationLatencyMetricsEvent(t *testing.T) {
 	t.Parallel()
-	p := newProcessor(t, 10)
+	p := newProcessorForTestPushEvent(t, 10)
 	p.PushGetEvaluationLatencyMetricsEvent(context.Background(), time.Duration(1), processorTag)
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &protoevent.MetricsEvent{}
@@ -73,7 +78,7 @@ func TestPushGetEvaluationLatencyMetricsEvent(t *testing.T) {
 
 func TestPushGetEvaluationSizeMetricsEvent(t *testing.T) {
 	t.Parallel()
-	p := newProcessor(t, 10)
+	p := newProcessorForTestPushEvent(t, 10)
 	p.PushGetEvaluationSizeMetricsEvent(context.Background(), 1, processorTag)
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &protoevent.MetricsEvent{}
@@ -86,7 +91,7 @@ func TestPushGetEvaluationSizeMetricsEvent(t *testing.T) {
 
 func TestPushTimeoutErrorCountMetricsEvent(t *testing.T) {
 	t.Parallel()
-	p := newProcessor(t, 10)
+	p := newProcessorForTestPushEvent(t, 10)
 	p.PushTimeoutErrorCountMetricsEvent(context.Background(), processorTag)
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &protoevent.MetricsEvent{}
@@ -99,7 +104,7 @@ func TestPushTimeoutErrorCountMetricsEvent(t *testing.T) {
 
 func TestPushInternalErrorCountMetricsEvent(t *testing.T) {
 	t.Parallel()
-	p := newProcessor(t, 10)
+	p := newProcessorForTestPushEvent(t, 10)
 	p.PushInternalErrorCountMetricsEvent(context.Background(), processorTag)
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &protoevent.MetricsEvent{}
@@ -133,7 +138,7 @@ func TestPushEvent(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			p := newProcessor(t, tt.eventQueueCapacity)
+			p := newProcessorForTestPushEvent(t, tt.eventQueueCapacity)
 			err := p.pushEvent(tt.anyEvt)
 			if tt.isErr {
 				assert.Error(t, err)
@@ -148,12 +153,12 @@ func TestPushEvent(t *testing.T) {
 	}
 }
 
-func newProcessor(t *testing.T, eventQueueCapacity int) *processor {
+func newProcessorForTestPushEvent(t *testing.T, eventQueueCapacity int) *processor {
 	t.Helper()
 	return &processor{
 		evtQueue: newQueue(&queueConfig{
-			capacity: eventQueueCapacity},
-		),
+			capacity: eventQueueCapacity,
+		}),
 		loggers: log.NewLoggers(&log.LoggersConfig{
 			EnableDebugLog: false,
 			ErrorLogger:    log.DiscardErrorLogger,
@@ -182,4 +187,125 @@ func newAnyEvaluationEvent(t *testing.T, featureID string) *anypb.Any {
 	anyEvt, err := ptypes.MarshalAny(evaluationEvt)
 	require.NoError(t, err)
 	return anyEvt
+}
+
+func TestFlushEvents(t *testing.T) {
+	t.Parallel()
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	tests := []struct {
+		desc             string
+		setup            func(*processor, []*protoevent.Event)
+		events           []*protoevent.Event
+		expectedQueueLen int
+	}{
+		{
+			desc: "do nothing when events length is 0",
+			setup: func(p *processor, events []*protoevent.Event) {
+				req := &protogateway.RegisterEventsRequest{Events: events}
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(gomock.Any(), req).Times(0)
+			},
+			events:           make([]*protoevent.Event, 0, 10),
+			expectedQueueLen: 0,
+		},
+		{
+			desc: "re-push all events when failed to register events",
+			setup: func(p *processor, events []*protoevent.Event) {
+				req := &protogateway.RegisterEventsRequest{Events: events}
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(gomock.Any(), req).Return(
+					nil,
+					status.Error(codes.Internal, "error"),
+				)
+			},
+			events:           []*protoevent.Event{{Id: "id-0"}, {Id: "id-1"}, {Id: "id-2"}},
+			expectedQueueLen: 3,
+		},
+		{
+			desc: "faled to re-push all events when failed to register events if queue is closed",
+			setup: func(p *processor, events []*protoevent.Event) {
+				p.evtQueue.close()
+				req := &protogateway.RegisterEventsRequest{Events: events}
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(gomock.Any(), req).Return(
+					nil,
+					status.Error(codes.Internal, "error"),
+				)
+			},
+			events:           []*protoevent.Event{{Id: "id-0"}, {Id: "id-1"}, {Id: "id-2"}},
+			expectedQueueLen: 0,
+		},
+		{
+			desc: "re-push events when register events res contains retriable errors",
+			setup: func(p *processor, events []*protoevent.Event) {
+				req := &protogateway.RegisterEventsRequest{Events: events}
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(gomock.Any(), req).Return(
+					&protogateway.RegisterEventsResponse{
+						Errors: map[string]*protogateway.RegisterEventsResponse_Error{
+							"id-0": {Retriable: true, Message: "retriable"},
+							"id-1": {Retriable: false, Message: "non retriable"},
+						},
+					},
+					nil,
+				)
+			},
+			events:           []*protoevent.Event{{Id: "id-0"}, {Id: "id-1"}, {Id: "id-2"}},
+			expectedQueueLen: 1,
+		},
+		{
+			desc: "faled to re-push events when register events res contains retriable errors if queue is closed",
+			setup: func(p *processor, events []*protoevent.Event) {
+				p.evtQueue.close()
+				req := &protogateway.RegisterEventsRequest{Events: events}
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(gomock.Any(), req).Return(
+					&protogateway.RegisterEventsResponse{
+						Errors: map[string]*protogateway.RegisterEventsResponse_Error{
+							"id-0": {Retriable: true, Message: "retriable"},
+							"id-1": {Retriable: false, Message: "non retriable"},
+						},
+					},
+					nil,
+				)
+			},
+			events:           []*protoevent.Event{{Id: "id-0"}, {Id: "id-1"}, {Id: "id-2"}},
+			expectedQueueLen: 0,
+		},
+		{
+			desc: "success",
+			setup: func(p *processor, events []*protoevent.Event) {
+				req := &protogateway.RegisterEventsRequest{Events: events}
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(gomock.Any(), req).Return(
+					&protogateway.RegisterEventsResponse{
+						Errors: make(map[string]*protogateway.RegisterEventsResponse_Error),
+					},
+					nil,
+				)
+			},
+			events:           []*protoevent.Event{{Id: "id-0"}, {Id: "id-1"}, {Id: "id-2"}},
+			expectedQueueLen: 0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			p := newProcessorForTestWorker(t, mockCtrl)
+			if tt.setup != nil {
+				tt.setup(p, tt.events)
+			}
+			p.flushEvents(tt.events)
+			assert.Len(t, p.evtQueue.eventCh(), tt.expectedQueueLen)
+		})
+	}
+}
+
+func newProcessorForTestWorker(t *testing.T, mockCtrl *gomock.Controller) *processor {
+	t.Helper()
+	return &processor{
+		evtQueue: newQueue(&queueConfig{
+			capacity: 10,
+		}),
+		flushTimeout: 10 * time.Second,
+		apiClient:    mockapi.NewMockClient(mockCtrl),
+		loggers: log.NewLoggers(&log.LoggersConfig{
+			EnableDebugLog: false,
+			ErrorLogger:    log.DiscardErrorLogger,
+		}),
+	}
 }
