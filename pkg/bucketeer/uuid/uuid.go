@@ -18,7 +18,7 @@ func (uuid *UUID) String() string {
 func NewV4() (*UUID, error) {
 	uuid := &UUID{}
 	if _, err := rand.Read(uuid[:]); err != nil {
-		return nil, fmt.Errorf("uuid: failed to read rand: %w", err)
+		return nil, fmt.Errorf("bucketeer/uuid: failed to read rand: %w", err)
 	}
 	uuid.setV4Variant()
 	uuid.setV4Version()
