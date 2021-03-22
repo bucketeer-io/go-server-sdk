@@ -63,6 +63,16 @@ func WithPort(port int) Option {
 	}
 }
 
+// WithEventQueueCapacity sets a capacity of the event queue. (Default: 100_000)
+//
+// The SDK buffers events up to the capacity in memory before processing.
+// If the capacity is exceeded, events will be discarded.
+func WithEventQueueCapacity(eventQueueCapacity int) Option {
+	return func(opts *options) {
+		opts.eventQueueCapacity = eventQueueCapacity
+	}
+}
+
 // WithNumEventFlushWorkers sets a number of workers to flush events. (Default: 50)
 func WithNumEventFlushWorkers(numEventFlushWorkers int) Option {
 	return func(opts *options) {
@@ -87,16 +97,6 @@ func WithEventFlushInterval(eventFlushInterval time.Duration) Option {
 func WithEventFlushSize(eventFlushSize int) Option {
 	return func(opts *options) {
 		opts.eventFlushSize = eventFlushSize
-	}
-}
-
-// WithEventQueueCapacity sets a capacity of the event queue. (Default: 100_000)
-//
-// The SDK buffers events up to the capacity in memory before processing.
-// If the capacity is exceeded, events will be discarded.
-func WithEventQueueCapacity(eventQueueCapacity int) Option {
-	return func(opts *options) {
-		opts.eventQueueCapacity = eventQueueCapacity
 	}
 }
 

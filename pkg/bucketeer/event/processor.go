@@ -24,7 +24,7 @@ import (
 // When one of the Push method called, Processor pushes an event to the in-memory event queue.
 //
 // In the background, Processor pulls the events from the event queue,
-// and sends them to the Bucketeer server using the Bucketeer API Client
+// and sends them to the Bucketeer service using the Bucketeer API Client
 // every time the specified time elapses or the specified capacity is exceeded.
 type Processor interface {
 	// PushEvaluationEvent pushes the evaluation event to the queue.
@@ -66,6 +66,12 @@ type processor struct {
 
 // ProcessorConfig is the config for Processor.
 type ProcessorConfig struct {
+	// QueueCapacity is a capacity of the event queue.
+	//
+	// The queue buffers events up to the capacity in memory before processing.
+	// If the capacity is exceeded, events will be discarded.
+	QueueCapacity int
+
 	// NumFlushWorkers is a number of workers to flush events.
 	NumFlushWorkers int
 
@@ -80,12 +86,6 @@ type ProcessorConfig struct {
 	// Each worker sends the events to Bucketeer service every time EventFlushInterval elapses or
 	// its buffer exceeds EventFlushSize is exceeded.
 	FlushSize int
-
-	// QueueCapacity is a capacity of the event queue.
-	//
-	// The queue buffers events up to the capacity in memory before processing.
-	// If the capacity is exceeded, events will be discarded.
-	QueueCapacity int
 
 	// APIClient is the client for Bucketeer service.
 	APIClient api.Client
