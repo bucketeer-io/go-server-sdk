@@ -123,13 +123,15 @@ func (mr *MockProcessorMockRecorder) PushInternalErrorCountMetricsEvent(ctx, tag
 }
 
 // Close mocks base method
-func (m *MockProcessor) Close() {
+func (m *MockProcessor) Close(ctx context.Context) error {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Close")
+	ret := m.ctrl.Call(m, "Close", ctx)
+	ret0, _ := ret[0].(error)
+	return ret0
 }
 
 // Close indicates an expected call of Close
-func (mr *MockProcessorMockRecorder) Close() *gomock.Call {
+func (mr *MockProcessorMockRecorder) Close(ctx interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockProcessor)(nil).Close))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockProcessor)(nil).Close), ctx)
 }

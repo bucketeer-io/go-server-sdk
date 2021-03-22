@@ -67,7 +67,9 @@ type SDK interface {
 	TrackValue(ctx context.Context, user *User, goalID string, value float64)
 
 	// Close tears down all SDK activities and resources, after ensuring that all events have been delivered.
-	Close()
+	//
+	// After calling this, the SDK should no longer be used.
+	Close(ctx context.Context) error
 }
 
 type sdk struct {
@@ -275,6 +277,12 @@ func (s *sdk) TrackValue(ctx context.Context, user *User, goalID string, value f
 	s.eventProcessor.PushGoalEvent(ctx, user.User, goalID, value)
 }
 
-func (s *sdk) Close() {
-	// TODO: implement later
+func (s *sdk) Close(ctx context.Context) error {
+	if err := s.eventProcessor.Close(ctx); err != nil {
+		return fmt.Errorf("bucketeer: failed to close event processor: %v", err)
+	}
+	if err := s.apiClient.Close(); err != nil {
+		return fmt.Errorf("bucketeer: failed to close api client: %v", err)
+	}
+	return nil
 }

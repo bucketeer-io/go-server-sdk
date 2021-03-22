@@ -43,8 +43,6 @@ func (q *queue) eventCh() <-chan *protoevent.Event {
 	return q.evtCh
 }
 
-// TODO: remove nolint comment
-// nolint
 func (q *queue) close() {
 	q.closedMu.Lock()
 	defer q.closedMu.Unlock()
