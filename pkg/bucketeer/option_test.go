@@ -15,10 +15,10 @@ func TestWithOptions(t *testing.T) {
 	apiKey := "apiKey"
 	host := "host"
 	port := 8443
+	eventQueueCapacity := 100
 	numEventFlushWorkers := 1
 	eventFlushInterval := 1 * time.Second
 	eventFlushSize := 10
-	eventQueueCapacity := 100
 	enableDebugLog := true
 	errorLogger := log.DiscardErrorLogger
 
@@ -27,10 +27,10 @@ func TestWithOptions(t *testing.T) {
 		WithAPIKey(apiKey),
 		WithHost(host),
 		WithPort(port),
+		WithEventQueueCapacity(eventQueueCapacity),
 		WithNumEventFlushWorkers(numEventFlushWorkers),
 		WithEventFlushInterval(eventFlushInterval),
 		WithEventFlushSize(eventFlushSize),
-		WithEventQueueCapacity(eventQueueCapacity),
 		WithEnableDebugLog(enableDebugLog),
 		WithErrorLogger(errorLogger),
 	}
@@ -43,10 +43,10 @@ func TestWithOptions(t *testing.T) {
 	assert.Equal(t, apiKey, dopts.apiKey)
 	assert.Equal(t, host, dopts.host)
 	assert.Equal(t, port, dopts.port)
+	assert.Equal(t, eventQueueCapacity, dopts.eventQueueCapacity)
 	assert.Equal(t, numEventFlushWorkers, dopts.numEventFlushWorkers)
 	assert.Equal(t, eventFlushInterval, dopts.eventFlushInterval)
 	assert.Equal(t, eventFlushSize, dopts.eventFlushSize)
-	assert.Equal(t, eventQueueCapacity, dopts.eventQueueCapacity)
 	assert.Equal(t, enableDebugLog, dopts.enableDebugLog)
 	assert.Equal(t, errorLogger, dopts.errorLogger)
 }
