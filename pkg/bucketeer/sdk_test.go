@@ -2,6 +2,7 @@ package bucketeer
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/golang/mock/gomock"
@@ -780,6 +781,55 @@ func TestTrackValue(t *testing.T) {
 	s.TrackValue(ctx, user, sdkGoalID, value)
 }
 
+func TestClose(t *testing.T) {
+	t.Parallel()
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	tests := []struct {
+		desc  string
+		setup func(context.Context, *sdk)
+		isErr bool
+	}{
+		{
+			desc: "return error when failed to close event processor",
+			setup: func(ctx context.Context, s *sdk) {
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().Close(ctx).Return(errors.New("error"))
+			},
+			isErr: true,
+		},
+		{
+			desc: "return error when failed to close api client",
+			setup: func(ctx context.Context, s *sdk) {
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().Close(ctx).Return(nil)
+				s.apiClient.(*mockapi.MockClient).EXPECT().Close().Return(errors.New("error"))
+			},
+			isErr: true,
+		},
+		{
+			desc: "success",
+			setup: func(ctx context.Context, s *sdk) {
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().Close(ctx).Return(nil)
+				s.apiClient.(*mockapi.MockClient).EXPECT().Close().Return(nil)
+			},
+			isErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			s := newSDKWithMock(t, mockCtrl)
+			ctx := context.Background()
+			if tt.setup != nil {
+				tt.setup(ctx, s)
+			}
+			err := s.Close(ctx)
+			if tt.isErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
 func newSDKWithMock(t *testing.T, mockCtrl *gomock.Controller) *sdk {
 	t.Helper()
 	return &sdk{

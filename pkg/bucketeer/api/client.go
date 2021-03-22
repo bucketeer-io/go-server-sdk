@@ -16,7 +16,7 @@ type Client interface {
 	protogateway.GatewayClient
 
 	// Close tears down the connection.
-	Close()
+	Close() error
 }
 
 type client struct {
@@ -53,7 +53,7 @@ func NewClient(ctx context.Context, conf *ClientConfig) (Client, error) {
 		dialOptions...,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("api: failed to dial gRPC: %w", err)
+		return nil, fmt.Errorf("bucketeer/api: failed to dial gRPC: %w", err)
 	}
 	return &client{
 		GatewayClient: protogateway.NewGatewayClient(conn),
@@ -61,6 +61,9 @@ func NewClient(ctx context.Context, conf *ClientConfig) (Client, error) {
 	}, nil
 }
 
-func (c *client) Close() {
-	c.conn.Close()
+func (c *client) Close() error {
+	if err := c.conn.Close(); err != nil {
+		return fmt.Errorf("bucketeer/api: failed to close conn: %v", err)
+	}
+	return nil
 }

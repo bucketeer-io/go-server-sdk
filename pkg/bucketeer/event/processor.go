@@ -4,6 +4,7 @@ package event
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/golang/protobuf/ptypes"
@@ -48,7 +49,7 @@ type Processor interface {
 	PushInternalErrorCountMetricsEvent(ctx context.Context, tag string)
 
 	// Close tears down all Processor activities, after ensuring that all events have been delivered.
-	Close()
+	Close(ctx context.Context) error
 }
 
 type processor struct {
@@ -59,6 +60,8 @@ type processor struct {
 	flushTimeout    time.Duration
 	apiClient       api.Client
 	loggers         *log.Loggers
+	closeCh         chan struct{}
+	workerWG        sync.WaitGroup
 }
 
 // ProcessorConfig is the config for Processor.
@@ -105,8 +108,9 @@ func NewProcessor(conf *ProcessorConfig) Processor {
 		flushTimeout:    flushTimeout,
 		apiClient:       conf.APIClient,
 		loggers:         conf.Loggers,
+		closeCh:         make(chan struct{}),
 	}
-	p.startWorkers()
+	go p.startWorkers()
 	return p
 }
 
@@ -316,17 +320,30 @@ func (p *processor) pushEvent(anyEvt *anypb.Any) error {
 	return nil
 }
 
-func (p *processor) Close() {
-	// TODO: implement later
+func (p *processor) Close(ctx context.Context) error {
+	p.evtQueue.close()
+	select {
+	case <-p.closeCh:
+		return nil
+	case <-ctx.Done():
+		return fmt.Errorf("bucketeer/event: ctx is canceled: %v", ctx.Err())
+	}
 }
 
 func (p *processor) startWorkers() {
 	for i := 0; i < p.numFlushWorkers; i++ {
+		p.workerWG.Add(1)
 		go p.runWorkerProcessLoop()
 	}
+	p.workerWG.Wait()
+	close(p.closeCh)
 }
 
 func (p *processor) runWorkerProcessLoop() {
+	defer func() {
+		p.loggers.Debug("bucketeer/event: runWorkerProcessLoop done")
+		p.workerWG.Done()
+	}()
 	events := make([]*protoevent.Event, 0, p.flushSize)
 	ticker := time.NewTicker(p.flushInterval)
 	defer ticker.Stop()

@@ -295,17 +295,64 @@ func TestFlushEvents(t *testing.T) {
 	}
 }
 
+func TestClose(t *testing.T) {
+	t.Parallel()
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	tests := []struct {
+		desc    string
+		setup   func(*processor)
+		timeout time.Duration
+		isErr   bool
+	}{
+		{
+			desc:    "return error when ctx is canceled",
+			setup:   nil,
+			timeout: 1 * time.Millisecond,
+			isErr:   true,
+		},
+		{
+			desc: "success",
+			setup: func(p *processor) {
+				go p.startWorkers()
+			},
+			timeout: 1 * time.Minute,
+			isErr:   false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			p := newProcessorForTestWorker(t, mockCtrl)
+			if tt.setup != nil {
+				tt.setup(p)
+			}
+			ctx, cancel := context.WithTimeout(context.Background(), tt.timeout)
+			defer cancel()
+			err := p.Close(ctx)
+			if tt.isErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func newProcessorForTestWorker(t *testing.T, mockCtrl *gomock.Controller) *processor {
 	t.Helper()
 	return &processor{
 		evtQueue: newQueue(&queueConfig{
 			capacity: 10,
 		}),
-		flushTimeout: 10 * time.Second,
-		apiClient:    mockapi.NewMockClient(mockCtrl),
+		numFlushWorkers: 3,
+		flushInterval:   1 * time.Minute,
+		flushSize:       10,
+		flushTimeout:    10 * time.Second,
+		apiClient:       mockapi.NewMockClient(mockCtrl),
 		loggers: log.NewLoggers(&log.LoggersConfig{
 			EnableDebugLog: false,
 			ErrorLogger:    log.DiscardErrorLogger,
 		}),
+		closeCh: make(chan struct{}),
 	}
 }
