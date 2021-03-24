@@ -33,7 +33,7 @@ type Processor interface {
 	// PushDefaultEvaluationEvent pushes the default evaluation event to the queue.
 	PushDefaultEvaluationEvent(ctx context.Context, user *protouser.User, featureID string)
 
-	// PushEvaluationEvent pushes the goal event to the queue.
+	// PushGoalEvent pushes the goal event to the queue.
 	PushGoalEvent(ctx context.Context, user *protouser.User, goalID string, value float64)
 
 	// PushGetEvaluationLatencyMetricsEvent pushes the get evaluation latency metrics event to the queue.
