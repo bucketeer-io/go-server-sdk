@@ -24,11 +24,11 @@ mockgen:
 
 .PHONY: fmt
 fmt:
-	goimports -local $(IMPORT_PATH_TO) -w ./pkg ./test
+	goimports -local ${IMPORT_PATH_TO} -w ./pkg ./test
 
 .PHONY: fmt-check
 fmt-check:
-	test -z "$$(goimports -local $(IMPORT_PATH_TO) -d ./pkg ./test)"
+	test -z "$$(goimports -local ${IMPORT_PATH_TO} -d ./pkg ./test)"
 
 .PHONY: lint
 lint:
@@ -57,17 +57,17 @@ e2e:
 .PHONY: copy-protos
 copy-protos: .gen-protos
 	rm -rf proto
-	mv $(PROTO_OUTPUT)/$(IMPORT_PATH_FROM)/proto .
+	mv ${PROTO_OUTPUT}/${IMPORT_PATH_FROM}/proto .
 
 .PHONY: .gen-protos
 .gen-protos:
 	if [ -d ${PROTO_OUTPUT} ]; then rm -fr ${PROTO_OUTPUT}; fi; \
 	mkdir ${PROTO_OUTPUT}; \
 	for f in ${PROTO_FOLDERS}; do \
-		protoc -I"$(PROTO_TOP_DIR)" \
+		protoc -I"${PROTO_TOP_DIR}" \
 			-I"${GOPATH}/src/github.com/googleapis/googleapis" \
-			--go_out=plugins=grpc:./$(PROTO_OUTPUT) \
-			$(PROTO_TOP_DIR)/proto/$$f/*.proto; \
+			--go_out=plugins=grpc:./${PROTO_OUTPUT} \
+			${PROTO_TOP_DIR}/proto/$$f/*.proto; \
 	done; \
 	for file in $$(find ./${PROTO_OUTPUT} -name "*.go"); do \
 		sed -i '' 's|${IMPORT_PATH_FROM}|${IMPORT_PATH_TO}|g' $$file; \
