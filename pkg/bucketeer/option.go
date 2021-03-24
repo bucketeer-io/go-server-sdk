@@ -42,21 +42,21 @@ func WithTag(tag string) Option {
 	}
 }
 
-// WithAPIKey sets apiKey to use Bucketeer API Service. (Default: "")
+// WithAPIKey sets apiKey to use Bucketeer service. (Default: "")
 func WithAPIKey(apiKey string) Option {
 	return func(opts *options) {
 		opts.apiKey = apiKey
 	}
 }
 
-// WithHost sets host name for the Bucketeer API service. (Default: "")
+// WithHost sets host name for the Bucketeer service. (Default: "")
 func WithHost(host string) Option {
 	return func(opts *options) {
 		opts.host = host
 	}
 }
 
-// WithPort sets port for the Bucketeer API service. (Default: 443)
+// WithPort sets port for the Bucketeer service. (Default: 443)
 func WithPort(port int) Option {
 	return func(opts *options) {
 		opts.port = port

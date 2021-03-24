@@ -17,7 +17,7 @@ const (
 )
 
 var (
-	apiKey = flag.String("api-key", "", "API key for the Bucketeer APIGateway service")
-	host   = flag.String("host", "", "Host name of the target service, e.g. api-dev.bucketeer.jp")
-	port   = flag.Int("port", 443, "Port number of the target service, e.g. 443")
+	apiKey = flag.String("api-key", "", "API key for the Bucketeer service")
+	host   = flag.String("host", "", "Host name of the Bucketeer service, e.g. api-dev.bucketeer.jp")
+	port   = flag.Int("port", 443, "Port number of the Bucketeer service, e.g. 443")
 )
