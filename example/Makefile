@@ -18,7 +18,12 @@ lint:
 build:
 	go build -o main ./...
 
-
 .PHONY: start
 start:
-	./main
+	./main \
+		-bucketeer-api-key=${API_KEY} \
+		-bucketeer-host=${HOST} \
+		-bucketeer-port=${PORT} \
+		-bucketeer-enable-debug-log=${ENABLE_DEBUG_LOG} \
+		-bucketeer-feature-id=${FEATURE_ID} \
+		-bucketeer-goal-id=${GOAL_ID}
