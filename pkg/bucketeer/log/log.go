@@ -24,14 +24,14 @@ type BaseLogger interface {
 }
 
 var (
-	flags = stdlog.LstdFlags | stdlog.Lshortfile
+	flags = stdlog.LstdFlags
 
 	defaultDebugLogger = stdlog.New(os.Stdout, "[DEBUG] ", flags)
 	discardDebugLogger = stdlog.New(ioutil.Discard, "[DEBUG] ", flags)
 
 	// DefaultErrorLogger is a default logger for Bucketeer SDK error logs.
 	// For example, DefaultErrorLogger outputs,
-	//   [ERROR] 2021/01/01 10:00:00 prog.go:8 message
+	//   [ERROR] 2021/01/01 10:00:00 message
 	//
 	// DefaultErrorLoger implements BaseLogger interface.
 	DefaultErrorLogger = stdlog.New(os.Stderr, "[ERROR] ", flags)
