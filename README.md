@@ -108,3 +108,4 @@ curl -X POST --cookie "user_id=user-1" http://localhost:8080/track
 
 - [Tutorial](https://bucketeer.io/docs/#/./server-side-sdk-tutorial-go)
 - [Integration](https://bucketeer.io/docs/#/./server-side-sdk-reference-guides-go)
+- [Go Doc](https://pkg.go.dev/github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer)
