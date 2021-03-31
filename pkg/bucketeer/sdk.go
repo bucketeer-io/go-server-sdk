@@ -297,3 +297,46 @@ func (s *sdk) Close(ctx context.Context) error {
 	}
 	return nil
 }
+
+type nopSDK struct {
+}
+
+// NewNopSDK creates a new no-op Bucketeer SDK.
+//
+// It never requests to Bucketeer Service, and just returns default value when XXXVariation methods called.
+func NewNopSDK() SDK {
+	return &nopSDK{}
+}
+
+func (s *nopSDK) BoolVariation(ctx context.Context, user *User, featureID string, defaultValue bool) bool {
+	return defaultValue
+}
+
+func (s *nopSDK) IntVariation(ctx context.Context, user *User, featureID string, defaultValue int) int {
+	return defaultValue
+}
+
+func (s *nopSDK) Int64Variation(ctx context.Context, user *User, featureID string, defaultValue int64) int64 {
+	return defaultValue
+}
+
+func (s *nopSDK) Float64Variation(ctx context.Context, user *User, featureID string, defaultValue float64) float64 {
+	return defaultValue
+}
+
+func (s *nopSDK) StringVariation(ctx context.Context, user *User, featureID, defaultValue string) string {
+	return defaultValue
+}
+
+func (s *nopSDK) JSONVariation(ctx context.Context, user *User, featureID string, dst interface{}) {
+}
+
+func (s *nopSDK) Track(ctx context.Context, user *User, goalID string) {
+}
+
+func (s *nopSDK) TrackValue(ctx context.Context, user *User, goalID string, value float64) {
+}
+
+func (s *nopSDK) Close(ctx context.Context) error {
+	return nil
+}
