@@ -104,6 +104,24 @@ curl --cookie "user_id=user-1" http://localhost:8080/variation
 curl -X POST --cookie "user_id=user-1" http://localhost:8080/track
 ```
 
+If you want to use published SDK instead of local one, change go.mod in the example directory,
+
+before:
+
+```
+require github.com/ca-dp/bucketeer-go-server-sdk v0.0.0-00010101000000-000000000000
+
+replace github.com/ca-dp/bucketeer-go-server-sdk => ../
+```
+
+after (check SDK versions [here](https://github.com/ca-dp/bucketeer-go-server-sdk/releases)):
+
+```
+require github.com/ca-dp/bucketeer-go-server-sdk vX.Y.Z
+```
+
+then build and start the example server.
+
 ## SDK User Docs
 
 - [Tutorial](https://bucketeer.io/docs/#/./server-side-sdk-tutorial-go)
