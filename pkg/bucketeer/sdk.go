@@ -218,6 +218,9 @@ func (s *sdk) JSONVariation(ctx context.Context, user *User, featureID string, d
 }
 
 func (s *sdk) getEvaluation(ctx context.Context, user *User, featureID string) (*protofeature.Evaluation, error) {
+	if !user.Valid() {
+		return nil, fmt.Errorf("invalid user: %v", user)
+	}
 	req := &protogateway.GetEvaluationRequest{
 		Tag:       s.tag,
 		User:      user.User,
@@ -274,6 +277,14 @@ func (s *sdk) Track(ctx context.Context, user *User, goalID string) {
 }
 
 func (s *sdk) TrackValue(ctx context.Context, user *User, goalID string, value float64) {
+	if !user.Valid() {
+		s.loggers.Errorf("bucketeer: failed to track due to invalid user (user: %v, goalID: %v, value: %g)",
+			user,
+			goalID,
+			value,
+		)
+		return
+	}
 	s.eventProcessor.PushGoalEvent(ctx, user.User, goalID, value)
 }
 

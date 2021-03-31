@@ -8,7 +8,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -616,6 +615,14 @@ func TestGetEvaluation(t *testing.T) {
 		isErr         bool
 	}{
 		{
+			desc:          "invalid user",
+			setup:         nil,
+			user:          newUser(t, ""),
+			featureID:     sdkFeatureID,
+			expectedValue: "",
+			isErr:         true,
+		},
+		{
 			desc: "get evaluations returns timeout error",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
@@ -762,23 +769,85 @@ func TestTrack(t *testing.T) {
 	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	ctx := context.Background()
-	user := newUser(t, sdkUserID)
-	s := newSDKWithMock(t, mockCtrl)
-	s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGoalEvent(ctx, user.User, sdkGoalID, 0.0)
-	s.Track(ctx, user, sdkGoalID)
+	tests := []struct {
+		desc  string
+		setup func(context.Context, *sdk, *User, string)
+		user  *User
+	}{
+		{
+			desc: "invalid user",
+			setup: func(ctx context.Context, s *sdk, user *User, goalID string) {
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGoalEvent(
+					ctx,
+					user.User,
+					sdkGoalID,
+					0.0,
+				).Times(0)
+			},
+			user: newUser(t, ""),
+		},
+		{
+			desc: "success",
+			setup: func(ctx context.Context, s *sdk, user *User, goalID string) {
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGoalEvent(ctx, user.User, sdkGoalID, 0.0)
+			},
+			user: newUser(t, sdkUserID),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			s := newSDKWithMock(t, mockCtrl)
+			ctx := context.Background()
+			goalID := sdkGoalID
+			if tt.setup != nil {
+				tt.setup(ctx, s, tt.user, goalID)
+			}
+			s.Track(ctx, tt.user, goalID)
+		})
+	}
 }
 
 func TestTrackValue(t *testing.T) {
 	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	ctx := context.Background()
-	user := newUser(t, sdkUserID)
-	value := 1.1
-	s := newSDKWithMock(t, mockCtrl)
-	s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGoalEvent(ctx, user.User, sdkGoalID, value)
-	s.TrackValue(ctx, user, sdkGoalID, value)
+	tests := []struct {
+		desc  string
+		setup func(context.Context, *sdk, *User, string, float64)
+		user  *User
+	}{
+		{
+			desc: "invalid user",
+			setup: func(ctx context.Context, s *sdk, user *User, goalID string, value float64) {
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGoalEvent(
+					ctx,
+					user.User,
+					sdkGoalID,
+					value,
+				).Times(0)
+			},
+			user: newUser(t, ""),
+		},
+		{
+			desc: "success",
+			setup: func(ctx context.Context, s *sdk, user *User, goalID string, value float64) {
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGoalEvent(ctx, user.User, sdkGoalID, value)
+			},
+			user: newUser(t, sdkUserID),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			s := newSDKWithMock(t, mockCtrl)
+			ctx := context.Background()
+			goalID := sdkGoalID
+			value := 1.1
+			if tt.setup != nil {
+				tt.setup(ctx, s, tt.user, goalID, 1.1)
+			}
+			s.TrackValue(ctx, tt.user, goalID, value)
+		})
+	}
 }
 
 func TestClose(t *testing.T) {
@@ -845,9 +914,7 @@ func newSDKWithMock(t *testing.T, mockCtrl *gomock.Controller) *sdk {
 
 func newUser(t *testing.T, id string) *User {
 	t.Helper()
-	u, err := NewUser(id, nil)
-	require.NoError(t, err)
-	return u
+	return NewUser(id, nil)
 }
 
 func newGetEvaluationResponse(t *testing.T, featureID, value string) *protogateway.GetEvaluationResponse {
