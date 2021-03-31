@@ -23,8 +23,7 @@ func TestGetEvaluation(t *testing.T) {
 	defer client.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	user, err := bucketeer.NewUser(userID, nil)
-	require.NoError(t, err)
+	user := bucketeer.NewUser(userID, nil)
 	req := &protogateway.GetEvaluationRequest{
 		Tag:       tag,
 		User:      user.User,
@@ -42,8 +41,7 @@ func TestRegisterEvents(t *testing.T) {
 	defer client.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	user, err := bucketeer.NewUser(userID, nil)
-	require.NoError(t, err)
+	user := bucketeer.NewUser(userID, nil)
 	evaluationEvent, err := ptypes.MarshalAny(&protoevent.EvaluationEvent{
 		Timestamp:      time.Now().Unix(),
 		FeatureId:      featureID,

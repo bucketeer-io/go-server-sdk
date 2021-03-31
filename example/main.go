@@ -151,5 +151,5 @@ func (a *exampleApp) userFrom(r *http.Request) (*bucketeer.User, error) {
 		}
 		userID = uuid.String()
 	}
-	return bucketeer.NewUser(userID, nil)
+	return bucketeer.NewUser(userID, nil), nil
 }

@@ -71,7 +71,5 @@ func newSDK(t *testing.T, ctx context.Context) bucketeer.SDK {
 
 func newUser(t *testing.T, id string) *bucketeer.User {
 	t.Helper()
-	user, err := bucketeer.NewUser(id, map[string]string{"attr-key": "attr-value"})
-	require.NoError(t, err)
-	return user
+	return bucketeer.NewUser(id, map[string]string{"attr-key": "attr-value"})
 }

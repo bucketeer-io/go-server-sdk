@@ -1,8 +1,6 @@
 package bucketeer
 
 import (
-	"errors"
-
 	protouser "github.com/ca-dp/bucketeer-go-server-sdk/proto/user"
 )
 
@@ -16,12 +14,20 @@ type User struct {
 // NewUser creates a new User.
 //
 // id is mandatory and attributes is optional.
-func NewUser(id string, attributes map[string]string) (*User, error) {
-	if id == "" {
-		return nil, errors.New("bucketeer: user id is empty")
-	}
+func NewUser(id string, attributes map[string]string) *User {
 	return &User{User: &protouser.User{
 		Id:   id,
 		Data: attributes,
-	}}, nil
+	}}
+}
+
+// Valid returns true if valid user, otherwise returns false.
+func (u *User) Valid() bool {
+	if u == nil {
+		return false
+	}
+	if u.Id == "" {
+		return false
+	}
+	return true
 }
