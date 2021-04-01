@@ -7,8 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
-	anypb "github.com/golang/protobuf/ptypes/any"
+	"github.com/golang/protobuf/proto" // nolint:staticcheck
+	"google.golang.org/protobuf/types/known/anypb"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
@@ -128,7 +129,7 @@ func (p *processor) PushEvaluationEvent(
 		User:           user,
 		Reason:         evaluation.Reason,
 	}
-	anyEvaluationEvt, err := ptypes.MarshalAny(evaluationEvt)
+	anyEvaluationEvt, err := p.newAnyPB(evaluationEvt)
 	if err != nil {
 		p.loggers.Errorf(
 			"bucketeer/event: PushEvaluationEvent failed (err: %v, userID: %s, featureID: %s)",
@@ -159,7 +160,7 @@ func (p *processor) PushDefaultEvaluationEvent(ctx context.Context, user *protou
 		User:           user,
 		Reason:         &protofeature.Reason{Type: protofeature.Reason_CLIENT},
 	}
-	anyEvaluationEvt, err := ptypes.MarshalAny(evaluationEvt)
+	anyEvaluationEvt, err := p.newAnyPB(evaluationEvt)
 	if err != nil {
 		p.loggers.Errorf(
 			"bucketeer/event: PushDefaultEvaluationEvent failed (err: %v, userID: %s, featureID: %s)",
@@ -188,7 +189,7 @@ func (p *processor) PushGoalEvent(ctx context.Context, user *protouser.User, goa
 		Value:     value,
 		User:      user,
 	}
-	anyGoalEvt, err := ptypes.MarshalAny(goalEvt)
+	anyGoalEvt, err := p.newAnyPB(goalEvt)
 	if err != nil {
 		p.loggers.Errorf(
 			"bucketeer/event: PushGoalEvent failed (err: %v, userID: %s, goalID: %s, value: %g)",
@@ -214,9 +215,9 @@ func (p *processor) PushGoalEvent(ctx context.Context, user *protouser.User, goa
 func (p *processor) PushGetEvaluationLatencyMetricsEvent(ctx context.Context, duration time.Duration, tag string) {
 	gelMetricsEvt := &protoevent.GetEvaluationLatencyMetricsEvent{
 		Labels:   map[string]string{"tag": tag, "state": protofeature.UserEvaluations_FULL.String()},
-		Duration: ptypes.DurationProto(duration),
+		Duration: durationpb.New(duration),
 	}
-	anyGELMetricsEvt, err := ptypes.MarshalAny(gelMetricsEvt)
+	anyGELMetricsEvt, err := p.newAnyPB(gelMetricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: PushGetEvaluationLatencyMetricsEvent failed (err: %v, tag: %s)", err, tag)
 		return
@@ -225,7 +226,7 @@ func (p *processor) PushGetEvaluationLatencyMetricsEvent(ctx context.Context, du
 		Timestamp: time.Now().Unix(),
 		Event:     anyGELMetricsEvt,
 	}
-	anyMetricsEvt, err := ptypes.MarshalAny(metricsEvt)
+	anyMetricsEvt, err := p.newAnyPB(metricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: PushGetEvaluationLatencyMetricsEvent failed (err: %v, tag: %s)", err, tag)
 		return
@@ -241,7 +242,7 @@ func (p *processor) PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeB
 		Labels:   map[string]string{"tag": tag, "state": protofeature.UserEvaluations_FULL.String()},
 		SizeByte: int32(sizeByte),
 	}
-	anyGESMetricsEvt, err := ptypes.MarshalAny(gesMetricsEvt)
+	anyGESMetricsEvt, err := p.newAnyPB(gesMetricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: PushGetEvaluationSizeMetricsEvent failed (err: %v, tag: %s)", err, tag)
 		return
@@ -250,7 +251,7 @@ func (p *processor) PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeB
 		Timestamp: time.Now().Unix(),
 		Event:     anyGESMetricsEvt,
 	}
-	anyMetricsEvt, err := ptypes.MarshalAny(metricsEvt)
+	anyMetricsEvt, err := p.newAnyPB(metricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: PushGetEvaluationSizeMetricsEvent failed (err: %v, tag: %s)", err, tag)
 		return
@@ -263,7 +264,7 @@ func (p *processor) PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeB
 
 func (p *processor) PushTimeoutErrorCountMetricsEvent(ctx context.Context, tag string) {
 	tecMetricsEvt := &protoevent.TimeoutErrorCountMetricsEvent{Tag: tag}
-	anyTECMetricsEvt, err := ptypes.MarshalAny(tecMetricsEvt)
+	anyTECMetricsEvt, err := p.newAnyPB(tecMetricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: PushTimeoutErrorCountMetricsEvent failed (err: %v, tag: %s)", err, tag)
 		return
@@ -272,7 +273,7 @@ func (p *processor) PushTimeoutErrorCountMetricsEvent(ctx context.Context, tag s
 		Timestamp: time.Now().Unix(),
 		Event:     anyTECMetricsEvt,
 	}
-	anyMetricsEvt, err := ptypes.MarshalAny(metricsEvt)
+	anyMetricsEvt, err := p.newAnyPB(metricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: PushTimeoutErrorCountMetricsEvent failed (err: %v, tag: %s)", err, tag)
 		return
@@ -285,7 +286,7 @@ func (p *processor) PushTimeoutErrorCountMetricsEvent(ctx context.Context, tag s
 
 func (p *processor) PushInternalErrorCountMetricsEvent(ctx context.Context, tag string) {
 	iecMetricsEvt := &protoevent.InternalErrorCountMetricsEvent{Tag: tag}
-	anyIECMetricsEvt, err := ptypes.MarshalAny(iecMetricsEvt)
+	anyIECMetricsEvt, err := p.newAnyPB(iecMetricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: PushInternalErrorCountMetricsEvent failed (err: %v, tag: %s)", err, tag)
 		return
@@ -294,7 +295,7 @@ func (p *processor) PushInternalErrorCountMetricsEvent(ctx context.Context, tag 
 		Timestamp: time.Now().Unix(),
 		Event:     anyIECMetricsEvt,
 	}
-	anyMetricsEvt, err := ptypes.MarshalAny(metricsEvt)
+	anyMetricsEvt, err := p.newAnyPB(metricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: PushInternalErrorCountMetricsEvent failed (err: %v, tag: %s", err, tag)
 		return
@@ -318,6 +319,10 @@ func (p *processor) pushEvent(anyEvt *anypb.Any) error {
 		return fmt.Errorf("failed to push event: %w", err)
 	}
 	return nil
+}
+
+func (p *processor) newAnyPB(m proto.GeneratedMessage) (*anypb.Any, error) {
+	return anypb.New(proto.MessageV2(m))
 }
 
 func (p *processor) Close(ctx context.Context) error {

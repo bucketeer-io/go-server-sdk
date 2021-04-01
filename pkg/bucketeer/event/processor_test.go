@@ -6,12 +6,13 @@ import (
 	"time"
 
 	"github.com/golang/mock/gomock"
+	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
-	anypb "github.com/golang/protobuf/ptypes/any"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
 	protoevent "github.com/ca-dp/bucketeer-go-server-sdk/proto/event/client"
@@ -184,7 +185,7 @@ func newEvaluation(t *testing.T, featureID, variationID string) *protofeature.Ev
 func newAnyEvaluationEvent(t *testing.T, featureID string) *anypb.Any {
 	t.Helper()
 	evaluationEvt := &protoevent.EvaluationEvent{FeatureId: featureID}
-	anyEvt, err := ptypes.MarshalAny(evaluationEvt)
+	anyEvt, err := anypb.New(proto.MessageV2(evaluationEvt))
 	require.NoError(t, err)
 	return anyEvt
 }
