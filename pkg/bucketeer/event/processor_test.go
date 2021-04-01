@@ -7,11 +7,11 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/golang/protobuf/ptypes"
+	anypb "github.com/golang/protobuf/ptypes/any"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
 	protoevent "github.com/ca-dp/bucketeer-go-server-sdk/proto/event/client"
