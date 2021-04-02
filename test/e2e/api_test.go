@@ -5,10 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/types/known/anypb"
 
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
@@ -43,7 +42,7 @@ func TestRegisterEvents(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	user := bucketeer.NewUser(userID, nil)
-	evaluationEvent, err := anypb.New(proto.MessageV2(&protoevent.EvaluationEvent{
+	evaluationEvent, err := ptypes.MarshalAny(&protoevent.EvaluationEvent{
 		Timestamp:      time.Now().Unix(),
 		FeatureId:      featureID,
 		FeatureVersion: 0,
@@ -51,15 +50,15 @@ func TestRegisterEvents(t *testing.T) {
 		VariationId:    "",
 		User:           user.User,
 		Reason:         &protofeature.Reason{Type: protofeature.Reason_CLIENT},
-	}))
+	})
 	require.NoError(t, err)
-	goalEvent, err := anypb.New(proto.MessageV2(&protoevent.GoalEvent{
+	goalEvent, err := ptypes.MarshalAny(&protoevent.GoalEvent{
 		Timestamp: time.Now().Unix(),
 		GoalId:    goalID,
 		UserId:    user.Id,
 		Value:     0.0,
 		User:      user.User,
-	}))
+	})
 	req := &protogateway.RegisterEventsRequest{
 		Events: []*protoevent.Event{
 			{
