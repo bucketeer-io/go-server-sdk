@@ -2,6 +2,7 @@
 # Variables
 #############################
 PROTO_TOP_DIR := $(shell cd ../bucketeer && pwd)
+PROTOBUF_INCLUDE_DIR := ${PROTO_TOP_DIR}/proto/external/protocolbuffers/protobuf/v3.9.0
 PROTO_FOLDERS := event/client feature gateway user
 PROTO_OUTPUT := proto_output
 IMPORT_PATH_FROM := github.com/ca-dp/bucketeer
@@ -65,6 +66,7 @@ copy-protos: .gen-protos
 	mkdir ${PROTO_OUTPUT}; \
 	for f in ${PROTO_FOLDERS}; do \
 		protoc -I"${PROTO_TOP_DIR}" \
+			-I"${PROTOBUF_INCLUDE_DIR}" \
 			-I"${GOPATH}/src/github.com/googleapis/googleapis" \
 			--go_out=plugins=grpc:./${PROTO_OUTPUT} \
 			${PROTO_TOP_DIR}/proto/$$f/*.proto; \
