@@ -8,8 +8,8 @@ import (
 	feature "github.com/ca-dp/bucketeer-go-server-sdk/proto/feature"
 	user "github.com/ca-dp/bucketeer-go-server-sdk/proto/user"
 	proto "github.com/golang/protobuf/proto"
-	anypb "google.golang.org/protobuf/types/known/anypb"
-	durationpb "google.golang.org/protobuf/types/known/durationpb"
+	any "github.com/golang/protobuf/ptypes/any"
+	duration "github.com/golang/protobuf/ptypes/duration"
 	math "math"
 )
 
@@ -25,12 +25,12 @@ var _ = math.Inf
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type Event struct {
-	Id                   string     `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Event                *anypb.Any `protobuf:"bytes,2,opt,name=event,proto3" json:"event,omitempty"`
-	EnvironmentNamespace string     `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
-	XXX_unrecognized     []byte     `json:"-"`
-	XXX_sizecache        int32      `json:"-"`
+	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Event                *any.Any `protobuf:"bytes,2,opt,name=event,proto3" json:"event,omitempty"`
+	EnvironmentNamespace string   `protobuf:"bytes,3,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *Event) Reset()         { *m = Event{} }
@@ -65,7 +65,7 @@ func (m *Event) GetId() string {
 	return ""
 }
 
-func (m *Event) GetEvent() *anypb.Any {
+func (m *Event) GetEvent() *any.Any {
 	if m != nil {
 		return m.Event
 	}
@@ -349,11 +349,11 @@ func (m *ExperimentEvent) GetUser() *user.User {
 }
 
 type MetricsEvent struct {
-	Timestamp            int64      `protobuf:"varint,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	Event                *anypb.Any `protobuf:"bytes,2,opt,name=event,proto3" json:"event,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
-	XXX_unrecognized     []byte     `json:"-"`
-	XXX_sizecache        int32      `json:"-"`
+	Timestamp            int64    `protobuf:"varint,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Event                *any.Any `protobuf:"bytes,2,opt,name=event,proto3" json:"event,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *MetricsEvent) Reset()         { *m = MetricsEvent{} }
@@ -388,7 +388,7 @@ func (m *MetricsEvent) GetTimestamp() int64 {
 	return 0
 }
 
-func (m *MetricsEvent) GetEvent() *anypb.Any {
+func (m *MetricsEvent) GetEvent() *any.Any {
 	if m != nil {
 		return m.Event
 	}
@@ -396,11 +396,11 @@ func (m *MetricsEvent) GetEvent() *anypb.Any {
 }
 
 type GetEvaluationLatencyMetricsEvent struct {
-	Labels               map[string]string    `protobuf:"bytes,1,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	Duration             *durationpb.Duration `protobuf:"bytes,2,opt,name=duration,proto3" json:"duration,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
-	XXX_unrecognized     []byte               `json:"-"`
-	XXX_sizecache        int32                `json:"-"`
+	Labels               map[string]string  `protobuf:"bytes,1,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	Duration             *duration.Duration `protobuf:"bytes,2,opt,name=duration,proto3" json:"duration,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
+	XXX_unrecognized     []byte             `json:"-"`
+	XXX_sizecache        int32              `json:"-"`
 }
 
 func (m *GetEvaluationLatencyMetricsEvent) Reset()         { *m = GetEvaluationLatencyMetricsEvent{} }
@@ -435,7 +435,7 @@ func (m *GetEvaluationLatencyMetricsEvent) GetLabels() map[string]string {
 	return nil
 }
 
-func (m *GetEvaluationLatencyMetricsEvent) GetDuration() *durationpb.Duration {
+func (m *GetEvaluationLatencyMetricsEvent) GetDuration() *duration.Duration {
 	if m != nil {
 		return m.Duration
 	}

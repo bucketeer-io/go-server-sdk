@@ -6,8 +6,8 @@ package feature
 import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
-	anypb "google.golang.org/protobuf/types/known/anypb"
-	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
+	any "github.com/golang/protobuf/ptypes/any"
+	wrappers "github.com/golang/protobuf/ptypes/wrappers"
 	math "math"
 )
 
@@ -23,10 +23,10 @@ var _ = math.Inf
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type Command struct {
-	Command              *anypb.Any `protobuf:"bytes,1,opt,name=command,proto3" json:"command,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
-	XXX_unrecognized     []byte     `json:"-"`
-	XXX_sizecache        int32      `json:"-"`
+	Command              *any.Any `protobuf:"bytes,1,opt,name=command,proto3" json:"command,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *Command) Reset()         { *m = Command{} }
@@ -54,7 +54,7 @@ func (m *Command) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Command proto.InternalMessageInfo
 
-func (m *Command) GetCommand() *anypb.Any {
+func (m *Command) GetCommand() *any.Any {
 	if m != nil {
 		return m.Command
 	}
@@ -62,16 +62,16 @@ func (m *Command) GetCommand() *anypb.Any {
 }
 
 type CreateFeatureCommand struct {
-	Id                       string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Name                     string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	Description              string                 `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
-	Variations               []*Variation           `protobuf:"bytes,4,rep,name=variations,proto3" json:"variations,omitempty"`
-	Tags                     []string               `protobuf:"bytes,5,rep,name=tags,proto3" json:"tags,omitempty"`
-	DefaultOnVariationIndex  *wrapperspb.Int32Value `protobuf:"bytes,6,opt,name=default_on_variation_index,json=defaultOnVariationIndex,proto3" json:"default_on_variation_index,omitempty"`
-	DefaultOffVariationIndex *wrapperspb.Int32Value `protobuf:"bytes,7,opt,name=default_off_variation_index,json=defaultOffVariationIndex,proto3" json:"default_off_variation_index,omitempty"`
-	XXX_NoUnkeyedLiteral     struct{}               `json:"-"`
-	XXX_unrecognized         []byte                 `json:"-"`
-	XXX_sizecache            int32                  `json:"-"`
+	Id                       string               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name                     string               `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Description              string               `protobuf:"bytes,3,opt,name=description,proto3" json:"description,omitempty"`
+	Variations               []*Variation         `protobuf:"bytes,4,rep,name=variations,proto3" json:"variations,omitempty"`
+	Tags                     []string             `protobuf:"bytes,5,rep,name=tags,proto3" json:"tags,omitempty"`
+	DefaultOnVariationIndex  *wrappers.Int32Value `protobuf:"bytes,6,opt,name=default_on_variation_index,json=defaultOnVariationIndex,proto3" json:"default_on_variation_index,omitempty"`
+	DefaultOffVariationIndex *wrappers.Int32Value `protobuf:"bytes,7,opt,name=default_off_variation_index,json=defaultOffVariationIndex,proto3" json:"default_off_variation_index,omitempty"`
+	XXX_NoUnkeyedLiteral     struct{}             `json:"-"`
+	XXX_unrecognized         []byte               `json:"-"`
+	XXX_sizecache            int32                `json:"-"`
 }
 
 func (m *CreateFeatureCommand) Reset()         { *m = CreateFeatureCommand{} }
@@ -134,14 +134,14 @@ func (m *CreateFeatureCommand) GetTags() []string {
 	return nil
 }
 
-func (m *CreateFeatureCommand) GetDefaultOnVariationIndex() *wrapperspb.Int32Value {
+func (m *CreateFeatureCommand) GetDefaultOnVariationIndex() *wrappers.Int32Value {
 	if m != nil {
 		return m.DefaultOnVariationIndex
 	}
 	return nil
 }
 
-func (m *CreateFeatureCommand) GetDefaultOffVariationIndex() *wrapperspb.Int32Value {
+func (m *CreateFeatureCommand) GetDefaultOffVariationIndex() *wrappers.Int32Value {
 	if m != nil {
 		return m.DefaultOffVariationIndex
 	}
