@@ -8,10 +8,10 @@ import (
 	fmt "fmt"
 	user "github.com/ca-dp/bucketeer-go-server-sdk/proto/user"
 	proto "github.com/golang/protobuf/proto"
+	wrappers "github.com/golang/protobuf/ptypes/wrappers"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 	math "math"
 )
 
@@ -1969,15 +1969,15 @@ func (m *GetSegmentUserResponse) GetUser() *SegmentUser {
 }
 
 type ListSegmentUsersRequest struct {
-	PageSize             int64                  `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
-	Cursor               string                 `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
-	SegmentId            string                 `protobuf:"bytes,3,opt,name=segment_id,json=segmentId,proto3" json:"segment_id,omitempty"`
-	State                *wrapperspb.Int32Value `protobuf:"bytes,4,opt,name=state,proto3" json:"state,omitempty"`
-	UserId               string                 `protobuf:"bytes,5,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	EnvironmentNamespace string                 `protobuf:"bytes,6,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
-	XXX_unrecognized     []byte                 `json:"-"`
-	XXX_sizecache        int32                  `json:"-"`
+	PageSize             int64                `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	Cursor               string               `protobuf:"bytes,2,opt,name=cursor,proto3" json:"cursor,omitempty"`
+	SegmentId            string               `protobuf:"bytes,3,opt,name=segment_id,json=segmentId,proto3" json:"segment_id,omitempty"`
+	State                *wrappers.Int32Value `protobuf:"bytes,4,opt,name=state,proto3" json:"state,omitempty"`
+	UserId               string               `protobuf:"bytes,5,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	EnvironmentNamespace string               `protobuf:"bytes,6,opt,name=environment_namespace,json=environmentNamespace,proto3" json:"environment_namespace,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
+	XXX_unrecognized     []byte               `json:"-"`
+	XXX_sizecache        int32                `json:"-"`
 }
 
 func (m *ListSegmentUsersRequest) Reset()         { *m = ListSegmentUsersRequest{} }
@@ -2026,7 +2026,7 @@ func (m *ListSegmentUsersRequest) GetSegmentId() string {
 	return ""
 }
 
-func (m *ListSegmentUsersRequest) GetState() *wrapperspb.Int32Value {
+func (m *ListSegmentUsersRequest) GetState() *wrappers.Int32Value {
 	if m != nil {
 		return m.State
 	}
