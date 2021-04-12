@@ -17,11 +17,11 @@ import (
 const (
 	timeout = 10 * time.Second
 
-	bucketeerTag = "go-server"
-	userIDKey    = "user_id"
+	userIDKey = "user_id"
 )
 
 var (
+	bucketeerTag            = flag.String("bucketeer-tag", "", "Bucketeer tag")
 	bucketeerAPIKey         = flag.String("bucketeer-api-key", "", "Bucketeer api key")
 	bucketeerHost           = flag.String("bucketeer-host", "", "Bucketeer host name, e.g. api-dev.bucketeer.jp")
 	bucketeerPort           = flag.Int("bucketeer-port", 443, "Bucketeer port number, e.g. 443")
@@ -38,7 +38,7 @@ func main() {
 	defer cancel()
 	sdk, err := bucketeer.NewSDK(
 		ctx,
-		bucketeer.WithTag(bucketeerTag),
+		bucketeer.WithTag(*bucketeerTag),
 		bucketeer.WithAPIKey(*bucketeerAPIKey),
 		bucketeer.WithHost(*bucketeerHost),
 		bucketeer.WithPort(*bucketeerPort),
