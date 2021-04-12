@@ -21,6 +21,7 @@ build:
 .PHONY: start
 start:
 	./main \
+		-bucketeer-tag=${TAG} \
 		-bucketeer-api-key=${API_KEY} \
 		-bucketeer-host=${HOST} \
 		-bucketeer-port=${PORT} \
