@@ -122,6 +122,10 @@ require github.com/ca-dp/bucketeer-go-server-sdk vX.Y.Z
 
 then build and start the example server.
 
+## Contributing
+
+[CONTRIBUTING.md](./CONTRIBUTING.md)
+
 ## SDK User Docs
 
 - [Tutorial](https://bucketeer.io/docs/#/./server-side-sdk-tutorial-go)
