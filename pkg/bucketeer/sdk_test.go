@@ -40,6 +40,8 @@ func TestBoolVariation(t *testing.T) {
 		{
 			desc: "return default value when failed to get evaluation",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
+				ctx, err := NewContext(ctx, featureID)
+				assert.NoError(t, err)
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(ctx, req).Return(
 					nil,
@@ -47,7 +49,7 @@ func TestBoolVariation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx, sdkTag)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
-					ctx,
+					context.Background(),
 					user.User,
 					featureID,
 				)
@@ -60,6 +62,8 @@ func TestBoolVariation(t *testing.T) {
 		{
 			desc: "return default value when faled to parse variation",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
+				ctx, err := NewContext(ctx, featureID)
+				assert.NoError(t, err)
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
 				res := newGetEvaluationResponse(t, featureID, "invalid")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(ctx, req).Return(res, nil)
@@ -74,7 +78,7 @@ func TestBoolVariation(t *testing.T) {
 					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
-					ctx,
+					context.Background(),
 					user.User,
 					featureID,
 				)
@@ -87,6 +91,8 @@ func TestBoolVariation(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
+				ctx, err := NewContext(ctx, featureID)
+				assert.NoError(t, err)
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
 				res := newGetEvaluationResponse(t, featureID, "true")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(ctx, req).Return(res, nil)
@@ -101,7 +107,7 @@ func TestBoolVariation(t *testing.T) {
 					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
-					ctx,
+					context.Background(),
 					user.User,
 					res.Evaluation,
 				)
@@ -140,6 +146,8 @@ func TestIntVariation(t *testing.T) {
 		{
 			desc: "return default value when failed to get evaluation",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
+				ctx, err := NewContext(ctx, featureID)
+				assert.NoError(t, err)
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(ctx, req).Return(
 					nil,
@@ -147,7 +155,7 @@ func TestIntVariation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx, sdkTag)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
-					ctx,
+					context.Background(),
 					user.User,
 					featureID,
 				)
@@ -160,6 +168,8 @@ func TestIntVariation(t *testing.T) {
 		{
 			desc: "return default value when faled to parse variation",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
+				ctx, err := NewContext(ctx, featureID)
+				assert.NoError(t, err)
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
 				res := newGetEvaluationResponse(t, featureID, "invalid")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(ctx, req).Return(res, nil)
@@ -174,7 +184,7 @@ func TestIntVariation(t *testing.T) {
 					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
-					ctx,
+					context.Background(),
 					user.User,
 					featureID,
 				)
@@ -187,6 +197,8 @@ func TestIntVariation(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
+				ctx, err := NewContext(ctx, featureID)
+				assert.NoError(t, err)
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
 				res := newGetEvaluationResponse(t, featureID, "2")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(ctx, req).Return(res, nil)
@@ -201,7 +213,7 @@ func TestIntVariation(t *testing.T) {
 					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
-					ctx,
+					context.Background(),
 					user.User,
 					res.Evaluation,
 				)
@@ -240,6 +252,8 @@ func TestInt64Variation(t *testing.T) {
 		{
 			desc: "return default value when failed to get evaluation",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
+				ctx, err := NewContext(ctx, featureID)
+				assert.NoError(t, err)
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(ctx, req).Return(
 					nil,
@@ -247,7 +261,7 @@ func TestInt64Variation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx, sdkTag)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
-					ctx,
+					context.Background(),
 					user.User,
 					featureID,
 				)
@@ -260,6 +274,8 @@ func TestInt64Variation(t *testing.T) {
 		{
 			desc: "return default value when faled to parse variation",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
+				ctx, err := NewContext(ctx, featureID)
+				assert.NoError(t, err)
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
 				res := newGetEvaluationResponse(t, featureID, "invalid")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(ctx, req).Return(res, nil)
@@ -274,7 +290,7 @@ func TestInt64Variation(t *testing.T) {
 					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
-					ctx,
+					context.Background(),
 					user.User,
 					featureID,
 				)
@@ -287,6 +303,8 @@ func TestInt64Variation(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
+				ctx, err := NewContext(ctx, featureID)
+				assert.NoError(t, err)
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
 				res := newGetEvaluationResponse(t, featureID, "2")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(ctx, req).Return(res, nil)
@@ -301,7 +319,7 @@ func TestInt64Variation(t *testing.T) {
 					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
-					ctx,
+					context.Background(),
 					user.User,
 					res.Evaluation,
 				)
@@ -340,6 +358,8 @@ func TestFloat64Variation(t *testing.T) {
 		{
 			desc: "return default value when failed to get evaluation",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
+				ctx, err := NewContext(ctx, featureID)
+				assert.NoError(t, err)
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(ctx, req).Return(
 					nil,
@@ -347,7 +367,7 @@ func TestFloat64Variation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx, sdkTag)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
-					ctx,
+					context.Background(),
 					user.User,
 					featureID,
 				)
@@ -360,6 +380,8 @@ func TestFloat64Variation(t *testing.T) {
 		{
 			desc: "return default value when faled to parse variation",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
+				ctx, err := NewContext(ctx, featureID)
+				assert.NoError(t, err)
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
 				res := newGetEvaluationResponse(t, featureID, "invalid")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(ctx, req).Return(res, nil)
@@ -374,7 +396,7 @@ func TestFloat64Variation(t *testing.T) {
 					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
-					ctx,
+					context.Background(),
 					user.User,
 					featureID,
 				)
@@ -387,6 +409,8 @@ func TestFloat64Variation(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
+				ctx, err := NewContext(ctx, featureID)
+				assert.NoError(t, err)
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
 				res := newGetEvaluationResponse(t, featureID, "2.2")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(ctx, req).Return(res, nil)
@@ -401,7 +425,7 @@ func TestFloat64Variation(t *testing.T) {
 					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
-					ctx,
+					context.Background(),
 					user.User,
 					res.Evaluation,
 				)
@@ -440,6 +464,8 @@ func TestStringVariation(t *testing.T) {
 		{
 			desc: "return default value when failed to get evaluation",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
+				ctx, err := NewContext(ctx, featureID)
+				assert.NoError(t, err)
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(ctx, req).Return(
 					nil,
@@ -447,7 +473,7 @@ func TestStringVariation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx, sdkTag)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
-					ctx,
+					context.Background(),
 					user.User,
 					featureID,
 				)
@@ -460,6 +486,8 @@ func TestStringVariation(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
+				ctx, err := NewContext(ctx, featureID)
+				assert.NoError(t, err)
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
 				res := newGetEvaluationResponse(t, featureID, "value")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(ctx, req).Return(res, nil)
@@ -474,7 +502,7 @@ func TestStringVariation(t *testing.T) {
 					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
-					ctx,
+					context.Background(),
 					user.User,
 					res.Evaluation,
 				)
@@ -517,6 +545,8 @@ func TestJSONVariation(t *testing.T) {
 		{
 			desc: "failed to get evaluation",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
+				ctx, err := NewContext(ctx, featureID)
+				assert.NoError(t, err)
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(ctx, req).Return(
 					nil,
@@ -524,7 +554,7 @@ func TestJSONVariation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx, sdkTag)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
-					ctx,
+					context.Background(),
 					user.User,
 					featureID,
 				)
@@ -537,6 +567,8 @@ func TestJSONVariation(t *testing.T) {
 		{
 			desc: "faled to unmarshal variation",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
+				ctx, err := NewContext(ctx, featureID)
+				assert.NoError(t, err)
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
 				res := newGetEvaluationResponse(t, featureID, `invalid`)
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(ctx, req).Return(res, nil)
@@ -551,7 +583,7 @@ func TestJSONVariation(t *testing.T) {
 					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
-					ctx,
+					context.Background(),
 					user.User,
 					featureID,
 				)
@@ -564,6 +596,8 @@ func TestJSONVariation(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
+				ctx, err := NewContext(ctx, featureID)
+				assert.NoError(t, err)
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
 				res := newGetEvaluationResponse(t, featureID, `{"str": "str2", "int": "int2"}`)
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(ctx, req).Return(res, nil)
@@ -578,7 +612,7 @@ func TestJSONVariation(t *testing.T) {
 					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
-					ctx,
+					context.Background(),
 					user.User,
 					res.Evaluation,
 				)
@@ -625,6 +659,8 @@ func TestGetEvaluation(t *testing.T) {
 		{
 			desc: "get evaluations returns timeout error",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
+				ctx, err := NewContext(ctx, featureID)
+				assert.NoError(t, err)
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(ctx, req).Return(
 					nil,
@@ -640,6 +676,8 @@ func TestGetEvaluation(t *testing.T) {
 		{
 			desc: "get evaluations returns internal error",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
+				ctx, err := NewContext(ctx, featureID)
+				assert.NoError(t, err)
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(ctx, req).Return(
 					nil,
@@ -655,6 +693,8 @@ func TestGetEvaluation(t *testing.T) {
 		{
 			desc: "invalid get evaluation res: evaluation is nil",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
+				ctx, err := NewContext(ctx, featureID)
+				assert.NoError(t, err)
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
 				res := newGetEvaluationResponse(t, featureID, "value")
 				res.Evaluation = nil
@@ -678,6 +718,8 @@ func TestGetEvaluation(t *testing.T) {
 		{
 			desc: "invalid get evaluation res: feature id doesn't match",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
+				ctx, err := NewContext(ctx, featureID)
+				assert.NoError(t, err)
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
 				res := newGetEvaluationResponse(t, "invalid-feature-id", "value")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(ctx, req).Return(res, nil)
@@ -700,6 +742,8 @@ func TestGetEvaluation(t *testing.T) {
 		{
 			desc: "invalid get evaluation res: variation is nil",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
+				ctx, err := NewContext(ctx, featureID)
+				assert.NoError(t, err)
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
 				res := newGetEvaluationResponse(t, featureID, "value")
 				res.Evaluation.Variation = nil
@@ -723,6 +767,8 @@ func TestGetEvaluation(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
+				ctx, err := NewContext(ctx, featureID)
+				assert.NoError(t, err)
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
 				res := newGetEvaluationResponse(t, featureID, "value")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(ctx, req).Return(

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go.opencensus.io/tag"
 	"strconv"
 	"time"
 
@@ -218,6 +219,21 @@ func (s *sdk) JSONVariation(ctx context.Context, user *User, featureID string, d
 }
 
 func (s *sdk) getEvaluation(ctx context.Context, user *User, featureID string) (*protofeature.Evaluation, error) {
+	ctx, err := NewContext(ctx, featureID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate new context: %w", err)
+	}
+	reqStart := time.Now()
+	defer func() {
+		state := status.Code(err).String()
+		ctx, err := tag.New(ctx, tag.Insert(KeyStatus, state))
+		if err != nil {
+			return
+		}
+
+		count(ctx)
+		measure(ctx, time.Since(reqStart))
+	}()
 	if !user.Valid() {
 		return nil, fmt.Errorf("invalid user: %v", user)
 	}
@@ -226,7 +242,6 @@ func (s *sdk) getEvaluation(ctx context.Context, user *User, featureID string) (
 		User:      user.User,
 		FeatureId: featureID,
 	}
-	reqStart := time.Now()
 	res, err := s.apiClient.GetEvaluation(ctx, req)
 	if err != nil || res == nil {
 		if status.Code(err) == codes.DeadlineExceeded {
