@@ -9,7 +9,6 @@ import (
 	"github.com/golang/protobuf/ptypes"
 	anypb "github.com/golang/protobuf/ptypes/any"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -185,7 +184,7 @@ func newAnyEvaluationEvent(t *testing.T, featureID string) *anypb.Any {
 	t.Helper()
 	evaluationEvt := &protoevent.EvaluationEvent{FeatureId: featureID}
 	anyEvt, err := ptypes.MarshalAny(evaluationEvt)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	return anyEvt
 }
 
