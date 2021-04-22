@@ -259,7 +259,7 @@ func (s *sdk) callGetEvaluationAPI(
 	}()
 
 	res, err := s.apiClient.GetEvaluation(ctx, req)
-	if err != nil || res == nil {
+	if err != nil {
 		gserr = err // set gRPC status error
 		if status.Code(gserr) == codes.DeadlineExceeded {
 			s.eventProcessor.PushTimeoutErrorCountMetricsEvent(ctx, s.tag)
@@ -273,8 +273,10 @@ func (s *sdk) callGetEvaluationAPI(
 	return res, nil
 }
 
-// Require res is not nil.
 func (s *sdk) validateGetEvaluationResponse(res *protogateway.GetEvaluationResponse, featureID string) error {
+	if res == nil {
+		return errors.New("res is nil")
+	}
 	if res.Evaluation == nil {
 		return errors.New("evaluation is nil")
 	}
