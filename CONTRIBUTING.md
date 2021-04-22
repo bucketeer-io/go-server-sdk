@@ -42,6 +42,8 @@ docs: add link to xxx doc
 
 After pushing your commits to the forked repository, create a pull request to the original repository on GitHub.
 
+NOTE: When you create a pull request, check that `make all` passes on the root directory.
+
 ## Code review
 
 After a pull request created, Bucketeer team members will review it.
