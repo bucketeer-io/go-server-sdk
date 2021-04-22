@@ -8,9 +8,8 @@ import (
 	"strconv"
 	"time"
 
-	"go.opencensus.io/tag"
-
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
+	"go.opencensus.io/tag"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
