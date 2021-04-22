@@ -47,7 +47,7 @@ func TestBoolVariation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx, sdkTag)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
-					context.Background(),
+					ctx,
 					user.User,
 					featureID,
 				)
@@ -74,7 +74,7 @@ func TestBoolVariation(t *testing.T) {
 					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
-					context.Background(),
+					ctx,
 					user.User,
 					featureID,
 				)
@@ -101,7 +101,7 @@ func TestBoolVariation(t *testing.T) {
 					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
-					context.Background(),
+					ctx,
 					user.User,
 					res.Evaluation,
 				)
@@ -147,7 +147,7 @@ func TestIntVariation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx, sdkTag)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
-					context.Background(),
+					ctx,
 					user.User,
 					featureID,
 				)
@@ -174,7 +174,7 @@ func TestIntVariation(t *testing.T) {
 					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
-					context.Background(),
+					ctx,
 					user.User,
 					featureID,
 				)
@@ -201,7 +201,7 @@ func TestIntVariation(t *testing.T) {
 					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
-					context.Background(),
+					ctx,
 					user.User,
 					res.Evaluation,
 				)
@@ -247,7 +247,7 @@ func TestInt64Variation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx, sdkTag)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
-					context.Background(),
+					ctx,
 					user.User,
 					featureID,
 				)
@@ -274,7 +274,7 @@ func TestInt64Variation(t *testing.T) {
 					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
-					context.Background(),
+					ctx,
 					user.User,
 					featureID,
 				)
@@ -301,7 +301,7 @@ func TestInt64Variation(t *testing.T) {
 					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
-					context.Background(),
+					ctx,
 					user.User,
 					res.Evaluation,
 				)
@@ -347,7 +347,7 @@ func TestFloat64Variation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx, sdkTag)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
-					context.Background(),
+					ctx,
 					user.User,
 					featureID,
 				)
@@ -374,7 +374,7 @@ func TestFloat64Variation(t *testing.T) {
 					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
-					context.Background(),
+					ctx,
 					user.User,
 					featureID,
 				)
@@ -401,7 +401,7 @@ func TestFloat64Variation(t *testing.T) {
 					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
-					context.Background(),
+					ctx,
 					user.User,
 					res.Evaluation,
 				)
@@ -447,7 +447,7 @@ func TestStringVariation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx, sdkTag)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
-					context.Background(),
+					ctx,
 					user.User,
 					featureID,
 				)
@@ -474,7 +474,7 @@ func TestStringVariation(t *testing.T) {
 					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
-					context.Background(),
+					ctx,
 					user.User,
 					res.Evaluation,
 				)
@@ -524,7 +524,7 @@ func TestJSONVariation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx, sdkTag)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
-					context.Background(),
+					ctx,
 					user.User,
 					featureID,
 				)
@@ -551,7 +551,7 @@ func TestJSONVariation(t *testing.T) {
 					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
-					context.Background(),
+					ctx,
 					user.User,
 					featureID,
 				)
@@ -578,7 +578,7 @@ func TestJSONVariation(t *testing.T) {
 					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
-					context.Background(),
+					ctx,
 					user.User,
 					res.Evaluation,
 				)
