@@ -28,5 +28,7 @@ func (c perRPCCredentials) RequireTransportSecurity() bool {
 }
 
 func newTransportCredentials() credentials.TransportCredentials {
-	return credentials.NewTLS(&tls.Config{})
+	return credentials.NewTLS(&tls.Config{
+		MinVersion: tls.VersionTLS12,
+	})
 }
