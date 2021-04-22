@@ -21,4 +21,5 @@ linters:
     - gofmt
     - goimports
     - golint
+    - gosec
     - lll
