@@ -10,16 +10,23 @@ import (
 	"go.opencensus.io/tag"
 )
 
-
 var (
 	registerOnce sync.Once
-	latencyMs    = stats.Int64("bucketeer_latency_distribution", "bucketeer api latency in milliseconds", stats.UnitMilliseconds)
-	counter      = stats.Int64("bucketeer_call_count", "bucketeer api call count", stats.UnitDimensionless)
+	latencyMs    = stats.Int64(
+		"bucketeer_go_server_sdk_get_evaluation_latency_distribution",
+		"Get evaluation latency in milliseconds",
+		stats.UnitMilliseconds,
+	)
+	counter = stats.Int64(
+		"bucketeer_go_server_sdk_get_evaluation_call_count",
+		"Get evaluation call count",
+		stats.UnitDimensionless,
+	)
 )
 
 var (
-	KeyFeatureID  = tag.MustNewKey("featureID")
-	KeyStatus = tag.MustNewKey("status")
+	keyFeatureID = tag.MustNewKey("featureID")
+	keyStatus    = tag.MustNewKey("status")
 )
 
 func RegisterMetrics() error {
@@ -28,14 +35,14 @@ func RegisterMetrics() error {
 			Name:        latencyMs.Name(),
 			Measure:     latencyMs,
 			Description: latencyMs.Description(),
-			TagKeys:     []tag.Key{KeyFeatureID, KeyStatus},
+			TagKeys:     []tag.Key{keyFeatureID, keyStatus},
 			Aggregation: newLatencyDistribution(),
 		},
 		{
 			Name:        counter.Name(),
 			Measure:     counter,
 			Description: counter.Description(),
-			TagKeys:     []tag.Key{KeyFeatureID, KeyStatus},
+			TagKeys:     []tag.Key{keyFeatureID, keyStatus},
 			Aggregation: view.Count(),
 		},
 	}
@@ -54,10 +61,10 @@ func count(ctx context.Context) {
 	stats.Record(ctx, counter.M(1))
 }
 
-func NewContext(ctx context.Context, featureID string) (context.Context, error) {
+func newMetricsContext(ctx context.Context, mutators []tag.Mutator) (context.Context, error) {
 	return tag.New(
 		ctx,
-		tag.Insert(KeyFeatureID, featureID),
+		mutators...,
 	)
 }
 

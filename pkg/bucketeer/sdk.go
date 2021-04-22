@@ -219,21 +219,6 @@ func (s *sdk) JSONVariation(ctx context.Context, user *User, featureID string, d
 }
 
 func (s *sdk) getEvaluation(ctx context.Context, user *User, featureID string) (*protofeature.Evaluation, error) {
-	ctx, err := NewContext(ctx, featureID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to generate new context: %w", err)
-	}
-	reqStart := time.Now()
-	defer func() {
-		state := status.Code(err).String()
-		ctx, err := tag.New(ctx, tag.Insert(KeyStatus, state))
-		if err != nil {
-			return
-		}
-
-		count(ctx)
-		measure(ctx, time.Since(reqStart))
-	}()
 	if !user.Valid() {
 		return nil, fmt.Errorf("invalid user: %v", user)
 	}
@@ -242,9 +227,41 @@ func (s *sdk) getEvaluation(ctx context.Context, user *User, featureID string) (
 		User:      user.User,
 		FeatureId: featureID,
 	}
+	res, err := s.callGetEvaluationAPI(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to call get evaluation api: %w", err)
+	}
+	if err := s.validateGetEvaluationResponse(res, featureID); err != nil {
+		return nil, fmt.Errorf("invalid get evaluation response: %w", err)
+	}
+	return res.Evaluation, nil
+}
+
+func (s *sdk) callGetEvaluationAPI(
+	ctx context.Context,
+	req *protogateway.GetEvaluationRequest,
+) (*protogateway.GetEvaluationResponse, error) {
+	var gserr error
+	reqStart := time.Now()
+	defer func() {
+		state := status.Code(gserr).String()
+		mutators := []tag.Mutator{
+			tag.Insert(keyFeatureID, req.FeatureId),
+			tag.Insert(keyStatus, state),
+		}
+		ctx, err := newMetricsContext(ctx, mutators)
+		if err != nil {
+			return
+		}
+
+		count(ctx)
+		measure(ctx, time.Since(reqStart))
+	}()
+
 	res, err := s.apiClient.GetEvaluation(ctx, req)
 	if err != nil || res == nil {
-		if status.Code(err) == codes.DeadlineExceeded {
+		gserr = err // set gRPC status error
+		if status.Code(gserr) == codes.DeadlineExceeded {
 			s.eventProcessor.PushTimeoutErrorCountMetricsEvent(ctx, s.tag)
 		} else {
 			s.eventProcessor.PushInternalErrorCountMetricsEvent(ctx, s.tag)
@@ -253,10 +270,7 @@ func (s *sdk) getEvaluation(ctx context.Context, user *User, featureID string) (
 	}
 	s.eventProcessor.PushGetEvaluationLatencyMetricsEvent(ctx, time.Since(reqStart), s.tag)
 	s.eventProcessor.PushGetEvaluationSizeMetricsEvent(ctx, proto.Size(res), s.tag)
-	if err := s.validateGetEvaluationResponse(res, featureID); err != nil {
-		return nil, fmt.Errorf("invalid get evaluation response: %w", err)
-	}
-	return res.Evaluation, nil
+	return res, nil
 }
 
 // Require res is not nil.
