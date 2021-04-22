@@ -29,6 +29,11 @@ var (
 	keyStatus    = tag.MustNewKey("status")
 )
 
+// RegisterMetrics begins collecting data for the OpenCensus views.
+//
+// NOTE: Currently, we only support OpenCensus to provide metrics,
+// but we would support other libraries if there is a demand.
+// In that time, we will add a breaking change to support them.
 func RegisterMetrics() error {
 	views := []*view.View{
 		{
