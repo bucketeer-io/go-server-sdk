@@ -7,7 +7,6 @@ import (
 
 	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
@@ -30,7 +29,7 @@ func TestGetEvaluation(t *testing.T) {
 		FeatureId: featureID,
 	}
 	res, err := client.GetEvaluation(ctx, req)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Equal(t, featureID, res.Evaluation.FeatureId)
 	assert.Equal(t, featureIDVariation2, res.Evaluation.Variation.Value)
 }
@@ -51,7 +50,7 @@ func TestRegisterEvents(t *testing.T) {
 		User:           user.User,
 		Reason:         &protofeature.Reason{Type: protofeature.Reason_CLIENT},
 	})
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	goalEvent, err := ptypes.MarshalAny(&protoevent.GoalEvent{
 		Timestamp: time.Now().Unix(),
 		GoalId:    goalID,
@@ -72,7 +71,7 @@ func TestRegisterEvents(t *testing.T) {
 		},
 	}
 	res, err := client.RegisterEvents(ctx, req)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	assert.Len(t, res.Errors, 0)
 }
 
@@ -86,13 +85,13 @@ func newAPIClient(t *testing.T) api.Client {
 		Port:   *port,
 	}
 	client, err := api.NewClient(ctx, conf)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	return client
 }
 
 func newUUID(t *testing.T) string {
 	t.Helper()
 	id, err := uuid.NewV4()
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	return id.String()
 }

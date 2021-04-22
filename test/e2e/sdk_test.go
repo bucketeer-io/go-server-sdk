@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer"
 )
@@ -65,7 +64,7 @@ func newSDK(t *testing.T, ctx context.Context) bucketeer.SDK {
 		bucketeer.WithEventFlushSize(5),
 		bucketeer.WithEnableDebugLog(true),
 	)
-	require.NoError(t, err)
+	assert.NoError(t, err)
 	return sdk
 }
 
