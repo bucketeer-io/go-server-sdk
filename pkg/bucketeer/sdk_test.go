@@ -653,6 +653,28 @@ func TestGetEvaluation(t *testing.T) {
 			isErr:         true,
 		},
 		{
+			desc: "invalid get evaluation res: res is nil",
+			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
+				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
+				var res *protogateway.GetEvaluationResponse
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(ctx, req).Return(res, nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
+					ctx,
+					gomock.Any(), // duration
+					sdkTag,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
+					ctx,
+					proto.Size(res),
+					sdkTag,
+				)
+			},
+			user:          newUser(t, sdkUserID),
+			featureID:     sdkFeatureID,
+			expectedValue: "",
+			isErr:         true,
+		},
+		{
 			desc: "invalid get evaluation res: evaluation is nil",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
