@@ -5,9 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"go.opencensus.io/tag"
 	"strconv"
 	"time"
+
+	"go.opencensus.io/tag"
 
 	"github.com/golang/protobuf/proto" // nolint:staticcheck
 	"google.golang.org/grpc/codes"

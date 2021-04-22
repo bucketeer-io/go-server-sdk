@@ -2,10 +2,11 @@ package bucketeer
 
 import (
 	"context"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/tag"
-	"testing"
 )
 
 func TestRegisterMetrics(t *testing.T) {
@@ -26,7 +27,7 @@ func TestNewMetricsContext(t *testing.T) {
 	assert.Equal(t, expectedCtx, ctx)
 }
 
-func TestNewLatencyDistribution(t *testing.T){
+func TestNewLatencyDistribution(t *testing.T) {
 	expected := view.Distribution(25, 50, 100, 200, 400, 800, 1600, 3200, 6400).Buckets
 	assert.Equal(t, expected, newLatencyDistribution().Buckets)
 }
