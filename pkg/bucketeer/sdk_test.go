@@ -720,11 +720,10 @@ func TestGetEvaluation(t *testing.T) {
 			isErr:         true,
 		},
 		{
-			desc: "invalid get evaluation res: variation is nil",
+			desc: "invalid get evaluation res: variation value is empty",
 			setup: func(ctx context.Context, s *sdk, user *User, featureID string) {
 				req := &protogateway.GetEvaluationRequest{Tag: sdkTag, User: user.User, FeatureId: featureID}
-				res := newGetEvaluationResponse(t, featureID, "value")
-				res.Evaluation.Variation = nil
+				res := newGetEvaluationResponse(t, featureID, "")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(ctx, req).Return(res, nil)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
 					ctx,
@@ -781,7 +780,7 @@ func TestGetEvaluation(t *testing.T) {
 				assert.Nil(t, actual)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, tt.expectedValue, actual.Variation.Value)
+				assert.Equal(t, tt.expectedValue, actual.VariationValue)
 			}
 		})
 	}
@@ -943,8 +942,8 @@ func newGetEvaluationResponse(t *testing.T, featureID, value string) *protogatew
 	t.Helper()
 	return &protogateway.GetEvaluationResponse{
 		Evaluation: &protofeature.Evaluation{
-			FeatureId: featureID,
-			Variation: &protofeature.Variation{Value: value},
+			FeatureId:      featureID,
+			VariationValue: value,
 		},
 	}
 }

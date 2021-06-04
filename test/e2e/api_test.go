@@ -31,7 +31,7 @@ func TestGetEvaluation(t *testing.T) {
 	res, err := client.GetEvaluation(ctx, req)
 	assert.NoError(t, err)
 	assert.Equal(t, featureID, res.Evaluation.FeatureId)
-	assert.Equal(t, featureIDVariation2, res.Evaluation.Variation.Value)
+	assert.Equal(t, featureIDVariation2, res.Evaluation.VariationValue)
 }
 
 func TestRegisterEvents(t *testing.T) {
