@@ -39,39 +39,39 @@ func (m *MockProcessor) EXPECT() *MockProcessorMockRecorder {
 }
 
 // PushEvaluationEvent mocks base method
-func (m *MockProcessor) PushEvaluationEvent(ctx context.Context, user *user.User, evaluation *feature.Evaluation) {
+func (m *MockProcessor) PushEvaluationEvent(ctx context.Context, user *user.User, evaluation *feature.Evaluation, tag string) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PushEvaluationEvent", ctx, user, evaluation)
+	m.ctrl.Call(m, "PushEvaluationEvent", ctx, user, evaluation, tag)
 }
 
 // PushEvaluationEvent indicates an expected call of PushEvaluationEvent
-func (mr *MockProcessorMockRecorder) PushEvaluationEvent(ctx, user, evaluation interface{}) *gomock.Call {
+func (mr *MockProcessorMockRecorder) PushEvaluationEvent(ctx, user, evaluation, tag interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushEvaluationEvent", reflect.TypeOf((*MockProcessor)(nil).PushEvaluationEvent), ctx, user, evaluation)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushEvaluationEvent", reflect.TypeOf((*MockProcessor)(nil).PushEvaluationEvent), ctx, user, evaluation, tag)
 }
 
 // PushDefaultEvaluationEvent mocks base method
-func (m *MockProcessor) PushDefaultEvaluationEvent(ctx context.Context, user *user.User, featureID string) {
+func (m *MockProcessor) PushDefaultEvaluationEvent(ctx context.Context, user *user.User, featureID, tag string) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PushDefaultEvaluationEvent", ctx, user, featureID)
+	m.ctrl.Call(m, "PushDefaultEvaluationEvent", ctx, user, featureID, tag)
 }
 
 // PushDefaultEvaluationEvent indicates an expected call of PushDefaultEvaluationEvent
-func (mr *MockProcessorMockRecorder) PushDefaultEvaluationEvent(ctx, user, featureID interface{}) *gomock.Call {
+func (mr *MockProcessorMockRecorder) PushDefaultEvaluationEvent(ctx, user, featureID, tag interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushDefaultEvaluationEvent", reflect.TypeOf((*MockProcessor)(nil).PushDefaultEvaluationEvent), ctx, user, featureID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushDefaultEvaluationEvent", reflect.TypeOf((*MockProcessor)(nil).PushDefaultEvaluationEvent), ctx, user, featureID, tag)
 }
 
 // PushGoalEvent mocks base method
-func (m *MockProcessor) PushGoalEvent(ctx context.Context, user *user.User, goalID string, value float64) {
+func (m *MockProcessor) PushGoalEvent(ctx context.Context, user *user.User, goalID string, value float64, tag string) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PushGoalEvent", ctx, user, goalID, value)
+	m.ctrl.Call(m, "PushGoalEvent", ctx, user, goalID, value, tag)
 }
 
 // PushGoalEvent indicates an expected call of PushGoalEvent
-func (mr *MockProcessorMockRecorder) PushGoalEvent(ctx, user, goalID, value interface{}) *gomock.Call {
+func (mr *MockProcessorMockRecorder) PushGoalEvent(ctx, user, goalID, value, tag interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushGoalEvent", reflect.TypeOf((*MockProcessor)(nil).PushGoalEvent), ctx, user, goalID, value)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushGoalEvent", reflect.TypeOf((*MockProcessor)(nil).PushGoalEvent), ctx, user, goalID, value, tag)
 }
 
 // PushGetEvaluationLatencyMetricsEvent mocks base method

@@ -16,6 +16,7 @@ import (
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/event"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
+	protoevent "github.com/ca-dp/bucketeer-go-server-sdk/proto/event/client"
 	protofeature "github.com/ca-dp/bucketeer-go-server-sdk/proto/feature"
 	protogateway "github.com/ca-dp/bucketeer-go-server-sdk/proto/gateway"
 )
@@ -121,17 +122,17 @@ func (s *sdk) BoolVariation(ctx context.Context, user *User, featureID string, d
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
 		s.logVariationError(err, "BoolVariation", user.Id, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID, s.tag)
 		return defaultValue
 	}
 	variation := evaluation.VariationValue
 	v, err := strconv.ParseBool(variation)
 	if err != nil {
 		s.logVariationError(err, "BoolVariation", user.Id, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID, s.tag)
 		return defaultValue
 	}
-	s.eventProcessor.PushEvaluationEvent(ctx, user.User, evaluation)
+	s.eventProcessor.PushEvaluationEvent(ctx, user.User, evaluation, s.tag)
 	return v
 }
 
@@ -139,17 +140,17 @@ func (s *sdk) IntVariation(ctx context.Context, user *User, featureID string, de
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
 		s.logVariationError(err, "IntVariation", user.Id, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID, s.tag)
 		return defaultValue
 	}
 	variation := evaluation.VariationValue
 	v, err := strconv.ParseInt(variation, 10, 64)
 	if err != nil {
 		s.logVariationError(err, "IntVariation", user.Id, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID, s.tag)
 		return defaultValue
 	}
-	s.eventProcessor.PushEvaluationEvent(ctx, user.User, evaluation)
+	s.eventProcessor.PushEvaluationEvent(ctx, user.User, evaluation, s.tag)
 	return int(v)
 }
 
@@ -157,17 +158,17 @@ func (s *sdk) Int64Variation(ctx context.Context, user *User, featureID string, 
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
 		s.logVariationError(err, "Int64Variation", user.Id, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID, s.tag)
 		return defaultValue
 	}
 	variation := evaluation.VariationValue
 	v, err := strconv.ParseInt(variation, 10, 64)
 	if err != nil {
 		s.logVariationError(err, "Int64Variation", user.Id, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID, s.tag)
 		return defaultValue
 	}
-	s.eventProcessor.PushEvaluationEvent(ctx, user.User, evaluation)
+	s.eventProcessor.PushEvaluationEvent(ctx, user.User, evaluation, s.tag)
 	return v
 }
 
@@ -175,17 +176,17 @@ func (s *sdk) Float64Variation(ctx context.Context, user *User, featureID string
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
 		s.logVariationError(err, "Float64Variation", user.Id, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID, s.tag)
 		return defaultValue
 	}
 	variation := evaluation.VariationValue
 	v, err := strconv.ParseFloat(variation, 64)
 	if err != nil {
 		s.logVariationError(err, "Float64Variation", user.Id, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID, s.tag)
 		return defaultValue
 	}
-	s.eventProcessor.PushEvaluationEvent(ctx, user.User, evaluation)
+	s.eventProcessor.PushEvaluationEvent(ctx, user.User, evaluation, s.tag)
 	return v
 }
 
@@ -193,11 +194,11 @@ func (s *sdk) StringVariation(ctx context.Context, user *User, featureID, defaul
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
 		s.logVariationError(err, "StringVariation", user.Id, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID, s.tag)
 		return defaultValue
 	}
 	variation := evaluation.VariationValue
-	s.eventProcessor.PushEvaluationEvent(ctx, user.User, evaluation)
+	s.eventProcessor.PushEvaluationEvent(ctx, user.User, evaluation, s.tag)
 	return variation
 }
 
@@ -205,17 +206,17 @@ func (s *sdk) JSONVariation(ctx context.Context, user *User, featureID string, d
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
 		s.logVariationError(err, "JSONVariation", user.Id, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID, s.tag)
 		return
 	}
 	variation := evaluation.VariationValue
 	err = json.Unmarshal([]byte(variation), dst)
 	if err != nil {
 		s.logVariationError(err, "JSONVariation", user.Id, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID, s.tag)
 		return
 	}
-	s.eventProcessor.PushEvaluationEvent(ctx, user.User, evaluation)
+	s.eventProcessor.PushEvaluationEvent(ctx, user.User, evaluation, s.tag)
 }
 
 func (s *sdk) getEvaluation(ctx context.Context, user *User, featureID string) (*protofeature.Evaluation, error) {
@@ -226,6 +227,7 @@ func (s *sdk) getEvaluation(ctx context.Context, user *User, featureID string) (
 		Tag:       s.tag,
 		User:      user.User,
 		FeatureId: featureID,
+		SourceId:  protoevent.SourceId_GO_SERVER,
 	}
 	res, err := s.callGetEvaluationAPI(ctx, req)
 	if err != nil {
@@ -316,7 +318,7 @@ func (s *sdk) TrackValue(ctx context.Context, user *User, goalID string, value f
 		)
 		return
 	}
-	s.eventProcessor.PushGoalEvent(ctx, user.User, goalID, value)
+	s.eventProcessor.PushGoalEvent(ctx, user.User, goalID, value, s.tag)
 }
 
 func (s *sdk) Close(ctx context.Context) error {

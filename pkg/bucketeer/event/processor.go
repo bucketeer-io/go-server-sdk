@@ -28,13 +28,13 @@ import (
 // every time the specified time elapses or the specified capacity is exceeded.
 type Processor interface {
 	// PushEvaluationEvent pushes the evaluation event to the queue.
-	PushEvaluationEvent(ctx context.Context, user *protouser.User, evaluation *protofeature.Evaluation)
+	PushEvaluationEvent(ctx context.Context, user *protouser.User, evaluation *protofeature.Evaluation, tag string)
 
 	// PushDefaultEvaluationEvent pushes the default evaluation event to the queue.
-	PushDefaultEvaluationEvent(ctx context.Context, user *protouser.User, featureID string)
+	PushDefaultEvaluationEvent(ctx context.Context, user *protouser.User, featureID string, tag string)
 
 	// PushGoalEvent pushes the goal event to the queue.
-	PushGoalEvent(ctx context.Context, user *protouser.User, goalID string, value float64)
+	PushGoalEvent(ctx context.Context, user *protouser.User, goalID string, value float64, tag string)
 
 	// PushGetEvaluationLatencyMetricsEvent pushes the get evaluation latency metrics event to the queue.
 	PushGetEvaluationLatencyMetricsEvent(ctx context.Context, duration time.Duration, tag string)
@@ -118,8 +118,11 @@ func (p *processor) PushEvaluationEvent(
 	ctx context.Context,
 	user *protouser.User,
 	evaluation *protofeature.Evaluation,
+	tag string,
 ) {
 	evaluationEvt := &protoevent.EvaluationEvent{
+		SourceId:       protoevent.SourceId_GO_SERVER,
+		Tag:            tag,
 		Timestamp:      time.Now().Unix(),
 		FeatureId:      evaluation.FeatureId,
 		FeatureVersion: evaluation.FeatureVersion,
@@ -149,8 +152,10 @@ func (p *processor) PushEvaluationEvent(
 	}
 }
 
-func (p *processor) PushDefaultEvaluationEvent(ctx context.Context, user *protouser.User, featureID string) {
+func (p *processor) PushDefaultEvaluationEvent(ctx context.Context, user *protouser.User, featureID, tag string) {
 	evaluationEvt := &protoevent.EvaluationEvent{
+		SourceId:       protoevent.SourceId_GO_SERVER,
+		Tag:            tag,
 		Timestamp:      time.Now().Unix(),
 		FeatureId:      featureID,
 		FeatureVersion: 0,
@@ -180,8 +185,10 @@ func (p *processor) PushDefaultEvaluationEvent(ctx context.Context, user *protou
 	}
 }
 
-func (p *processor) PushGoalEvent(ctx context.Context, user *protouser.User, goalID string, value float64) {
+func (p *processor) PushGoalEvent(ctx context.Context, user *protouser.User, goalID string, value float64, tag string) {
 	goalEvt := &protoevent.GoalEvent{
+		SourceId:  protoevent.SourceId_GO_SERVER,
+		Tag:       tag,
 		Timestamp: time.Now().Unix(),
 		GoalId:    goalID,
 		UserId:    user.Id,

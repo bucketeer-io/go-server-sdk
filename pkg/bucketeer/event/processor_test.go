@@ -33,7 +33,7 @@ func TestPushEvaluationEvent(t *testing.T) {
 	p := newProcessorForTestPushEvent(t, 10)
 	user := newUser(t, processorUserID)
 	evaluation := newEvaluation(t, processorFeatureID, processorVariationID)
-	p.PushEvaluationEvent(context.Background(), user, evaluation)
+	p.PushEvaluationEvent(context.Background(), user, evaluation, processorTag)
 	evt := <-p.evtQueue.eventCh()
 	evalationEvt := &protoevent.EvaluationEvent{}
 	err := ptypes.UnmarshalAny(evt.Event, evalationEvt)
@@ -44,7 +44,7 @@ func TestPushDefaultEvaluationEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	user := newUser(t, processorUserID)
-	p.PushDefaultEvaluationEvent(context.Background(), user, processorFeatureID)
+	p.PushDefaultEvaluationEvent(context.Background(), user, processorFeatureID, processorTag)
 	evt := <-p.evtQueue.eventCh()
 	evalationEvt := &protoevent.EvaluationEvent{}
 	err := ptypes.UnmarshalAny(evt.Event, evalationEvt)
@@ -55,7 +55,7 @@ func TestPushGoalEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	user := newUser(t, processorUserID)
-	p.PushGoalEvent(context.Background(), user, processorGoalID, 1.1)
+	p.PushGoalEvent(context.Background(), user, processorGoalID, 1.1, processorTag)
 	evt := <-p.evtQueue.eventCh()
 	goalEvt := &protoevent.GoalEvent{}
 	err := ptypes.UnmarshalAny(evt.Event, goalEvt)
