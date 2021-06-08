@@ -16,6 +16,7 @@ import (
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/event"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
+	protoevent "github.com/ca-dp/bucketeer-go-server-sdk/proto/event/client"
 	protofeature "github.com/ca-dp/bucketeer-go-server-sdk/proto/feature"
 	protogateway "github.com/ca-dp/bucketeer-go-server-sdk/proto/gateway"
 )
@@ -107,6 +108,7 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		FlushSize:       dopts.eventFlushSize,
 		APIClient:       client,
 		Loggers:         loggers,
+		Tag:             dopts.tag,
 	}
 	processor := event.NewProcessor(processorConf)
 	return &sdk{
@@ -226,6 +228,7 @@ func (s *sdk) getEvaluation(ctx context.Context, user *User, featureID string) (
 		Tag:       s.tag,
 		User:      user.User,
 		FeatureId: featureID,
+		SourceId:  protoevent.SourceId_GO_SERVER,
 	}
 	res, err := s.callGetEvaluationAPI(ctx, req)
 	if err != nil {
@@ -262,14 +265,14 @@ func (s *sdk) callGetEvaluationAPI(
 	if err != nil {
 		gserr = err // set gRPC status error
 		if status.Code(gserr) == codes.DeadlineExceeded {
-			s.eventProcessor.PushTimeoutErrorCountMetricsEvent(ctx, s.tag)
+			s.eventProcessor.PushTimeoutErrorCountMetricsEvent(ctx)
 		} else {
-			s.eventProcessor.PushInternalErrorCountMetricsEvent(ctx, s.tag)
+			s.eventProcessor.PushInternalErrorCountMetricsEvent(ctx)
 		}
 		return nil, fmt.Errorf("failed to get evaluation: %w", err)
 	}
-	s.eventProcessor.PushGetEvaluationLatencyMetricsEvent(ctx, time.Since(reqStart), s.tag)
-	s.eventProcessor.PushGetEvaluationSizeMetricsEvent(ctx, proto.Size(res), s.tag)
+	s.eventProcessor.PushGetEvaluationLatencyMetricsEvent(ctx, time.Since(reqStart))
+	s.eventProcessor.PushGetEvaluationSizeMetricsEvent(ctx, proto.Size(res))
 	return res, nil
 }
 
