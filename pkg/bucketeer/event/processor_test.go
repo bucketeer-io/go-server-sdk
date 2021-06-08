@@ -21,7 +21,6 @@ import (
 )
 
 const (
-	processorTag         = "go-server"
 	processorUserID      = "user-id"
 	processorFeatureID   = "feature-id"
 	processorVariationID = "variation-id"
@@ -33,7 +32,7 @@ func TestPushEvaluationEvent(t *testing.T) {
 	p := newProcessorForTestPushEvent(t, 10)
 	user := newUser(t, processorUserID)
 	evaluation := newEvaluation(t, processorFeatureID, processorVariationID)
-	p.PushEvaluationEvent(context.Background(), user, evaluation, processorTag)
+	p.PushEvaluationEvent(context.Background(), user, evaluation)
 	evt := <-p.evtQueue.eventCh()
 	evalationEvt := &protoevent.EvaluationEvent{}
 	err := ptypes.UnmarshalAny(evt.Event, evalationEvt)
@@ -44,7 +43,7 @@ func TestPushDefaultEvaluationEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	user := newUser(t, processorUserID)
-	p.PushDefaultEvaluationEvent(context.Background(), user, processorFeatureID, processorTag)
+	p.PushDefaultEvaluationEvent(context.Background(), user, processorFeatureID)
 	evt := <-p.evtQueue.eventCh()
 	evalationEvt := &protoevent.EvaluationEvent{}
 	err := ptypes.UnmarshalAny(evt.Event, evalationEvt)
@@ -55,7 +54,7 @@ func TestPushGoalEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	user := newUser(t, processorUserID)
-	p.PushGoalEvent(context.Background(), user, processorGoalID, 1.1, processorTag)
+	p.PushGoalEvent(context.Background(), user, processorGoalID, 1.1)
 	evt := <-p.evtQueue.eventCh()
 	goalEvt := &protoevent.GoalEvent{}
 	err := ptypes.UnmarshalAny(evt.Event, goalEvt)
@@ -65,7 +64,7 @@ func TestPushGoalEvent(t *testing.T) {
 func TestPushGetEvaluationLatencyMetricsEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.PushGetEvaluationLatencyMetricsEvent(context.Background(), time.Duration(1), processorTag)
+	p.PushGetEvaluationLatencyMetricsEvent(context.Background(), time.Duration(1))
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &protoevent.MetricsEvent{}
 	err := ptypes.UnmarshalAny(evt.Event, metricsEvt)
@@ -78,7 +77,7 @@ func TestPushGetEvaluationLatencyMetricsEvent(t *testing.T) {
 func TestPushGetEvaluationSizeMetricsEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.PushGetEvaluationSizeMetricsEvent(context.Background(), 1, processorTag)
+	p.PushGetEvaluationSizeMetricsEvent(context.Background(), 1)
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &protoevent.MetricsEvent{}
 	err := ptypes.UnmarshalAny(evt.Event, metricsEvt)
@@ -91,7 +90,7 @@ func TestPushGetEvaluationSizeMetricsEvent(t *testing.T) {
 func TestPushTimeoutErrorCountMetricsEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.PushTimeoutErrorCountMetricsEvent(context.Background(), processorTag)
+	p.PushTimeoutErrorCountMetricsEvent(context.Background())
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &protoevent.MetricsEvent{}
 	err := ptypes.UnmarshalAny(evt.Event, metricsEvt)
@@ -104,7 +103,7 @@ func TestPushTimeoutErrorCountMetricsEvent(t *testing.T) {
 func TestPushInternalErrorCountMetricsEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.PushInternalErrorCountMetricsEvent(context.Background(), processorTag)
+	p.PushInternalErrorCountMetricsEvent(context.Background())
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &protoevent.MetricsEvent{}
 	err := ptypes.UnmarshalAny(evt.Event, metricsEvt)

@@ -51,12 +51,11 @@ func TestBoolVariation(t *testing.T) {
 					nil,
 					status.Error(codes.Internal, "error"),
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx, sdkTag)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
 					user.User,
 					featureID,
-					sdkTag,
 				)
 			},
 			user:         newUser(t, sdkUserID),
@@ -78,18 +77,15 @@ func TestBoolVariation(t *testing.T) {
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
 					proto.Size(res),
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
 					user.User,
 					featureID,
-					sdkTag,
 				)
 			},
 			user:         newUser(t, sdkUserID),
@@ -111,18 +107,15 @@ func TestBoolVariation(t *testing.T) {
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
 					proto.Size(res),
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
 					ctx,
 					user.User,
 					res.Evaluation,
-					sdkTag,
 				)
 			},
 			user:         newUser(t, sdkUserID),
@@ -169,12 +162,11 @@ func TestIntVariation(t *testing.T) {
 					nil,
 					status.Error(codes.Internal, "error"),
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx, sdkTag)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
 					user.User,
 					featureID,
-					sdkTag,
 				)
 			},
 			user:         newUser(t, sdkUserID),
@@ -196,18 +188,15 @@ func TestIntVariation(t *testing.T) {
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
 					proto.Size(res),
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
 					user.User,
 					featureID,
-					sdkTag,
 				)
 			},
 			user:         newUser(t, sdkUserID),
@@ -229,18 +218,15 @@ func TestIntVariation(t *testing.T) {
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
 					proto.Size(res),
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
 					ctx,
 					user.User,
 					res.Evaluation,
-					sdkTag,
 				)
 			},
 			user:         newUser(t, sdkUserID),
@@ -287,12 +273,11 @@ func TestInt64Variation(t *testing.T) {
 					nil,
 					status.Error(codes.Internal, "error"),
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx, sdkTag)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
 					user.User,
 					featureID,
-					sdkTag,
 				)
 			},
 			user:         newUser(t, sdkUserID),
@@ -314,18 +299,15 @@ func TestInt64Variation(t *testing.T) {
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
 					proto.Size(res),
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
 					user.User,
 					featureID,
-					sdkTag,
 				)
 			},
 			user:         newUser(t, sdkUserID),
@@ -347,18 +329,15 @@ func TestInt64Variation(t *testing.T) {
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
 					proto.Size(res),
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
 					ctx,
 					user.User,
 					res.Evaluation,
-					sdkTag,
 				)
 			},
 			user:         newUser(t, sdkUserID),
@@ -405,12 +384,11 @@ func TestFloat64Variation(t *testing.T) {
 					nil,
 					status.Error(codes.Internal, "error"),
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx, sdkTag)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
 					user.User,
 					featureID,
-					sdkTag,
 				)
 			},
 			user:         newUser(t, sdkUserID),
@@ -432,18 +410,15 @@ func TestFloat64Variation(t *testing.T) {
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
 					proto.Size(res),
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
 					user.User,
 					featureID,
-					sdkTag,
 				)
 			},
 			user:         newUser(t, sdkUserID),
@@ -465,18 +440,15 @@ func TestFloat64Variation(t *testing.T) {
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
 					proto.Size(res),
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
 					ctx,
 					user.User,
 					res.Evaluation,
-					sdkTag,
 				)
 			},
 			user:         newUser(t, sdkUserID),
@@ -523,12 +495,11 @@ func TestStringVariation(t *testing.T) {
 					nil,
 					status.Error(codes.Internal, "error"),
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx, sdkTag)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
 					user.User,
 					featureID,
-					sdkTag,
 				)
 			},
 			user:         newUser(t, sdkUserID),
@@ -550,18 +521,15 @@ func TestStringVariation(t *testing.T) {
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
 					proto.Size(res),
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
 					ctx,
 					user.User,
 					res.Evaluation,
-					sdkTag,
 				)
 			},
 			user:         newUser(t, sdkUserID),
@@ -612,12 +580,11 @@ func TestJSONVariation(t *testing.T) {
 					nil,
 					status.Error(codes.Internal, "error"),
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx, sdkTag)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
 					user.User,
 					featureID,
-					sdkTag,
 				)
 			},
 			user:      newUser(t, sdkUserID),
@@ -639,18 +606,15 @@ func TestJSONVariation(t *testing.T) {
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
 					proto.Size(res),
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
 					user.User,
 					featureID,
-					sdkTag,
 				)
 			},
 			user:      newUser(t, sdkUserID),
@@ -672,18 +636,15 @@ func TestJSONVariation(t *testing.T) {
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
 					proto.Size(res),
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
 					ctx,
 					user.User,
 					res.Evaluation,
-					sdkTag,
 				)
 			},
 			user:      newUser(t, sdkUserID),
@@ -738,7 +699,7 @@ func TestGetEvaluation(t *testing.T) {
 					nil,
 					status.Error(codes.DeadlineExceeded, "error"),
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushTimeoutErrorCountMetricsEvent(ctx, sdkTag)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushTimeoutErrorCountMetricsEvent(ctx)
 			},
 			user:          newUser(t, sdkUserID),
 			featureID:     sdkFeatureID,
@@ -758,7 +719,7 @@ func TestGetEvaluation(t *testing.T) {
 					nil,
 					status.Error(codes.Internal, "error"),
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx, sdkTag)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx)
 			},
 			user:          newUser(t, sdkUserID),
 			featureID:     sdkFeatureID,
@@ -779,12 +740,10 @@ func TestGetEvaluation(t *testing.T) {
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
 					proto.Size(res),
-					sdkTag,
 				)
 			},
 			user:          newUser(t, sdkUserID),
@@ -807,12 +766,10 @@ func TestGetEvaluation(t *testing.T) {
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
 					proto.Size(res),
-					sdkTag,
 				)
 			},
 			user:          newUser(t, sdkUserID),
@@ -834,12 +791,10 @@ func TestGetEvaluation(t *testing.T) {
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
 					proto.Size(res),
-					sdkTag,
 				)
 			},
 			user:          newUser(t, sdkUserID),
@@ -861,12 +816,10 @@ func TestGetEvaluation(t *testing.T) {
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
 					proto.Size(res),
-					sdkTag,
 				)
 			},
 			user:          newUser(t, sdkUserID),
@@ -891,12 +844,10 @@ func TestGetEvaluation(t *testing.T) {
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
-					sdkTag,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
 					proto.Size(res),
-					sdkTag,
 				)
 			},
 			user:          newUser(t, sdkUserID),
@@ -941,7 +892,6 @@ func TestTrack(t *testing.T) {
 					user.User,
 					sdkGoalID,
 					0.0,
-					sdkTag,
 				).Times(0)
 			},
 			user: newUser(t, ""),
@@ -954,7 +904,6 @@ func TestTrack(t *testing.T) {
 					user.User,
 					sdkGoalID,
 					0.0,
-					sdkTag,
 				)
 			},
 			user: newUser(t, sdkUserID),
@@ -990,7 +939,6 @@ func TestTrackValue(t *testing.T) {
 					user.User,
 					sdkGoalID,
 					value,
-					sdkTag,
 				).Times(0)
 			},
 			user: newUser(t, ""),
@@ -1003,7 +951,6 @@ func TestTrackValue(t *testing.T) {
 					user.User,
 					sdkGoalID,
 					value,
-					sdkTag,
 				)
 			},
 			user: newUser(t, sdkUserID),
