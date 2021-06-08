@@ -124,7 +124,7 @@ func (s *sdk) BoolVariation(ctx context.Context, user *User, featureID string, d
 		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
 		return defaultValue
 	}
-	variation := evaluation.Variation.Value
+	variation := evaluation.VariationValue
 	v, err := strconv.ParseBool(variation)
 	if err != nil {
 		s.logVariationError(err, "BoolVariation", user.Id, featureID)
@@ -142,7 +142,7 @@ func (s *sdk) IntVariation(ctx context.Context, user *User, featureID string, de
 		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
 		return defaultValue
 	}
-	variation := evaluation.Variation.Value
+	variation := evaluation.VariationValue
 	v, err := strconv.ParseInt(variation, 10, 64)
 	if err != nil {
 		s.logVariationError(err, "IntVariation", user.Id, featureID)
@@ -160,7 +160,7 @@ func (s *sdk) Int64Variation(ctx context.Context, user *User, featureID string, 
 		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
 		return defaultValue
 	}
-	variation := evaluation.Variation.Value
+	variation := evaluation.VariationValue
 	v, err := strconv.ParseInt(variation, 10, 64)
 	if err != nil {
 		s.logVariationError(err, "Int64Variation", user.Id, featureID)
@@ -178,7 +178,7 @@ func (s *sdk) Float64Variation(ctx context.Context, user *User, featureID string
 		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
 		return defaultValue
 	}
-	variation := evaluation.Variation.Value
+	variation := evaluation.VariationValue
 	v, err := strconv.ParseFloat(variation, 64)
 	if err != nil {
 		s.logVariationError(err, "Float64Variation", user.Id, featureID)
@@ -196,7 +196,7 @@ func (s *sdk) StringVariation(ctx context.Context, user *User, featureID, defaul
 		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
 		return defaultValue
 	}
-	variation := evaluation.Variation.Value
+	variation := evaluation.VariationValue
 	s.eventProcessor.PushEvaluationEvent(ctx, user.User, evaluation)
 	return variation
 }
@@ -208,7 +208,7 @@ func (s *sdk) JSONVariation(ctx context.Context, user *User, featureID string, d
 		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
 		return
 	}
-	variation := evaluation.Variation.Value
+	variation := evaluation.VariationValue
 	err = json.Unmarshal([]byte(variation), dst)
 	if err != nil {
 		s.logVariationError(err, "JSONVariation", user.Id, featureID)
@@ -287,8 +287,8 @@ func (s *sdk) validateGetEvaluationResponse(res *protogateway.GetEvaluationRespo
 			featureID,
 		)
 	}
-	if res.Evaluation.Variation == nil {
-		return errors.New("variation is nil")
+	if res.Evaluation.VariationValue == "" {
+		return errors.New("variation value is empty")
 	}
 	return nil
 }
