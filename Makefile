@@ -22,6 +22,7 @@ deps:
 .PHONY: mockgen
 mockgen:
 	go generate -run="mockgen" ./pkg/...
+	make fmt
 
 .PHONY: fmt
 fmt:
