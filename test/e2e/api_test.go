@@ -24,6 +24,7 @@ func TestGetEvaluation(t *testing.T) {
 	defer cancel()
 	user := bucketeer.NewUser(userID, nil)
 	req := &protogateway.GetEvaluationRequest{
+		SourceId:  protoevent.SourceId_GO_SERVER,
 		Tag:       tag,
 		User:      user.User,
 		FeatureId: featureID,
@@ -43,6 +44,8 @@ func TestRegisterEvents(t *testing.T) {
 	user := bucketeer.NewUser(userID, nil)
 	evaluationEvent, err := ptypes.MarshalAny(&protoevent.EvaluationEvent{
 		Timestamp:      time.Now().Unix(),
+		SourceId:       protoevent.SourceId_GO_SERVER,
+		Tag:            tag,
 		FeatureId:      featureID,
 		FeatureVersion: 0,
 		UserId:         user.Id,
@@ -53,6 +56,8 @@ func TestRegisterEvents(t *testing.T) {
 	assert.NoError(t, err)
 	goalEvent, err := ptypes.MarshalAny(&protoevent.GoalEvent{
 		Timestamp: time.Now().Unix(),
+		SourceId:  protoevent.SourceId_GO_SERVER,
+		Tag:       tag,
 		GoalId:    goalID,
 		UserId:    user.Id,
 		Value:     0.0,
