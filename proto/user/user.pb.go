@@ -21,12 +21,14 @@ var _ = math.Inf
 const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type User struct {
-	Id                   string            `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Data                 map[string]string `protobuf:"bytes,2,rep,name=data,proto3" json:"data,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	LastSeen             int64             `protobuf:"varint,3,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen,omitempty"` // Deprecated: Do not use.
-	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
-	XXX_unrecognized     []byte            `json:"-"`
-	XXX_sizecache        int32             `json:"-"`
+	Id                   string                `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Data                 map[string]string     `protobuf:"bytes,2,rep,name=data,proto3" json:"data,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	TaggedData           map[string]*User_Data `protobuf:"bytes,3,rep,name=tagged_data,json=taggedData,proto3" json:"tagged_data,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	LastSeen             int64                 `protobuf:"varint,4,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen,omitempty"`
+	CreatedAt            int64                 `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
+	XXX_unrecognized     []byte                `json:"-"`
+	XXX_sizecache        int32                 `json:"-"`
 }
 
 func (m *User) Reset()         { *m = User{} }
@@ -68,7 +70,13 @@ func (m *User) GetData() map[string]string {
 	return nil
 }
 
-// Deprecated: Do not use.
+func (m *User) GetTaggedData() map[string]*User_Data {
+	if m != nil {
+		return m.TaggedData
+	}
+	return nil
+}
+
 func (m *User) GetLastSeen() int64 {
 	if m != nil {
 		return m.LastSeen
@@ -76,168 +84,48 @@ func (m *User) GetLastSeen() int64 {
 	return 0
 }
 
-type UserEntity struct {
-	Id                   string        `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Data                 []*Data       `protobuf:"bytes,2,rep,name=data,proto3" json:"data,omitempty"` // Deprecated: Do not use.
-	LastSeen             int64         `protobuf:"varint,3,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen,omitempty"`
-	TaggedData           []*TaggedData `protobuf:"bytes,4,rep,name=tagged_data,json=taggedData,proto3" json:"tagged_data,omitempty"`
-	CreatedAt            int64         `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
-	XXX_unrecognized     []byte        `json:"-"`
-	XXX_sizecache        int32         `json:"-"`
-}
-
-func (m *UserEntity) Reset()         { *m = UserEntity{} }
-func (m *UserEntity) String() string { return proto.CompactTextString(m) }
-func (*UserEntity) ProtoMessage()    {}
-func (*UserEntity) Descriptor() ([]byte, []int) {
-	return fileDescriptor_9b283a848145d6b7, []int{1}
-}
-
-func (m *UserEntity) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_UserEntity.Unmarshal(m, b)
-}
-func (m *UserEntity) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_UserEntity.Marshal(b, m, deterministic)
-}
-func (m *UserEntity) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UserEntity.Merge(m, src)
-}
-func (m *UserEntity) XXX_Size() int {
-	return xxx_messageInfo_UserEntity.Size(m)
-}
-func (m *UserEntity) XXX_DiscardUnknown() {
-	xxx_messageInfo_UserEntity.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_UserEntity proto.InternalMessageInfo
-
-func (m *UserEntity) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
-// Deprecated: Do not use.
-func (m *UserEntity) GetData() []*Data {
-	if m != nil {
-		return m.Data
-	}
-	return nil
-}
-
-func (m *UserEntity) GetLastSeen() int64 {
-	if m != nil {
-		return m.LastSeen
-	}
-	return 0
-}
-
-func (m *UserEntity) GetTaggedData() []*TaggedData {
-	if m != nil {
-		return m.TaggedData
-	}
-	return nil
-}
-
-func (m *UserEntity) GetCreatedAt() int64 {
+func (m *User) GetCreatedAt() int64 {
 	if m != nil {
 		return m.CreatedAt
 	}
 	return 0
 }
 
-type Data struct {
-	Key                  string   `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
-	Value                string   `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+type User_Data struct {
+	Value                map[string]string `protobuf:"bytes,1,rep,name=value,proto3" json:"value,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
+	XXX_unrecognized     []byte            `json:"-"`
+	XXX_sizecache        int32             `json:"-"`
 }
 
-func (m *Data) Reset()         { *m = Data{} }
-func (m *Data) String() string { return proto.CompactTextString(m) }
-func (*Data) ProtoMessage()    {}
-func (*Data) Descriptor() ([]byte, []int) {
-	return fileDescriptor_9b283a848145d6b7, []int{2}
+func (m *User_Data) Reset()         { *m = User_Data{} }
+func (m *User_Data) String() string { return proto.CompactTextString(m) }
+func (*User_Data) ProtoMessage()    {}
+func (*User_Data) Descriptor() ([]byte, []int) {
+	return fileDescriptor_9b283a848145d6b7, []int{0, 0}
 }
 
-func (m *Data) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Data.Unmarshal(m, b)
+func (m *User_Data) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_User_Data.Unmarshal(m, b)
 }
-func (m *Data) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Data.Marshal(b, m, deterministic)
+func (m *User_Data) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_User_Data.Marshal(b, m, deterministic)
 }
-func (m *Data) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Data.Merge(m, src)
+func (m *User_Data) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_User_Data.Merge(m, src)
 }
-func (m *Data) XXX_Size() int {
-	return xxx_messageInfo_Data.Size(m)
+func (m *User_Data) XXX_Size() int {
+	return xxx_messageInfo_User_Data.Size(m)
 }
-func (m *Data) XXX_DiscardUnknown() {
-	xxx_messageInfo_Data.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Data proto.InternalMessageInfo
-
-func (m *Data) GetKey() string {
-	if m != nil {
-		return m.Key
-	}
-	return ""
+func (m *User_Data) XXX_DiscardUnknown() {
+	xxx_messageInfo_User_Data.DiscardUnknown(m)
 }
 
-func (m *Data) GetValue() string {
+var xxx_messageInfo_User_Data proto.InternalMessageInfo
+
+func (m *User_Data) GetValue() map[string]string {
 	if m != nil {
 		return m.Value
-	}
-	return ""
-}
-
-type TaggedData struct {
-	Tag                  string   `protobuf:"bytes,1,opt,name=tag,proto3" json:"tag,omitempty"`
-	Data                 []*Data  `protobuf:"bytes,2,rep,name=data,proto3" json:"data,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *TaggedData) Reset()         { *m = TaggedData{} }
-func (m *TaggedData) String() string { return proto.CompactTextString(m) }
-func (*TaggedData) ProtoMessage()    {}
-func (*TaggedData) Descriptor() ([]byte, []int) {
-	return fileDescriptor_9b283a848145d6b7, []int{3}
-}
-
-func (m *TaggedData) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_TaggedData.Unmarshal(m, b)
-}
-func (m *TaggedData) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_TaggedData.Marshal(b, m, deterministic)
-}
-func (m *TaggedData) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TaggedData.Merge(m, src)
-}
-func (m *TaggedData) XXX_Size() int {
-	return xxx_messageInfo_TaggedData.Size(m)
-}
-func (m *TaggedData) XXX_DiscardUnknown() {
-	xxx_messageInfo_TaggedData.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_TaggedData proto.InternalMessageInfo
-
-func (m *TaggedData) GetTag() string {
-	if m != nil {
-		return m.Tag
-	}
-	return ""
-}
-
-func (m *TaggedData) GetData() []*Data {
-	if m != nil {
-		return m.Data
 	}
 	return nil
 }
@@ -245,33 +133,32 @@ func (m *TaggedData) GetData() []*Data {
 func init() {
 	proto.RegisterType((*User)(nil), "bucketeer.user.User")
 	proto.RegisterMapType((map[string]string)(nil), "bucketeer.user.User.DataEntry")
-	proto.RegisterType((*UserEntity)(nil), "bucketeer.user.UserEntity")
-	proto.RegisterType((*Data)(nil), "bucketeer.user.Data")
-	proto.RegisterType((*TaggedData)(nil), "bucketeer.user.TaggedData")
+	proto.RegisterMapType((map[string]*User_Data)(nil), "bucketeer.user.User.TaggedDataEntry")
+	proto.RegisterType((*User_Data)(nil), "bucketeer.user.User.Data")
+	proto.RegisterMapType((map[string]string)(nil), "bucketeer.user.User.Data.ValueEntry")
 }
 
 func init() { proto.RegisterFile("proto/user/user.proto", fileDescriptor_9b283a848145d6b7) }
 
 var fileDescriptor_9b283a848145d6b7 = []byte{
-	// 316 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x52, 0xcf, 0x4a, 0xf3, 0x40,
-	0x10, 0x67, 0x93, 0xf4, 0xe3, 0xcb, 0x14, 0x8a, 0x2c, 0x15, 0x42, 0x45, 0x2d, 0x01, 0x31, 0x07,
-	0xdd, 0x40, 0x3d, 0x28, 0x7a, 0xb2, 0x58, 0xf0, 0x1c, 0xf5, 0xe2, 0xa5, 0x4c, 0x93, 0x21, 0x86,
-	0xd6, 0xb4, 0x6c, 0x26, 0x42, 0xdf, 0xc7, 0x37, 0xf1, 0xc5, 0x64, 0xb7, 0xb5, 0xa1, 0xed, 0x41,
-	0x2f, 0xcb, 0xcc, 0x8f, 0xdf, 0xbf, 0x81, 0x85, 0xc3, 0x85, 0x9e, 0xf3, 0x3c, 0xae, 0x2b, 0xd2,
-	0xf6, 0x51, 0x76, 0x97, 0x9d, 0x49, 0x9d, 0x4e, 0x89, 0x89, 0xb4, 0x32, 0x68, 0xf8, 0x29, 0xc0,
-	0x7b, 0xa9, 0x48, 0xcb, 0x0e, 0x38, 0x45, 0x16, 0x88, 0xbe, 0x88, 0xfc, 0xc4, 0x29, 0x32, 0x39,
-	0x00, 0x2f, 0x43, 0xc6, 0xc0, 0xe9, 0xbb, 0x51, 0x7b, 0x70, 0xa2, 0xb6, 0x75, 0xca, 0x68, 0xd4,
-	0x03, 0x32, 0x8e, 0x4a, 0xd6, 0xcb, 0xc4, 0x72, 0xe5, 0x29, 0xf8, 0x33, 0xac, 0x78, 0x5c, 0x11,
-	0x95, 0x81, 0xdb, 0x17, 0x91, 0x3b, 0x74, 0x02, 0x91, 0xfc, 0x37, 0xe0, 0x13, 0x51, 0xd9, 0xbb,
-	0x06, 0x7f, 0xa3, 0x91, 0x07, 0xe0, 0x4e, 0x69, 0xb9, 0x8e, 0x34, 0xa3, 0xec, 0x42, 0xeb, 0x03,
-	0x67, 0x35, 0x05, 0x8e, 0xc5, 0x56, 0xcb, 0xad, 0x73, 0x23, 0xc2, 0x2f, 0x01, 0x60, 0x22, 0x47,
-	0x25, 0x17, 0xbc, 0xdc, 0x2b, 0x7b, 0xb1, 0x55, 0xb6, 0xbb, 0x5b, 0xd6, 0x64, 0xda, 0x26, 0xab,
-	0x9a, 0x47, 0x7b, 0x35, 0x9b, 0x8a, 0xf2, 0x0e, 0xda, 0x8c, 0x79, 0x4e, 0xd9, 0xd8, 0x3a, 0x7a,
-	0xd6, 0xb1, 0xb7, 0xeb, 0xf8, 0x6c, 0x29, 0xc6, 0x37, 0x01, 0xde, 0xcc, 0xf2, 0x18, 0x20, 0xd5,
-	0x84, 0x4c, 0xd9, 0x18, 0x39, 0x68, 0x59, 0x6b, 0x7f, 0x8d, 0xdc, 0x73, 0xa8, 0xc0, 0xb3, 0xb4,
-	0x3f, 0x5e, 0x1e, 0x3e, 0x02, 0x34, 0x41, 0x46, 0xc5, 0x98, 0xff, 0xa8, 0x18, 0x73, 0x19, 0xfd,
-	0x7e, 0xf6, 0xea, 0xe4, 0xe1, 0xf9, 0xeb, 0x59, 0x5e, 0xf0, 0x5b, 0x3d, 0x51, 0xe9, 0xfc, 0x3d,
-	0x4e, 0xf1, 0x32, 0x5b, 0xc4, 0x1b, 0x76, 0xdc, 0x7c, 0x95, 0xc9, 0x3f, 0x3b, 0x5f, 0x7d, 0x07,
-	0x00, 0x00, 0xff, 0xff, 0xfb, 0x1b, 0xbb, 0x52, 0x3f, 0x02, 0x00, 0x00,
+	// 302 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x92, 0xdd, 0x4a, 0xc3, 0x40,
+	0x10, 0x85, 0xc9, 0x4f, 0xc5, 0x4c, 0xa1, 0xca, 0xa2, 0x10, 0x2b, 0x4a, 0x11, 0xc5, 0xde, 0xb8,
+	0x81, 0x7a, 0x61, 0xe9, 0x9d, 0x62, 0x5f, 0x20, 0xfe, 0x20, 0xde, 0x84, 0x4d, 0x76, 0x88, 0xa1,
+	0x35, 0x29, 0x9b, 0x89, 0x50, 0xf0, 0x59, 0x7d, 0x16, 0xd9, 0x4d, 0x4d, 0xaa, 0x54, 0xc1, 0x9b,
+	0x30, 0x73, 0x72, 0xbe, 0xc3, 0xcc, 0xb0, 0xb0, 0xbf, 0x50, 0x05, 0x15, 0x41, 0x55, 0xa2, 0x32,
+	0x1f, 0x6e, 0x7a, 0xd6, 0x8b, 0xab, 0x64, 0x86, 0x84, 0xa8, 0xb8, 0x56, 0x4f, 0x3e, 0x1c, 0x70,
+	0x1f, 0x4a, 0x54, 0xac, 0x07, 0x76, 0x26, 0x7d, 0x6b, 0x60, 0x0d, 0xbd, 0xd0, 0xce, 0x24, 0x1b,
+	0x81, 0x2b, 0x05, 0x09, 0xdf, 0x1e, 0x38, 0xc3, 0xee, 0xe8, 0x98, 0x7f, 0xe7, 0xb8, 0x66, 0xf8,
+	0xad, 0x20, 0x31, 0xcd, 0x49, 0x2d, 0x43, 0xe3, 0x65, 0x53, 0xe8, 0x92, 0x48, 0x53, 0x94, 0x91,
+	0x41, 0x1d, 0x83, 0x9e, 0x6e, 0x44, 0xef, 0x8d, 0xaf, 0x0d, 0x00, 0x6a, 0x04, 0x76, 0x08, 0xde,
+	0x5c, 0x94, 0x14, 0x95, 0x88, 0xb9, 0xef, 0x0e, 0xac, 0xa1, 0x13, 0x6e, 0x6b, 0xe1, 0x0e, 0x31,
+	0x67, 0x47, 0x00, 0x89, 0x42, 0x41, 0x28, 0x23, 0x41, 0x7e, 0xc7, 0xfc, 0xf5, 0x56, 0xca, 0x35,
+	0xf5, 0xdf, 0xc1, 0x35, 0x19, 0x13, 0xe8, 0xbc, 0x89, 0x79, 0x85, 0xbe, 0xf5, 0xc7, 0x10, 0xda,
+	0xc9, 0x1f, 0xb5, 0xad, 0x1e, 0xa2, 0x46, 0xfa, 0x63, 0x80, 0x56, 0x64, 0xbb, 0xe0, 0xcc, 0x70,
+	0xb9, 0xba, 0x8c, 0x2e, 0xd9, 0xde, 0x57, 0xb6, 0x6d, 0xb4, 0xba, 0x99, 0xd8, 0x63, 0xab, 0x7f,
+	0x05, 0x5e, 0xb3, 0xd2, 0xbf, 0xc0, 0x27, 0xd8, 0xf9, 0x71, 0x91, 0x0d, 0x78, 0xb0, 0x8e, 0x77,
+	0x47, 0x07, 0xbf, 0xee, 0xb4, 0x96, 0x7c, 0x73, 0xfe, 0x7c, 0x96, 0x66, 0xf4, 0x52, 0xc5, 0x3c,
+	0x29, 0x5e, 0x83, 0x44, 0x5c, 0xc8, 0x45, 0xd0, 0x70, 0x41, 0xfb, 0x48, 0xe2, 0x2d, 0x53, 0x5f,
+	0x7e, 0x06, 0x00, 0x00, 0xff, 0xff, 0x5f, 0xc8, 0x22, 0x5e, 0x39, 0x02, 0x00, 0x00,
 }
