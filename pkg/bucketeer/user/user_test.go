@@ -1,4 +1,4 @@
-package bucketeer
+package user
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 
 func TestValid(t *testing.T) {
 	t.Parallel()
-	userID := "user-id"
+	UserID := "user-id"
 	userAttrs := map[string]string{"foo": "bar"}
 	tests := []struct {
 		desc  string
@@ -27,12 +27,12 @@ func TestValid(t *testing.T) {
 		},
 		{
 			desc:  "return true when user attributes is nil",
-			user:  NewUser(userID, nil),
+			user:  NewUser(UserID, nil),
 			valid: true,
 		},
 		{
 			desc:  "return true",
-			user:  NewUser(userID, userAttrs),
+			user:  NewUser(UserID, userAttrs),
 			valid: true,
 		},
 	}

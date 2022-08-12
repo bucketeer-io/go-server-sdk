@@ -51,7 +51,7 @@ func TestRegisterEvents(t *testing.T) {
 		UserId:         user.Id,
 		VariationId:    "",
 		User:           user.User,
-		Reason:         &protofeature.Reason{Type: protofeature.Reason_CLIENT},
+		Reason:         &protofeature.Reason{Type: protofeature.ReasonCLIENT},
 	})
 	assert.NoError(t, err)
 	goalEvent, err := ptypes.MarshalAny(&protoevent.GoalEvent{
