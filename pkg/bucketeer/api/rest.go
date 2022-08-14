@@ -36,7 +36,11 @@ const (
 	MetricsEventType
 )
 
-const SourceIDGOSERVER = 5
+type SourceIDType int32
+
+const (
+	SourceIDGoServer SourceIDType = 5
+)
 
 type successResponse struct {
 	Data json.RawMessage `json:"data"`
@@ -51,10 +55,10 @@ type RegisterEventsResponse struct {
 }
 
 type getEvaluationRequest struct {
-	Tag       string     `json:"tag,omitempty"`
-	User      *user.User `json:"user,omitempty"`
-	FeatureID string     `json:"feature_id,omitempty"`
-	SourceID  int32      `json:"source_id,omitempty"`
+	Tag       string       `json:"tag,omitempty"`
+	User      *user.User   `json:"user,omitempty"`
+	FeatureID string       `json:"feature_id,omitempty"`
+	SourceID  SourceIDType `json:"source_id,omitempty"`
 }
 
 type GetEvaluationResponse struct {
@@ -75,13 +79,13 @@ type MetricsEvent struct {
 }
 
 type GoalEvent struct {
-	Timestamp int64      `json:"timestamp,omitempty"`
-	GoalID    string     `json:"goal_id,omitempty"`
-	UserID    string     `json:"user_id,omitempty"`
-	Value     float64    `json:"value,omitempty"`
-	User      *user.User `json:"user,omitempty"`
-	Tag       string     `json:"tag,omitempty"`
-	SourceID  int32      `json:"source_id,omitempty"`
+	Timestamp int64        `json:"timestamp,omitempty"`
+	GoalID    string       `json:"goal_id,omitempty"`
+	UserID    string       `json:"user_id,omitempty"`
+	Value     float64      `json:"value,omitempty"`
+	User      *user.User   `json:"user,omitempty"`
+	Tag       string       `json:"tag,omitempty"`
+	SourceID  SourceIDType `json:"source_id,omitempty"`
 }
 
 type InternalErrorCountMetricsEvent struct {
@@ -103,9 +107,8 @@ type TimeoutErrorCountMetricsEvent struct {
 }
 
 type Variation struct {
-	ID    string `json:"id,omitempty"`
-	Value string `json:"value,omitempty"`
-	// number or even json object
+	ID          string `json:"id,omitempty"`
+	Value       string `json:"value,omitempty"` // number or even json object
 	Name        string `json:"name,omitempty"`
 	Description string `json:"description,omitempty"`
 }
@@ -124,7 +127,6 @@ type EvaluationEvent struct {
 	Timestamp      int64      `json:"timestamp,omitempty"`
 	FeatureID      string     `json:"feature_id,omitempty"`
 	FeatureVersion int32      `json:"feature_version,omitempty"`
-	UserID         string     `json:"user_id,omitempty"`
 	VariationID    string     `json:"variation_id,omitempty"`
 	User           *user.User `json:"user,omitempty"`
 	Reason         *Reason    `json:"reason,omitempty"`
@@ -140,7 +142,7 @@ type RegisterEventsResponseError struct {
 type ReasonType int32
 
 const (
-	ReasonCLIENT ReasonType = 4
+	ReasonClient ReasonType = 4
 )
 
 type Reason struct {
@@ -165,7 +167,7 @@ func (c *client) GetEvaluation(user *user.User, tag, featureID string) (*GetEval
 		Tag:       tag,
 		User:      user,
 		FeatureID: featureID,
-		SourceID:  SourceIDGOSERVER,
+		SourceID:  SourceIDGoServer,
 	}
 	resp, err := c.sendHTTPRequest(url, req)
 	if err != nil {
