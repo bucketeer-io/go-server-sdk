@@ -28,7 +28,7 @@ type RestClientConfig struct {
 // NewClient creates a new Client.
 //
 // NewClient returns error if failed to dial gRPC.
-func NewRestClient(conf *ClientConfig) (RestClient, error) {
+func NewRestClient(conf *RestClientConfig) (RestClient, error) {
 	client := &client{
 		apiKey: conf.APIKey,
 		host:   conf.Host,
