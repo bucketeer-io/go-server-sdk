@@ -51,7 +51,7 @@ type pingResponse struct {
 	Time int64 `json:"time,omitempty"`
 }
 
-type registerEventsRequest struct {
+type RegisterEventsRequest struct {
 	Events []*Event `json:"events,omitempty"`
 }
 
@@ -59,11 +59,15 @@ type RegisterEventsResponse struct {
 	Errors map[string]*RegisterEventsResponseError `json:"errors,omitempty"`
 }
 
+type GetEvaluationRequest struct {
+	Tag       string     `json:"tag,omitempty"`
+	User      *user.User `json:"user,omitempty"`
+	FeatureID string     `json:"feature_id,omitempty"`
+}
+
 type getEvaluationRequest struct {
-	Tag       string       `json:"tag,omitempty"`
-	User      *user.User   `json:"user,omitempty"`
-	FeatureID string       `json:"feature_id,omitempty"`
-	SourceID  SourceIDType `json:"source_id,omitempty"`
+	*GetEvaluationRequest
+	SourceID SourceIDType `json:"source_id,omitempty"`
 }
 
 type GetEvaluationResponse struct {
@@ -179,20 +183,20 @@ func (c *client) ping() (*pingResponse, error) {
 	return &pr, nil
 }
 
-func (c *client) GetEvaluation(user *user.User, tag, featureID string) (*GetEvaluationResponse, error) {
+func (c *client) GetEvaluation(req *GetEvaluationRequest) (*GetEvaluationResponse, error) {
 	url := fmt.Sprintf("https://%s%s%s%s",
 		c.host,
 		version,
 		service,
 		evaluationAPI,
 	)
-	req := &getEvaluationRequest{
-		Tag:       tag,
-		User:      user,
-		FeatureID: featureID,
-		SourceID:  SourceIDGoServer,
-	}
-	resp, err := c.sendHTTPRequest(url, req)
+	resp, err := c.sendHTTPRequest(
+		url,
+		&getEvaluationRequest{
+			GetEvaluationRequest: req,
+			SourceID:             SourceIDGoServer,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -203,17 +207,14 @@ func (c *client) GetEvaluation(user *user.User, tag, featureID string) (*GetEval
 	return &ger, nil
 }
 
-func (c *client) RegisterEvents(events []*Event) (*RegisterEventsResponse, error) {
+func (c *client) RegisterEvents(req *RegisterEventsRequest) (*RegisterEventsResponse, error) {
 	url := fmt.Sprintf("https://%s%s%s%s",
 		c.host,
 		version,
 		service,
 		eventsAPI,
 	)
-	req := &registerEventsRequest{
-		Events: events,
-	}
-	resp, err := c.sendHTTPRequest(url, req)
+	resp, err := c.sendHTTPRequest(url, &req)
 	if err != nil {
 		return nil, err
 	}

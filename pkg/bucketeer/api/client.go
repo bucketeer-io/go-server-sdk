@@ -3,14 +3,12 @@ package api
 
 import (
 	"fmt"
-
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
 )
 
 // Client is the client interface for the Bucketeer APIGateway service.
 type RestClient interface {
-	GetEvaluation(user *user.User, tag, featureID string) (*GetEvaluationResponse, error)
-	RegisterEvents(events []*Event) (*RegisterEventsResponse, error)
+	GetEvaluation(req *GetEvaluationRequest) (*GetEvaluationResponse, error)
+	RegisterEvents(req *RegisterEventsRequest) (*RegisterEventsResponse, error)
 }
 
 type client struct {

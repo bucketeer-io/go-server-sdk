@@ -10,7 +10,6 @@ import (
 	gomock "github.com/golang/mock/gomock"
 
 	api "github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
-	user "github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
 )
 
 // MockRestClient is a mock of RestClient interface.
@@ -37,31 +36,31 @@ func (m *MockRestClient) EXPECT() *MockRestClientMockRecorder {
 }
 
 // GetEvaluation mocks base method.
-func (m *MockRestClient) GetEvaluation(user *user.User, tag, featureID string) (*api.GetEvaluationResponse, error) {
+func (m *MockRestClient) GetEvaluation(req *api.GetEvaluationRequest) (*api.GetEvaluationResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEvaluation", user, tag, featureID)
+	ret := m.ctrl.Call(m, "GetEvaluation", req)
 	ret0, _ := ret[0].(*api.GetEvaluationResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetEvaluation indicates an expected call of GetEvaluation.
-func (mr *MockRestClientMockRecorder) GetEvaluation(user, tag, featureID interface{}) *gomock.Call {
+func (mr *MockRestClientMockRecorder) GetEvaluation(req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEvaluation", reflect.TypeOf((*MockRestClient)(nil).GetEvaluation), user, tag, featureID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEvaluation", reflect.TypeOf((*MockRestClient)(nil).GetEvaluation), req)
 }
 
 // RegisterEvents mocks base method.
-func (m *MockRestClient) RegisterEvents(events []*api.Event) (*api.RegisterEventsResponse, error) {
+func (m *MockRestClient) RegisterEvents(req *api.RegisterEventsRequest) (*api.RegisterEventsResponse, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RegisterEvents", events)
+	ret := m.ctrl.Call(m, "RegisterEvents", req)
 	ret0, _ := ret[0].(*api.RegisterEventsResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // RegisterEvents indicates an expected call of RegisterEvents.
-func (mr *MockRestClientMockRecorder) RegisterEvents(events interface{}) *gomock.Call {
+func (mr *MockRestClientMockRecorder) RegisterEvents(req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEvents", reflect.TypeOf((*MockRestClient)(nil).RegisterEvents), events)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEvents", reflect.TypeOf((*MockRestClient)(nil).RegisterEvents), req)
 }
