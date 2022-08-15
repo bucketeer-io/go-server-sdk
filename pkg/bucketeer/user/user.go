@@ -8,24 +8,3 @@ type User struct {
 	ID   string            `json:"id,omitempty"`
 	Data map[string]string `json:"data,omitempty"`
 }
-
-// NewUser creates a new User.
-//
-// id is mandatory and attributes is optional.
-func NewUser(id string, attributes map[string]string) *User {
-	return &User{
-		ID:   id,
-		Data: attributes,
-	}
-}
-
-// Valid returns true if valid user, otherwise returns false.
-func (u *User) Valid() bool {
-	if u == nil {
-		return false
-	}
-	if u.ID == "" {
-		return false
-	}
-	return true
-}
