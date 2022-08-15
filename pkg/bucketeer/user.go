@@ -1,8 +1,8 @@
 package bucketeer
 
 import (
-	protouser "github.com/ca-dp/bucketeer-go-server-sdk/proto/user"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
+	protouser "github.com/ca-dp/bucketeer-go-server-sdk/proto/user"
 )
 
 // User is the Bucketeer user.
