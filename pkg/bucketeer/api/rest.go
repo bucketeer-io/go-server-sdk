@@ -225,7 +225,7 @@ func (c *client) RegisterEvents(req *RegisterEventsRequest) (*RegisterEventsResp
 	return &rer, nil
 }
 
-func (c *client) sendHTTPRequest(url string, body interface{}) (*successResponse, error) {
+func (*client) sendHTTPRequest(url string, body interface{}) (*successResponse, error) {
 	encoded, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
