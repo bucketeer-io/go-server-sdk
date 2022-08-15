@@ -8,3 +8,14 @@ type User struct {
 	ID   string            `json:"id,omitempty"`
 	Data map[string]string `json:"data,omitempty"`
 }
+
+// Valid returns true if valid user, otherwise returns false.
+func (u *User) RestValid() bool {
+	if u == nil {
+		return false
+	}
+	if u.ID == "" {
+		return false
+	}
+	return true
+}
