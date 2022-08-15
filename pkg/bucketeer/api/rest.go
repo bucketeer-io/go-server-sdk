@@ -13,6 +13,7 @@ import (
 const (
 	version          = "/v1"
 	service          = "/gateway"
+	pingAPI          = "/ping"
 	evaluationAPI    = "/evaluation"
 	eventsAPI        = "/events"
 	authorizationKey = "authorization"
@@ -44,6 +45,10 @@ const (
 
 type successResponse struct {
 	Data json.RawMessage `json:"data"`
+}
+
+type pingResponse struct {
+	Time int64 `json:"time,omitempty"`
 }
 
 type registerEventsRequest struct {
@@ -155,6 +160,24 @@ type UserEvaluationsState int32
 const (
 	UserEvaluationsFULL UserEvaluationsState = 2
 )
+
+func (c *client) ping() (*pingResponse, error) {
+	url := fmt.Sprintf("https://%s%s%s%s",
+		c.host,
+		version,
+		service,
+		pingAPI,
+	)
+	resp, err := c.sendHTTPRequest(url, struct{}{})
+	if err != nil {
+		return nil, err
+	}
+	var pr pingResponse
+	if err := json.Unmarshal(resp.Data, &pr); err != nil {
+		return nil, err
+	}
+	return &pr, nil
+}
 
 func (c *client) GetEvaluation(user *user.User, tag, featureID string) (*GetEvaluationResponse, error) {
 	url := fmt.Sprintf("https://%s%s%s%s",
