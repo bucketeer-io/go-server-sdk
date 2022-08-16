@@ -1,6 +1,7 @@
 package bucketeer
 
 import (
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
 	protouser "github.com/ca-dp/bucketeer-go-server-sdk/proto/user"
 )
 
@@ -30,4 +31,14 @@ func (u *User) Valid() bool {
 		return false
 	}
 	return true
+}
+
+// NewUser creates a new User.
+//
+// id is mandatory and attributes is optional.
+func NewRestUser(id string, attributes map[string]string) *user.User {
+	return &user.User{
+		ID:   id,
+		Data: attributes,
+	}
 }
