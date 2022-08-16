@@ -55,6 +55,10 @@ type RegisterEventsRequest struct {
 	Events []*Event `json:"events,omitempty"`
 }
 
+type registerEventsRequest struct {
+	*RegisterEventsRequest
+}
+
 type RegisterEventsResponse struct {
 	Errors map[string]*RegisterEventsResponseError `json:"errors,omitempty"`
 }
@@ -214,7 +218,12 @@ func (c *client) RegisterEvents(req *RegisterEventsRequest) (*RegisterEventsResp
 		service,
 		eventsAPI,
 	)
-	resp, err := c.sendHTTPRequest(url, &req)
+	resp, err := c.sendHTTPRequest(
+		url,
+		&registerEventsRequest{
+			RegisterEventsRequest: req,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
