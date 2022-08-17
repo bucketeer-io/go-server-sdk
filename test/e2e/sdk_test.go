@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer"
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
 )
 
 func TestSDK(t *testing.T) {
@@ -68,7 +69,7 @@ func newSDK(t *testing.T, ctx context.Context) bucketeer.SDK {
 	return sdk
 }
 
-func newUser(t *testing.T, id string) *bucketeer.User {
+func newUser(t *testing.T, id string) *user.User {
 	t.Helper()
-	return bucketeer.NewUser(id, map[string]string{"attr-key": "attr-value"})
+	return user.NewUser(id, map[string]string{"attr-key": "attr-value"})
 }

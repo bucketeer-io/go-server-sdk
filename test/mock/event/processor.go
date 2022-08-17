@@ -65,7 +65,7 @@ func (mr *MockProcessorMockRecorder) PushDefaultEvaluationEvent(ctx, user, featu
 }
 
 // PushEvaluationEvent mocks base method.
-func (m *MockProcessor) PushEvaluationEvent(ctx context.Context, user *user.User, evaluation *feature.Evaluation) {
+func (m *MockProcessor) PushEvaluationEvent(ctx context.Context, user *user.User, evaluation *api.Evaluation) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "PushEvaluationEvent", ctx, user, evaluation)
 }
@@ -101,15 +101,15 @@ func (mr *MockProcessorMockRecorder) PushGetEvaluationSizeMetricsEvent(ctx, size
 }
 
 // PushGoalEvent mocks base method.
-func (m *MockProcessor) PushGoalEvent(ctx context.Context, user *user.User, goalID string, value float64) {
+func (m *MockProcessor) PushGoalEvent(ctx context.Context, user *user.User, GoalID string, value float64) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PushGoalEvent", ctx, user, goalID, value)
+	m.ctrl.Call(m, "PushGoalEvent", ctx, user, GoalID, value)
 }
 
 // PushGoalEvent indicates an expected call of PushGoalEvent.
-func (mr *MockProcessorMockRecorder) PushGoalEvent(ctx, user, goalID, value interface{}) *gomock.Call {
+func (mr *MockProcessorMockRecorder) PushGoalEvent(ctx, user, GoalID, value interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushGoalEvent", reflect.TypeOf((*MockProcessor)(nil).PushGoalEvent), ctx, user, goalID, value)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushGoalEvent", reflect.TypeOf((*MockProcessor)(nil).PushGoalEvent), ctx, user, GoalID, value)
 }
 
 // PushInternalErrorCountMetricsEvent mocks base method.

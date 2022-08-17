@@ -123,12 +123,11 @@ func (p *processor) PushEvaluationEvent(
 	evaluation *api.Evaluation,
 ) {
 	evaluationEvt := &api.EvaluationEvent{
-		SourceID:       api.SourceIDGOSERVER,
+		SourceID:       api.SourceIDGoServer,
 		Tag:            p.tag,
 		Timestamp:      time.Now().Unix(),
 		FeatureID:      evaluation.FeatureID,
 		FeatureVersion: evaluation.FeatureVersion,
-		UserID:         user.ID,
 		VariationID:    evaluation.VariationID,
 		User:           user,
 		Reason:         evaluation.Reason,
@@ -156,15 +155,14 @@ func (p *processor) PushEvaluationEvent(
 
 func (p *processor) PushDefaultEvaluationEvent(ctx context.Context, user *user.User, featureID string) {
 	evaluationEvt := &api.EvaluationEvent{
-		SourceID:       api.SourceIDGOSERVER,
+		SourceID:       api.SourceIDGoServer,
 		Tag:            p.tag,
 		Timestamp:      time.Now().Unix(),
 		FeatureID:      featureID,
 		FeatureVersion: 0,
-		UserID:         user.ID,
 		VariationID:    "",
 		User:           user,
-		Reason:         &api.Reason{Type: api.ReasonCLIENT},
+		Reason:         &api.Reason{Type: api.ReasonClient},
 	}
 	encodedEvaluationEvt, err := json.Marshal(evaluationEvt)
 	if err != nil {
@@ -189,7 +187,7 @@ func (p *processor) PushDefaultEvaluationEvent(ctx context.Context, user *user.U
 
 func (p *processor) PushGoalEvent(ctx context.Context, user *user.User, GoalID string, value float64) {
 	goalEvt := &api.GoalEvent{
-		SourceID:  api.SourceIDGOSERVER,
+		SourceID:  api.SourceIDGoServer,
 		Tag:       p.tag,
 		Timestamp: time.Now().Unix(),
 		GoalID:    GoalID,
@@ -382,7 +380,7 @@ func (p *processor) flushEvents(events []*api.Event) {
 	if len(events) == 0 {
 		return
 	}
-	res, err := p.apiClient.RegisterEvents(events)
+	res, err := p.apiClient.RegisterEvents(&api.RegisterEventsRequest{Events: events})
 	if err != nil {
 		p.loggers.Debugf("bucketeer/event: failed to register events: %v", err)
 		// Re-push all events to the event queue.

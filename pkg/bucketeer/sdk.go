@@ -80,7 +80,7 @@ type sdk struct {
 	loggers        *log.Loggers
 }
 
-const SourceIDGOSERVER = 5
+const SourceIDGoServer = 5
 
 // NewSDK creates a new Bucketeer SDK.
 func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
@@ -93,7 +93,10 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		ErrorLogger:    dopts.errorLogger,
 	}
 	loggers := log.NewLoggers(loggerConf)
-	client := api.NewClient(dopts.apiKey, dopts.host)
+	client, err := api.NewClient(&api.ClientConfig{APIKey: dopts.apiKey, Host: dopts.host})
+	if err != nil {
+		return nil, fmt.Errorf("bucketeer: failed to new api client: %w", err)
+	}
 	processorConf := &event.ProcessorConfig{
 		QueueCapacity:   dopts.eventQueueCapacity,
 		NumFlushWorkers: dopts.numEventFlushWorkers,
@@ -249,7 +252,7 @@ func (s *sdk) callGetEvaluationAPI(
 		measure(ctx, time.Since(reqStart))
 	}()
 
-	res, err := s.apiClient.GetEvaluation(user, tag, featureID)
+	res, err := s.apiClient.GetEvaluation(&api.GetEvaluationRequest{Tag: tag, User: user, FeatureID: featureID})
 	if err != nil {
 		gserr = err // set gRPC status error
 		if status.Code(gserr) == codes.DeadlineExceeded {

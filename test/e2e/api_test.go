@@ -1,95 +1,78 @@
 package e2e
 
 import (
-	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/uuid"
-	protoevent "github.com/ca-dp/bucketeer-go-server-sdk/proto/event/client"
-	protofeature "github.com/ca-dp/bucketeer-go-server-sdk/proto/feature"
-	protogateway "github.com/ca-dp/bucketeer-go-server-sdk/proto/gateway"
 )
 
 func TestGetEvaluation(t *testing.T) {
 	t.Parallel()
 	client := newAPIClient(t)
-	defer client.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	user := bucketeer.NewUser(userID, nil)
-	req := &protogateway.GetEvaluationRequest{
-		SourceId:  protoevent.SourceId_GO_SERVER,
-		Tag:       tag,
-		User:      user.User,
-		FeatureId: featureID,
-	}
-	res, err := client.GetEvaluation(ctx, req)
+	user := user.NewUser(userID, nil)
+	res, err := client.GetEvaluation(&api.GetEvaluationRequest{Tag: tag, User: user, FeatureID: featureID})
 	assert.NoError(t, err)
-	assert.Equal(t, featureID, res.Evaluation.FeatureId)
+	assert.Equal(t, featureID, res.Evaluation.FeatureID)
 	assert.Equal(t, featureIDVariation2, res.Evaluation.VariationValue)
 }
 
 func TestRegisterEvents(t *testing.T) {
 	t.Parallel()
 	client := newAPIClient(t)
-	defer client.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	user := bucketeer.NewUser(userID, nil)
-	evaluationEvent, err := ptypes.MarshalAny(&protoevent.EvaluationEvent{
+	user := user.NewUser(userID, nil)
+	evaluationEvent, err := json.Marshal(api.EvaluationEvent{
 		Timestamp:      time.Now().Unix(),
-		SourceId:       protoevent.SourceId_GO_SERVER,
+		SourceID:       api.SourceIDGoServer,
 		Tag:            tag,
-		FeatureId:      featureID,
+		FeatureID:      featureID,
 		FeatureVersion: 0,
-		UserId:         user.Id,
-		VariationId:    "",
-		User:           user.User,
-		Reason:         &protofeature.Reason{Type: protofeature.ReasonCLIENT},
+		VariationID:    "",
+		User:           user,
+		Reason:         &api.Reason{Type: api.ReasonClient},
 	})
 	assert.NoError(t, err)
-	goalEvent, err := ptypes.MarshalAny(&protoevent.GoalEvent{
+	goalEvent, err := json.Marshal(&api.GoalEvent{
 		Timestamp: time.Now().Unix(),
-		SourceId:  protoevent.SourceId_GO_SERVER,
+		SourceID:  api.SourceIDGoServer,
 		Tag:       tag,
-		GoalId:    goalID,
-		UserId:    user.Id,
+		GoalID:    goalID,
+		UserID:    user.ID,
 		Value:     0.0,
-		User:      user.User,
+		User:      user,
 	})
-	req := &protogateway.RegisterEventsRequest{
-		Events: []*protoevent.Event{
+	assert.NoError(t, err)
+	req := &api.RegisterEventsRequest{
+		Events: []*api.Event{
 			{
-				Id:    newUUID(t),
+				ID:    newUUID(t),
 				Event: evaluationEvent,
+				Type:  api.EvaluationEventType,
 			},
 			{
-				Id:    newUUID(t),
+				ID:    newUUID(t),
 				Event: goalEvent,
+				Type:  api.GoalEventType,
 			},
 		},
 	}
-	res, err := client.RegisterEvents(ctx, req)
+	res, err := client.RegisterEvents(req)
 	assert.NoError(t, err)
 	assert.Len(t, res.Errors, 0)
 }
 
 func newAPIClient(t *testing.T) api.Client {
 	t.Helper()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
 	conf := &api.ClientConfig{
 		APIKey: *apiKey,
 		Host:   *host,
-		Port:   *port,
 	}
-	client, err := api.NewClient(ctx, conf)
+	client, err := api.NewClient(conf)
 	assert.NoError(t, err)
 	return client
 }

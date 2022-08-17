@@ -9,8 +9,15 @@ type User struct {
 	Data map[string]string `json:"data,omitempty"`
 }
 
+func NewUser(id string, attributes map[string]string) *User {
+	return &User{
+		ID:   id,
+		Data: attributes,
+	}
+}
+
 // Valid returns true if valid user, otherwise returns false.
-func (u *User) RestValid() bool {
+func (u *User) Valid() bool {
 	if u == nil {
 		return false
 	}
