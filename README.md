@@ -64,7 +64,7 @@ Run e2e tests.
 make e2e API_KEY=<API_KEY> HOST=<HOST> PORT=<PORT>
 
 # e.g.
-make e2e API_KEY="a9bad43e7b2fc3cd849f12e6c8ce801aac1e9f0178ec305a937b64256624de5d" HOST="api-dev.bucketeer.jp" PORT=443
+make e2e API_KEY="xxxxxxxx" HOST="api-dev.bucketeer.jp" PORT=443
 ```
 
 ### Example
