@@ -5,14 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"strconv"
 	"time"
 	"unsafe"
 
 	// nolint:staticcheck
 	iotag "go.opencensus.io/tag"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/event"
@@ -238,10 +237,13 @@ func (s *sdk) callGetEvaluationAPI(
 	var gserr error
 	reqStart := time.Now()
 	defer func() {
-		state := status.Code(gserr).String()
+		status, ok := api.ConvertToErrStatus(gserr)
+		if !ok {
+			return
+		}
 		mutators := []iotag.Mutator{
 			iotag.Insert(keyFeatureID, featureID),
-			iotag.Insert(keyStatus, state),
+			iotag.Insert(keyStatus, strconv.Itoa(status.GetStatusCode())),
 		}
 		ctx, err := newMetricsContext(ctx, mutators)
 		if err != nil {
@@ -254,8 +256,13 @@ func (s *sdk) callGetEvaluationAPI(
 
 	res, err := s.apiClient.GetEvaluation(&api.GetEvaluationRequest{Tag: tag, User: user, FeatureID: featureID})
 	if err != nil {
-		gserr = err // set gRPC status error
-		if status.Code(gserr) == codes.DeadlineExceeded {
+		gserr = err // set HTTP status error
+		status, ok := api.ConvertToErrStatus(gserr)
+		if !ok {
+			s.eventProcessor.PushInternalErrorCountMetricsEvent(ctx)
+			return nil, fmt.Errorf("failed to get evaluation: %w", err)
+		}
+		if status.GetStatusCode() == http.StatusGatewayTimeout {
 			s.eventProcessor.PushTimeoutErrorCountMetricsEvent(ctx)
 		} else {
 			s.eventProcessor.PushInternalErrorCountMetricsEvent(ctx)
