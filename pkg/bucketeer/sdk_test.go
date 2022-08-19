@@ -3,12 +3,13 @@ package bucketeer
 import (
 	"context"
 	"errors"
-	"net/http"
 	"testing"
 	"unsafe"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
@@ -46,7 +47,7 @@ func TestBoolVariation(t *testing.T) {
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
-					api.NewErrStatus(http.StatusInternalServerError),
+					status.Error(codes.Internal, "error"),
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
@@ -154,7 +155,7 @@ func TestIntVariation(t *testing.T) {
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
-					api.NewErrStatus(http.StatusInternalServerError),
+					status.Error(codes.Internal, "error"),
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
@@ -262,7 +263,7 @@ func TestInt64Variation(t *testing.T) {
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
-					api.NewErrStatus(http.StatusInternalServerError),
+					status.Error(codes.Internal, "error"),
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
@@ -370,7 +371,7 @@ func TestFloat64Variation(t *testing.T) {
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
-					api.NewErrStatus(http.StatusInternalServerError),
+					status.Error(codes.Internal, "error"),
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
@@ -478,7 +479,7 @@ func TestStringVariation(t *testing.T) {
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
-					api.NewErrStatus(http.StatusInternalServerError),
+					status.Error(codes.Internal, "error"),
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
@@ -561,7 +562,7 @@ func TestJSONVariation(t *testing.T) {
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
-					api.NewErrStatus(http.StatusInternalServerError),
+					status.Error(codes.Internal, "error"),
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
@@ -677,7 +678,7 @@ func TestGetEvaluation(t *testing.T) {
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
-					api.NewErrStatus(http.StatusGatewayTimeout),
+					status.Error(codes.DeadlineExceeded, "error"),
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushTimeoutErrorCountMetricsEvent(ctx)
 			},
@@ -696,7 +697,7 @@ func TestGetEvaluation(t *testing.T) {
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
-					api.NewErrStatus(http.StatusInternalServerError),
+					status.Error(codes.Internal, "error"),
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx)
 			},

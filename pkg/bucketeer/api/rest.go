@@ -252,7 +252,7 @@ func (c *client) sendHTTPRequest(url string, body interface{}) (*successResponse
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, NewErrStatus(resp.StatusCode)
+		return nil, fmt.Errorf("bucketeer/api: send HTTP request failed: %d", resp.StatusCode)
 	}
 	var sr successResponse
 	err = json.NewDecoder(resp.Body).Decode(&sr)

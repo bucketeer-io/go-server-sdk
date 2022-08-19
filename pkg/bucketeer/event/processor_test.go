@@ -3,12 +3,13 @@ package event
 import (
 	"context"
 	"encoding/json"
-	"net/http"
 	"testing"
 	"time"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
@@ -211,7 +212,7 @@ func TestFlushEvents(t *testing.T) {
 			setup: func(p *processor, events []*api.Event) {
 				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&api.RegisterEventsRequest{Events: events}).Return(
 					nil,
-					api.NewErrStatus(http.StatusInternalServerError),
+					status.Error(codes.Internal, "error"),
 				)
 			},
 			events:           []*api.Event{{ID: "id-0"}, {ID: "id-1"}, {ID: "id-2"}},
@@ -223,7 +224,7 @@ func TestFlushEvents(t *testing.T) {
 				p.evtQueue.close()
 				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&api.RegisterEventsRequest{Events: events}).Return(
 					nil,
-					api.NewErrStatus(http.StatusInternalServerError),
+					status.Error(codes.Internal, "error"),
 				)
 			},
 			events:           []*api.Event{{ID: "id-0"}, {ID: "id-1"}, {ID: "id-2"}},
