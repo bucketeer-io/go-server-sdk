@@ -137,14 +137,14 @@ type Evaluation struct {
 }
 
 type EvaluationEvent struct {
-	Timestamp      int64      `json:"timestamp,omitempty"`
-	FeatureID      string     `json:"feature_id,omitempty"`
-	FeatureVersion int32      `json:"feature_version,omitempty"`
-	VariationID    string     `json:"variation_id,omitempty"`
-	User           *user.User `json:"user,omitempty"`
-	Reason         *Reason    `json:"reason,omitempty"`
-	Tag            string     `json:"tag,omitempty"`
-	SourceID       int32      `json:"source_id,omitempty"`
+	Timestamp      int64        `json:"timestamp,omitempty"`
+	FeatureID      string       `json:"feature_id,omitempty"`
+	FeatureVersion int32        `json:"feature_version,omitempty"`
+	VariationID    string       `json:"variation_id,omitempty"`
+	User           *user.User   `json:"user,omitempty"`
+	Reason         *Reason      `json:"reason,omitempty"`
+	Tag            string       `json:"tag,omitempty"`
+	SourceID       SourceIDType `json:"source_id,omitempty"`
 }
 
 type RegisterEventsResponseError struct {

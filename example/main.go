@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer"
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/uuid"
 )
 
@@ -139,7 +140,7 @@ func (a *exampleApp) postTrackHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "ok")
 }
 
-func (a *exampleApp) userFrom(r *http.Request) (*bucketeer.User, error) {
+func (a *exampleApp) userFrom(r *http.Request) (*user.User, error) {
 	var userID string
 	cookie, err := r.Cookie(userIDKey)
 	if err == nil {
@@ -151,5 +152,5 @@ func (a *exampleApp) userFrom(r *http.Request) (*bucketeer.User, error) {
 		}
 		userID = uuid.String()
 	}
-	return bucketeer.NewUser(userID, nil), nil
+	return user.NewUser(userID, nil), nil
 }

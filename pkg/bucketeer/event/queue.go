@@ -4,11 +4,11 @@ import (
 	"errors"
 	"sync"
 
-	protoevent "github.com/ca-dp/bucketeer-go-server-sdk/proto/event/client"
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
 )
 
 type queue struct {
-	evtCh    chan *protoevent.Event
+	evtCh    chan *api.Event
 	closedMu sync.RWMutex
 	closed   bool
 }
@@ -19,11 +19,11 @@ type queueConfig struct {
 
 func newQueue(conf *queueConfig) *queue {
 	return &queue{
-		evtCh: make(chan *protoevent.Event, conf.capacity),
+		evtCh: make(chan *api.Event, conf.capacity),
 	}
 }
 
-func (q *queue) push(evt *protoevent.Event) error {
+func (q *queue) push(evt *api.Event) error {
 	q.closedMu.RLock()
 	defer q.closedMu.RUnlock()
 	if q.closed {
@@ -39,7 +39,7 @@ func (q *queue) push(evt *protoevent.Event) error {
 	}
 }
 
-func (q *queue) eventCh() <-chan *protoevent.Event {
+func (q *queue) eventCh() <-chan *api.Event {
 	return q.evtCh
 }
 

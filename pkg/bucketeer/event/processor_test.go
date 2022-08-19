@@ -2,21 +2,18 @@ package event
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
 	"github.com/golang/mock/gomock"
-	"github.com/golang/protobuf/ptypes"
-	anypb "github.com/golang/protobuf/ptypes/any"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
-	protoevent "github.com/ca-dp/bucketeer-go-server-sdk/proto/event/client"
-	protofeature "github.com/ca-dp/bucketeer-go-server-sdk/proto/feature"
-	protogateway "github.com/ca-dp/bucketeer-go-server-sdk/proto/gateway"
-	protouser "github.com/ca-dp/bucketeer-go-server-sdk/proto/user"
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
 	mockapi "github.com/ca-dp/bucketeer-go-server-sdk/test/mock/api"
 )
 
@@ -27,6 +24,11 @@ const (
 	processorGoalID      = "goal-id"
 )
 
+type registerEventsResponseError struct {
+	Retriable bool   `json:"retriable,omitempty"`
+	Message   string `json:"message,omitempty"`
+}
+
 func TestPushEvaluationEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
@@ -34,8 +36,8 @@ func TestPushEvaluationEvent(t *testing.T) {
 	evaluation := newEvaluation(t, processorFeatureID, processorVariationID)
 	p.PushEvaluationEvent(context.Background(), user, evaluation)
 	evt := <-p.evtQueue.eventCh()
-	evalationEvt := &protoevent.EvaluationEvent{}
-	err := ptypes.UnmarshalAny(evt.Event, evalationEvt)
+	evalationEvt := &api.EvaluationEvent{}
+	err := json.Unmarshal(evt.Event, evalationEvt)
 	assert.NoError(t, err)
 }
 
@@ -45,8 +47,8 @@ func TestPushDefaultEvaluationEvent(t *testing.T) {
 	user := newUser(t, processorUserID)
 	p.PushDefaultEvaluationEvent(context.Background(), user, processorFeatureID)
 	evt := <-p.evtQueue.eventCh()
-	evalationEvt := &protoevent.EvaluationEvent{}
-	err := ptypes.UnmarshalAny(evt.Event, evalationEvt)
+	evalationEvt := &api.EvaluationEvent{}
+	err := json.Unmarshal(evt.Event, evalationEvt)
 	assert.NoError(t, err)
 }
 
@@ -56,8 +58,8 @@ func TestPushGoalEvent(t *testing.T) {
 	user := newUser(t, processorUserID)
 	p.PushGoalEvent(context.Background(), user, processorGoalID, 1.1)
 	evt := <-p.evtQueue.eventCh()
-	goalEvt := &protoevent.GoalEvent{}
-	err := ptypes.UnmarshalAny(evt.Event, goalEvt)
+	goalEvt := &api.GoalEvent{}
+	err := json.Unmarshal(evt.Event, goalEvt)
 	assert.NoError(t, err)
 }
 
@@ -66,11 +68,11 @@ func TestPushGetEvaluationLatencyMetricsEvent(t *testing.T) {
 	p := newProcessorForTestPushEvent(t, 10)
 	p.PushGetEvaluationLatencyMetricsEvent(context.Background(), time.Duration(1))
 	evt := <-p.evtQueue.eventCh()
-	metricsEvt := &protoevent.MetricsEvent{}
-	err := ptypes.UnmarshalAny(evt.Event, metricsEvt)
+	metricsEvt := &api.MetricsEvent{}
+	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
-	gelMetricsEvt := &protoevent.GetEvaluationLatencyMetricsEvent{}
-	err = ptypes.UnmarshalAny(metricsEvt.Event, gelMetricsEvt)
+	gelMetricsEvt := &api.GetEvaluationLatencyMetricsEvent{}
+	err = json.Unmarshal(metricsEvt.Event, gelMetricsEvt)
 	assert.NoError(t, err)
 }
 
@@ -79,11 +81,11 @@ func TestPushGetEvaluationSizeMetricsEvent(t *testing.T) {
 	p := newProcessorForTestPushEvent(t, 10)
 	p.PushGetEvaluationSizeMetricsEvent(context.Background(), 1)
 	evt := <-p.evtQueue.eventCh()
-	metricsEvt := &protoevent.MetricsEvent{}
-	err := ptypes.UnmarshalAny(evt.Event, metricsEvt)
+	metricsEvt := &api.MetricsEvent{}
+	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
-	gesMetricsEvt := &protoevent.GetEvaluationSizeMetricsEvent{}
-	err = ptypes.UnmarshalAny(metricsEvt.Event, gesMetricsEvt)
+	gesMetricsEvt := &api.GetEvaluationSizeMetricsEvent{}
+	err = json.Unmarshal(metricsEvt.Event, gesMetricsEvt)
 	assert.NoError(t, err)
 }
 
@@ -92,11 +94,11 @@ func TestPushTimeoutErrorCountMetricsEvent(t *testing.T) {
 	p := newProcessorForTestPushEvent(t, 10)
 	p.PushTimeoutErrorCountMetricsEvent(context.Background())
 	evt := <-p.evtQueue.eventCh()
-	metricsEvt := &protoevent.MetricsEvent{}
-	err := ptypes.UnmarshalAny(evt.Event, metricsEvt)
+	metricsEvt := &api.MetricsEvent{}
+	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
-	tecMetricsEvt := &protoevent.TimeoutErrorCountMetricsEvent{}
-	err = ptypes.UnmarshalAny(metricsEvt.Event, tecMetricsEvt)
+	tecMetricsEvt := &api.TimeoutErrorCountMetricsEvent{}
+	err = json.Unmarshal(metricsEvt.Event, tecMetricsEvt)
 	assert.NoError(t, err)
 }
 
@@ -105,11 +107,11 @@ func TestPushInternalErrorCountMetricsEvent(t *testing.T) {
 	p := newProcessorForTestPushEvent(t, 10)
 	p.PushInternalErrorCountMetricsEvent(context.Background())
 	evt := <-p.evtQueue.eventCh()
-	metricsEvt := &protoevent.MetricsEvent{}
-	err := ptypes.UnmarshalAny(evt.Event, metricsEvt)
+	metricsEvt := &api.MetricsEvent{}
+	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
-	iecMetricsEvt := &protoevent.InternalErrorCountMetricsEvent{}
-	err = ptypes.UnmarshalAny(metricsEvt.Event, iecMetricsEvt)
+	iecMetricsEvt := &api.InternalErrorCountMetricsEvent{}
+	err = json.Unmarshal(metricsEvt.Event, iecMetricsEvt)
 	assert.NoError(t, err)
 }
 
@@ -118,33 +120,33 @@ func TestPushEvent(t *testing.T) {
 	tests := []struct {
 		desc               string
 		eventQueueCapacity int
-		anyEvt             *anypb.Any
+		encodedEvt         []byte
 		isErr              bool
 	}{
 		{
 			desc:               "return error when failed to push event",
 			eventQueueCapacity: 0,
-			anyEvt:             newAnyEvaluationEvent(t, processorFeatureID),
+			encodedEvt:         newEncodedEvaluationEvent(t, processorFeatureID),
 			isErr:              true,
 		},
 		{
 			desc:               "success",
 			eventQueueCapacity: 10,
-			anyEvt:             newAnyEvaluationEvent(t, processorFeatureID),
+			encodedEvt:         newEncodedEvaluationEvent(t, processorFeatureID),
 			isErr:              false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			p := newProcessorForTestPushEvent(t, tt.eventQueueCapacity)
-			err := p.pushEvent(tt.anyEvt)
+			err := p.pushEvent(tt.encodedEvt)
 			if tt.isErr {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
 				evt := <-p.evtQueue.eventCh()
-				evalationEvt := &protoevent.EvaluationEvent{}
-				err := ptypes.UnmarshalAny(evt.Event, evalationEvt)
+				evalationEvt := &api.EvaluationEvent{}
+				err := json.Unmarshal(evt.Event, evalationEvt)
 				assert.NoError(t, err)
 			}
 		})
@@ -164,27 +166,27 @@ func newProcessorForTestPushEvent(t *testing.T, eventQueueCapacity int) *process
 	}
 }
 
-func newUser(t *testing.T, id string) *protouser.User {
+func newUser(t *testing.T, id string) *user.User {
 	t.Helper()
-	return &protouser.User{Id: id}
+	return &user.User{ID: id}
 }
 
-func newEvaluation(t *testing.T, featureID, variationID string) *protofeature.Evaluation {
+func newEvaluation(t *testing.T, featureID, variationID string) *api.Evaluation {
 	t.Helper()
-	return &protofeature.Evaluation{
-		FeatureId:      featureID,
+	return &api.Evaluation{
+		FeatureID:      featureID,
 		FeatureVersion: 0,
-		VariationId:    variationID,
-		Reason:         &protofeature.Reason{Type: protofeature.Reason_CLIENT},
+		VariationID:    variationID,
+		Reason:         &api.Reason{Type: api.ReasonClient},
 	}
 }
 
-func newAnyEvaluationEvent(t *testing.T, featureID string) *anypb.Any {
+func newEncodedEvaluationEvent(t *testing.T, featureID string) []byte {
 	t.Helper()
-	evaluationEvt := &protoevent.EvaluationEvent{FeatureId: featureID}
-	anyEvt, err := ptypes.MarshalAny(evaluationEvt)
+	evaluationEvt := &api.EvaluationEvent{FeatureID: featureID}
+	encodedEvt, err := json.Marshal(evaluationEvt)
 	assert.NoError(t, err)
-	return anyEvt
+	return encodedEvt
 }
 
 func TestFlushEvents(t *testing.T) {
@@ -193,51 +195,47 @@ func TestFlushEvents(t *testing.T) {
 	defer mockCtrl.Finish()
 	tests := []struct {
 		desc             string
-		setup            func(*processor, []*protoevent.Event)
-		events           []*protoevent.Event
+		setup            func(*processor, []*api.Event)
+		events           []*api.Event
 		expectedQueueLen int
 	}{
 		{
 			desc: "do nothing when events length is 0",
-			setup: func(p *processor, events []*protoevent.Event) {
-				req := &protogateway.RegisterEventsRequest{Events: events}
-				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(gomock.Any(), req).Times(0)
+			setup: func(p *processor, events []*api.Event) {
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&api.RegisterEventsRequest{Events: events}).Times(0)
 			},
-			events:           make([]*protoevent.Event, 0, 10),
+			events:           make([]*api.Event, 0, 10),
 			expectedQueueLen: 0,
 		},
 		{
 			desc: "re-push all events when failed to register events",
-			setup: func(p *processor, events []*protoevent.Event) {
-				req := &protogateway.RegisterEventsRequest{Events: events}
-				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(gomock.Any(), req).Return(
+			setup: func(p *processor, events []*api.Event) {
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&api.RegisterEventsRequest{Events: events}).Return(
 					nil,
 					status.Error(codes.Internal, "error"),
 				)
 			},
-			events:           []*protoevent.Event{{Id: "id-0"}, {Id: "id-1"}, {Id: "id-2"}},
+			events:           []*api.Event{{ID: "id-0"}, {ID: "id-1"}, {ID: "id-2"}},
 			expectedQueueLen: 3,
 		},
 		{
 			desc: "faled to re-push all events when failed to register events if queue is closed",
-			setup: func(p *processor, events []*protoevent.Event) {
+			setup: func(p *processor, events []*api.Event) {
 				p.evtQueue.close()
-				req := &protogateway.RegisterEventsRequest{Events: events}
-				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(gomock.Any(), req).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&api.RegisterEventsRequest{Events: events}).Return(
 					nil,
 					status.Error(codes.Internal, "error"),
 				)
 			},
-			events:           []*protoevent.Event{{Id: "id-0"}, {Id: "id-1"}, {Id: "id-2"}},
+			events:           []*api.Event{{ID: "id-0"}, {ID: "id-1"}, {ID: "id-2"}},
 			expectedQueueLen: 0,
 		},
 		{
 			desc: "re-push events when register events res contains retriable errors",
-			setup: func(p *processor, events []*protoevent.Event) {
-				req := &protogateway.RegisterEventsRequest{Events: events}
-				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(gomock.Any(), req).Return(
-					&protogateway.RegisterEventsResponse{
-						Errors: map[string]*protogateway.RegisterEventsResponse_Error{
+			setup: func(p *processor, events []*api.Event) {
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&api.RegisterEventsRequest{Events: events}).Return(
+					&api.RegisterEventsResponse{
+						Errors: map[string]*api.RegisterEventsResponseError{
 							"id-0": {Retriable: true, Message: "retriable"},
 							"id-1": {Retriable: false, Message: "non retriable"},
 						},
@@ -245,17 +243,16 @@ func TestFlushEvents(t *testing.T) {
 					nil,
 				)
 			},
-			events:           []*protoevent.Event{{Id: "id-0"}, {Id: "id-1"}, {Id: "id-2"}},
+			events:           []*api.Event{{ID: "id-0"}, {ID: "id-1"}, {ID: "id-2"}},
 			expectedQueueLen: 1,
 		},
 		{
 			desc: "faled to re-push events when register events res contains retriable errors if queue is closed",
-			setup: func(p *processor, events []*protoevent.Event) {
+			setup: func(p *processor, events []*api.Event) {
 				p.evtQueue.close()
-				req := &protogateway.RegisterEventsRequest{Events: events}
-				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(gomock.Any(), req).Return(
-					&protogateway.RegisterEventsResponse{
-						Errors: map[string]*protogateway.RegisterEventsResponse_Error{
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&api.RegisterEventsRequest{Events: events}).Return(
+					&api.RegisterEventsResponse{
+						Errors: map[string]*api.RegisterEventsResponseError{
 							"id-0": {Retriable: true, Message: "retriable"},
 							"id-1": {Retriable: false, Message: "non retriable"},
 						},
@@ -263,21 +260,20 @@ func TestFlushEvents(t *testing.T) {
 					nil,
 				)
 			},
-			events:           []*protoevent.Event{{Id: "id-0"}, {Id: "id-1"}, {Id: "id-2"}},
+			events:           []*api.Event{{ID: "id-0"}, {ID: "id-1"}, {ID: "id-2"}},
 			expectedQueueLen: 0,
 		},
 		{
 			desc: "success",
-			setup: func(p *processor, events []*protoevent.Event) {
-				req := &protogateway.RegisterEventsRequest{Events: events}
-				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(gomock.Any(), req).Return(
-					&protogateway.RegisterEventsResponse{
-						Errors: make(map[string]*protogateway.RegisterEventsResponse_Error),
+			setup: func(p *processor, events []*api.Event) {
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&api.RegisterEventsRequest{Events: events}).Return(
+					&api.RegisterEventsResponse{
+						Errors: make(map[string]*api.RegisterEventsResponseError),
 					},
 					nil,
 				)
 			},
-			events:           []*protoevent.Event{{Id: "id-0"}, {Id: "id-1"}, {Id: "id-2"}},
+			events:           []*api.Event{{ID: "id-0"}, {ID: "id-1"}, {ID: "id-2"}},
 			expectedQueueLen: 0,
 		},
 	}

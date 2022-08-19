@@ -6,7 +6,7 @@ import (
 )
 
 // Client is the client interface for the Bucketeer APIGateway service.
-type RestClient interface {
+type Client interface {
 	GetEvaluation(req *GetEvaluationRequest) (*GetEvaluationResponse, error)
 	RegisterEvents(req *RegisterEventsRequest) (*RegisterEventsResponse, error)
 }
@@ -17,7 +17,7 @@ type client struct {
 }
 
 // ClientConfig is the config for Client.
-type RestClientConfig struct {
+type ClientConfig struct {
 	// APIKey is the key to use the Bucketeer APIGateway service.
 	APIKey string
 
@@ -28,7 +28,7 @@ type RestClientConfig struct {
 // NewClient creates a new Client.
 //
 // NewClient returns error if failed to dial gRPC.
-func NewRestClient(conf *RestClientConfig) (RestClient, error) {
+func NewClient(conf *ClientConfig) (Client, error) {
 	client := &client{
 		apiKey: conf.APIKey,
 		host:   conf.Host,

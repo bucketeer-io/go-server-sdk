@@ -7,18 +7,17 @@ import (
 	"fmt"
 	"strconv"
 	"time"
+	"unsafe"
 
-	"github.com/golang/protobuf/proto" // nolint:staticcheck
-	"go.opencensus.io/tag"
+	// nolint:staticcheck
+	iotag "go.opencensus.io/tag"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/event"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
-	protoevent "github.com/ca-dp/bucketeer-go-server-sdk/proto/event/client"
-	protofeature "github.com/ca-dp/bucketeer-go-server-sdk/proto/feature"
-	protogateway "github.com/ca-dp/bucketeer-go-server-sdk/proto/gateway"
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
 )
 
 // SDK is the Bucketeer SDK.
@@ -32,41 +31,41 @@ type SDK interface {
 	// BoolVariation returns the value of a feature flag (whose variations are booleans) for the given user.
 	//
 	// BoolVariation returns defaultValue if an error occurs.
-	BoolVariation(ctx context.Context, user *User, featureID string, defaultValue bool) bool
+	BoolVariation(ctx context.Context, user *user.User, featureID string, defaultValue bool) bool
 
 	// IntVariation returns the value of a feature flag (whose variations are ints) for the given user.
 	//
 	// IntVariation returns defaultValue if an error occurs.
-	IntVariation(ctx context.Context, user *User, featureID string, defaultValue int) int
+	IntVariation(ctx context.Context, user *user.User, featureID string, defaultValue int) int
 
 	// Int64Variation returns the value of a feature flag (whose variations are int64s) for the given user.
 	//
 	// Int64Variation returns defaultValue if an error occurs.
-	Int64Variation(ctx context.Context, user *User, featureID string, defaultValue int64) int64
+	Int64Variation(ctx context.Context, user *user.User, featureID string, defaultValue int64) int64
 
 	// Float64Variation returns the value of a feature flag (whose variations are float64s) for the given user.
 	//
 	// Float64Variation returns defaultValue if an error occurs.
-	Float64Variation(ctx context.Context, user *User, featureID string, defaultValue float64) float64
+	Float64Variation(ctx context.Context, user *user.User, featureID string, defaultValue float64) float64
 
 	// StringVariation returns the value of a feature flag (whose variations are strings) for the given user.
 	//
 	// StringVariation returns defaultValue if an error occurs.
-	StringVariation(ctx context.Context, user *User, featureID, defaultValue string) string
+	StringVariation(ctx context.Context, user *user.User, featureID, defaultValue string) string
 
 	// JSONVariation parses the value of a feature flag (whose variations are jsons) for the given user,
 	// and stores the result in dst.
-	JSONVariation(ctx context.Context, user *User, featureID string, dst interface{})
+	JSONVariation(ctx context.Context, user *user.User, featureID string, dst interface{})
 
 	// Track reports that a user has performed a goal event.
 	//
 	// TODO: Track doesn't work correctly until Bucketeer service implements the new goal tracking architecture.
-	Track(ctx context.Context, user *User, goalID string)
+	Track(ctx context.Context, user *user.User, GoalID string)
 
 	// TrackValue reports that a user has performed a goal event, and associates it with a custom value.
 	//
 	// TODO: TrackValue doesn't work correctly until Bucketeer service implements the new goal tracking architecture.
-	TrackValue(ctx context.Context, user *User, goalID string, value float64)
+	TrackValue(ctx context.Context, user *user.User, GoalID string, value float64)
 
 	// Close tears down all SDK activities and resources, after ensuring that all events have been delivered.
 	//
@@ -81,6 +80,8 @@ type sdk struct {
 	loggers        *log.Loggers
 }
 
+const SourceIDGoServer = 5
+
 // NewSDK creates a new Bucketeer SDK.
 func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 	dopts := defaultOptions
@@ -92,12 +93,7 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		ErrorLogger:    dopts.errorLogger,
 	}
 	loggers := log.NewLoggers(loggerConf)
-	clientConf := &api.ClientConfig{
-		APIKey: dopts.apiKey,
-		Host:   dopts.host,
-		Port:   dopts.port,
-	}
-	client, err := api.NewClient(ctx, clientConf)
+	client, err := api.NewClient(&api.ClientConfig{APIKey: dopts.apiKey, Host: dopts.host})
 	if err != nil {
 		return nil, fmt.Errorf("bucketeer: failed to new api client: %w", err)
 	}
@@ -119,118 +115,112 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 	}, nil
 }
 
-func (s *sdk) BoolVariation(ctx context.Context, user *User, featureID string, defaultValue bool) bool {
+func (s *sdk) BoolVariation(ctx context.Context, user *user.User, featureID string, defaultValue bool) bool {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
-		s.logVariationError(err, "BoolVariation", user.Id, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
+		s.logVariationError(err, "BoolVariation", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user, featureID)
 		return defaultValue
 	}
 	variation := evaluation.VariationValue
 	v, err := strconv.ParseBool(variation)
 	if err != nil {
-		s.logVariationError(err, "BoolVariation", user.Id, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
+		s.logVariationError(err, "BoolVariation", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user, featureID)
 		return defaultValue
 	}
-	s.eventProcessor.PushEvaluationEvent(ctx, user.User, evaluation)
+	s.eventProcessor.PushEvaluationEvent(ctx, user, evaluation)
 	return v
 }
 
-func (s *sdk) IntVariation(ctx context.Context, user *User, featureID string, defaultValue int) int {
+func (s *sdk) IntVariation(ctx context.Context, user *user.User, featureID string, defaultValue int) int {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
-		s.logVariationError(err, "IntVariation", user.Id, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
+		s.logVariationError(err, "IntVariation", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user, featureID)
 		return defaultValue
 	}
 	variation := evaluation.VariationValue
 	v, err := strconv.ParseInt(variation, 10, 64)
 	if err != nil {
-		s.logVariationError(err, "IntVariation", user.Id, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
+		s.logVariationError(err, "IntVariation", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user, featureID)
 		return defaultValue
 	}
-	s.eventProcessor.PushEvaluationEvent(ctx, user.User, evaluation)
+	s.eventProcessor.PushEvaluationEvent(ctx, user, evaluation)
 	return int(v)
 }
 
-func (s *sdk) Int64Variation(ctx context.Context, user *User, featureID string, defaultValue int64) int64 {
+func (s *sdk) Int64Variation(ctx context.Context, user *user.User, featureID string, defaultValue int64) int64 {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
-		s.logVariationError(err, "Int64Variation", user.Id, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
+		s.logVariationError(err, "Int64Variation", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user, featureID)
 		return defaultValue
 	}
 	variation := evaluation.VariationValue
 	v, err := strconv.ParseInt(variation, 10, 64)
 	if err != nil {
-		s.logVariationError(err, "Int64Variation", user.Id, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
+		s.logVariationError(err, "Int64Variation", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user, featureID)
 		return defaultValue
 	}
-	s.eventProcessor.PushEvaluationEvent(ctx, user.User, evaluation)
+	s.eventProcessor.PushEvaluationEvent(ctx, user, evaluation)
 	return v
 }
 
-func (s *sdk) Float64Variation(ctx context.Context, user *User, featureID string, defaultValue float64) float64 {
+func (s *sdk) Float64Variation(ctx context.Context, user *user.User, featureID string, defaultValue float64) float64 {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
-		s.logVariationError(err, "Float64Variation", user.Id, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
+		s.logVariationError(err, "Float64Variation", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user, featureID)
 		return defaultValue
 	}
 	variation := evaluation.VariationValue
 	v, err := strconv.ParseFloat(variation, 64)
 	if err != nil {
-		s.logVariationError(err, "Float64Variation", user.Id, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
+		s.logVariationError(err, "Float64Variation", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user, featureID)
 		return defaultValue
 	}
-	s.eventProcessor.PushEvaluationEvent(ctx, user.User, evaluation)
+	s.eventProcessor.PushEvaluationEvent(ctx, user, evaluation)
 	return v
 }
 
-func (s *sdk) StringVariation(ctx context.Context, user *User, featureID, defaultValue string) string {
+func (s *sdk) StringVariation(ctx context.Context, user *user.User, featureID, defaultValue string) string {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
-		s.logVariationError(err, "StringVariation", user.Id, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
+		s.logVariationError(err, "StringVariation", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user, featureID)
 		return defaultValue
 	}
 	variation := evaluation.VariationValue
-	s.eventProcessor.PushEvaluationEvent(ctx, user.User, evaluation)
+	s.eventProcessor.PushEvaluationEvent(ctx, user, evaluation)
 	return variation
 }
 
-func (s *sdk) JSONVariation(ctx context.Context, user *User, featureID string, dst interface{}) {
+func (s *sdk) JSONVariation(ctx context.Context, user *user.User, featureID string, dst interface{}) {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
-		s.logVariationError(err, "JSONVariation", user.Id, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
+		s.logVariationError(err, "JSONVariation", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user, featureID)
 		return
 	}
 	variation := evaluation.VariationValue
 	err = json.Unmarshal([]byte(variation), dst)
 	if err != nil {
-		s.logVariationError(err, "JSONVariation", user.Id, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user.User, featureID)
+		s.logVariationError(err, "JSONVariation", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(ctx, user, featureID)
 		return
 	}
-	s.eventProcessor.PushEvaluationEvent(ctx, user.User, evaluation)
+	s.eventProcessor.PushEvaluationEvent(ctx, user, evaluation)
 }
 
-func (s *sdk) getEvaluation(ctx context.Context, user *User, featureID string) (*protofeature.Evaluation, error) {
+func (s *sdk) getEvaluation(ctx context.Context, user *user.User, featureID string) (*api.Evaluation, error) {
 	if !user.Valid() {
 		return nil, fmt.Errorf("invalid user: %v", user)
 	}
-	req := &protogateway.GetEvaluationRequest{
-		Tag:       s.tag,
-		User:      user.User,
-		FeatureId: featureID,
-		SourceId:  protoevent.SourceId_GO_SERVER,
-	}
-	res, err := s.callGetEvaluationAPI(ctx, req)
+	res, err := s.callGetEvaluationAPI(ctx, user, s.tag, featureID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call get evaluation api: %w", err)
 	}
@@ -242,15 +232,16 @@ func (s *sdk) getEvaluation(ctx context.Context, user *User, featureID string) (
 
 func (s *sdk) callGetEvaluationAPI(
 	ctx context.Context,
-	req *protogateway.GetEvaluationRequest,
-) (*protogateway.GetEvaluationResponse, error) {
+	user *user.User,
+	tag, featureID string,
+) (*api.GetEvaluationResponse, error) {
 	var gserr error
 	reqStart := time.Now()
 	defer func() {
 		state := status.Code(gserr).String()
-		mutators := []tag.Mutator{
-			tag.Insert(keyFeatureID, req.FeatureId),
-			tag.Insert(keyStatus, state),
+		mutators := []iotag.Mutator{
+			iotag.Insert(keyFeatureID, featureID),
+			iotag.Insert(keyStatus, state),
 		}
 		ctx, err := newMetricsContext(ctx, mutators)
 		if err != nil {
@@ -261,7 +252,7 @@ func (s *sdk) callGetEvaluationAPI(
 		measure(ctx, time.Since(reqStart))
 	}()
 
-	res, err := s.apiClient.GetEvaluation(ctx, req)
+	res, err := s.apiClient.GetEvaluation(&api.GetEvaluationRequest{Tag: tag, User: user, FeatureID: featureID})
 	if err != nil {
 		gserr = err // set gRPC status error
 		if status.Code(gserr) == codes.DeadlineExceeded {
@@ -272,21 +263,21 @@ func (s *sdk) callGetEvaluationAPI(
 		return nil, fmt.Errorf("failed to get evaluation: %w", err)
 	}
 	s.eventProcessor.PushGetEvaluationLatencyMetricsEvent(ctx, time.Since(reqStart))
-	s.eventProcessor.PushGetEvaluationSizeMetricsEvent(ctx, proto.Size(res))
+	s.eventProcessor.PushGetEvaluationSizeMetricsEvent(ctx, int(unsafe.Sizeof(res)))
 	return res, nil
 }
 
-func (s *sdk) validateGetEvaluationResponse(res *protogateway.GetEvaluationResponse, featureID string) error {
+func (s *sdk) validateGetEvaluationResponse(res *api.GetEvaluationResponse, featureID string) error {
 	if res == nil {
 		return errors.New("res is nil")
 	}
 	if res.Evaluation == nil {
 		return errors.New("evaluation is nil")
 	}
-	if res.Evaluation.FeatureId != featureID {
+	if res.Evaluation.FeatureID != featureID {
 		return fmt.Errorf(
 			"feature id doesn't match: actual %s != expected %s",
-			res.Evaluation.FeatureId,
+			res.Evaluation.FeatureID,
 			featureID,
 		)
 	}
@@ -296,38 +287,35 @@ func (s *sdk) validateGetEvaluationResponse(res *protogateway.GetEvaluationRespo
 	return nil
 }
 
-func (s *sdk) logVariationError(err error, methodName, userID, featureID string) {
+func (s *sdk) logVariationError(err error, methodName, UserID, featureID string) {
 	s.loggers.Errorf(
-		"bucketeer: %s returns default value (err: %v, userID: %s, featureID: %s)",
+		"bucketeer: %s returns default value (err: %v, UserID: %s, featureID: %s)",
 		methodName,
 		err,
-		userID,
+		UserID,
 		featureID,
 	)
 }
 
-func (s *sdk) Track(ctx context.Context, user *User, goalID string) {
-	s.TrackValue(ctx, user, goalID, 0.0)
+func (s *sdk) Track(ctx context.Context, user *user.User, GoalID string) {
+	s.TrackValue(ctx, user, GoalID, 0.0)
 }
 
-func (s *sdk) TrackValue(ctx context.Context, user *User, goalID string, value float64) {
+func (s *sdk) TrackValue(ctx context.Context, user *user.User, GoalID string, value float64) {
 	if !user.Valid() {
-		s.loggers.Errorf("bucketeer: failed to track due to invalid user (user: %v, goalID: %v, value: %g)",
+		s.loggers.Errorf("bucketeer: failed to track due to invalid user (user: %v, GoalID: %v, value: %g)",
 			user,
-			goalID,
+			GoalID,
 			value,
 		)
 		return
 	}
-	s.eventProcessor.PushGoalEvent(ctx, user.User, goalID, value)
+	s.eventProcessor.PushGoalEvent(ctx, user, GoalID, value)
 }
 
 func (s *sdk) Close(ctx context.Context) error {
 	if err := s.eventProcessor.Close(ctx); err != nil {
 		return fmt.Errorf("bucketeer: failed to close event processor: %v", err)
-	}
-	if err := s.apiClient.Close(); err != nil {
-		return fmt.Errorf("bucketeer: failed to close api client: %v", err)
 	}
 	return nil
 }
@@ -342,33 +330,43 @@ func NewNopSDK() SDK {
 	return &nopSDK{}
 }
 
-func (s *nopSDK) BoolVariation(ctx context.Context, user *User, featureID string, defaultValue bool) bool {
+func (s *nopSDK) BoolVariation(ctx context.Context, user *user.User, featureID string, defaultValue bool) bool {
 	return defaultValue
 }
 
-func (s *nopSDK) IntVariation(ctx context.Context, user *User, featureID string, defaultValue int) int {
+func (s *nopSDK) IntVariation(ctx context.Context, user *user.User, featureID string, defaultValue int) int {
 	return defaultValue
 }
 
-func (s *nopSDK) Int64Variation(ctx context.Context, user *User, featureID string, defaultValue int64) int64 {
+func (s *nopSDK) Int64Variation(ctx context.Context, user *user.User, featureID string, defaultValue int64) int64 {
 	return defaultValue
 }
 
-func (s *nopSDK) Float64Variation(ctx context.Context, user *User, featureID string, defaultValue float64) float64 {
+func (s *nopSDK) Float64Variation(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue float64,
+) float64 {
 	return defaultValue
 }
 
-func (s *nopSDK) StringVariation(ctx context.Context, user *User, featureID, defaultValue string) string {
+func (s *nopSDK) StringVariation(
+	ctx context.Context,
+	user *user.User,
+	featureID,
+	defaultValue string,
+) string {
 	return defaultValue
 }
 
-func (s *nopSDK) JSONVariation(ctx context.Context, user *User, featureID string, dst interface{}) {
+func (s *nopSDK) JSONVariation(ctx context.Context, user *user.User, featureID string, dst interface{}) {
 }
 
-func (s *nopSDK) Track(ctx context.Context, user *User, goalID string) {
+func (s *nopSDK) Track(ctx context.Context, user *user.User, GoalID string) {
 }
 
-func (s *nopSDK) TrackValue(ctx context.Context, user *User, goalID string, value float64) {
+func (s *nopSDK) TrackValue(ctx context.Context, user *user.User, GoalID string, value float64) {
 }
 
 func (s *nopSDK) Close(ctx context.Context) error {
