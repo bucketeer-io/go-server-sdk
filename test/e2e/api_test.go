@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"encoding/json"
+	"strconv"
 	"testing"
 	"time"
 
@@ -47,14 +48,17 @@ func TestRegisterEvents(t *testing.T) {
 		User:      user,
 	})
 	assert.NoError(t, err)
-	iecMetricsEvt, err := json.Marshal(&api.InternalErrorCountMetricsEvent{
-		Tag: tag,
+	gesMetricsEvt, err := json.Marshal(&api.GetEvaluationSizeMetricsEvent{
+		Labels: map[string]string{
+			"tag":   tag,
+			"state": strconv.Itoa(int(api.UserEvaluationsFULL)),
+		},
 	})
 	assert.NoError(t, err)
 	metricsEvent, err := json.Marshal(&api.MetricsEvent{
 		Timestamp: time.Now().Unix(),
-		Event:     iecMetricsEvt,
-		Type:      api.InternalErrorCountMetricsEventType,
+		Event:     gesMetricsEvt,
+		Type:      api.GetEvaluationSizeMetricsEventType,
 	})
 	assert.NoError(t, err)
 	req := &api.RegisterEventsRequest{
