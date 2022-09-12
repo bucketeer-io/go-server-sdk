@@ -331,6 +331,12 @@ func TestClose(t *testing.T) {
 	}
 }
 
+func TestNewEvent(t *testing.T) {
+	t.Parallel()
+	e := newEvent("", []byte{}, api.EvaluationEventType)
+	assert.IsType(t, &api.Event{}, e)
+}
+
 func newProcessorForTestWorker(t *testing.T, mockCtrl *gomock.Controller) *processor {
 	t.Helper()
 	return &processor{

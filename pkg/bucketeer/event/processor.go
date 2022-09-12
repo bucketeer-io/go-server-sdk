@@ -321,15 +321,19 @@ func (p *processor) pushEvent(encoded []byte, eventType api.EventType) error {
 	if err != nil {
 		return fmt.Errorf("failed to new uuid v4: %w", err)
 	}
-	evt := &api.Event{
-		ID:    id.String(),
-		Event: encoded,
-		Type:  eventType,
-	}
+	evt := newEvent(id.String(), encoded, eventType)
 	if err := p.evtQueue.push(evt); err != nil {
 		return fmt.Errorf("failed to push event: %w", err)
 	}
 	return nil
+}
+
+func newEvent(id string, encoded []byte, eventType api.EventType) *api.Event {
+	return &api.Event{
+		ID:    id,
+		Event: encoded,
+		Type:  eventType,
+	}
 }
 
 func (p *processor) Close(ctx context.Context) error {
