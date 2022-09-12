@@ -19,7 +19,7 @@ const (
 	authorizationKey = "authorization"
 )
 
-type eventType int
+type EventType int
 
 type metricsDetailEventType int
 
@@ -31,7 +31,7 @@ const (
 )
 
 const (
-	GoalEventType eventType = iota + 1 // eventType starts from 1 for validation.
+	GoalEventType EventType = iota + 1 // EventType starts from 1 for validation.
 	GoalBatchEventType
 	EvaluationEventType
 	MetricsEventType
@@ -82,7 +82,7 @@ type Event struct {
 	ID                   string          `json:"id,omitempty"`
 	Event                json.RawMessage `json:"event,omitempty"`
 	EnvironmentNamespace string          `json:"environment_namespace,omitempty"`
-	Type                 eventType       `json:"type,omitempty"`
+	Type                 EventType       `json:"type,omitempty"`
 }
 
 type MetricsEvent struct {
