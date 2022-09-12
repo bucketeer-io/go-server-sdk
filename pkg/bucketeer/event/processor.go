@@ -142,7 +142,7 @@ func (p *processor) PushEvaluationEvent(
 		)
 		return
 	}
-	if err := p.pushEvent(encodedEvaluationEvt); err != nil {
+	if err := p.pushEvent(encodedEvaluationEvt, api.EvaluationEventType); err != nil {
 		p.loggers.Errorf(
 			"bucketeer/event: PushEvaluationEvent failed (err: %v, UserID: %s, featureID: %s)",
 			err,
@@ -174,7 +174,7 @@ func (p *processor) PushDefaultEvaluationEvent(ctx context.Context, user *user.U
 		)
 		return
 	}
-	if err := p.pushEvent(encodedEvaluationEvt); err != nil {
+	if err := p.pushEvent(encodedEvaluationEvt, api.EvaluationEventType); err != nil {
 		p.loggers.Errorf(
 			"bucketeer/event: PushDefaultEvaluationEvent failed (err: %v, UserID: %s, featureID: %s)",
 			err,
@@ -206,7 +206,7 @@ func (p *processor) PushGoalEvent(ctx context.Context, user *user.User, GoalID s
 		)
 		return
 	}
-	if err := p.pushEvent(encodedGoalEvt); err != nil {
+	if err := p.pushEvent(encodedGoalEvt, api.GoalEventType); err != nil {
 		p.loggers.Errorf(
 			"bucketeer/event: PushGoalEvent failed (err: %v, UserID: %s, GoalID: %s, value: %g)",
 			err,
@@ -238,7 +238,7 @@ func (p *processor) PushGetEvaluationLatencyMetricsEvent(ctx context.Context, du
 		p.loggers.Errorf("bucketeer/event: PushGetEvaluationLatencyMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
-	if err := p.pushEvent(encodedMetricsEvt); err != nil {
+	if err := p.pushEvent(encodedMetricsEvt, api.MetricsEventType); err != nil {
 		p.loggers.Errorf("bucketeer/event: PushGetEvaluationLatencyMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
@@ -257,13 +257,14 @@ func (p *processor) PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeB
 	metricsEvt := &api.MetricsEvent{
 		Timestamp: time.Now().Unix(),
 		Event:     encodedGESMetricsEvt,
+		Type:      api.GetEvaluationSizeMetricsEventType,
 	}
 	encodedMetricsEvt, err := json.Marshal(metricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: PushGetEvaluationSizeMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
-	if err := p.pushEvent(encodedMetricsEvt); err != nil {
+	if err := p.pushEvent(encodedMetricsEvt, api.MetricsEventType); err != nil {
 		p.loggers.Errorf("bucketeer/event: PushGetEvaluationSizeMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
@@ -279,13 +280,14 @@ func (p *processor) PushTimeoutErrorCountMetricsEvent(ctx context.Context) {
 	metricsEvt := &api.MetricsEvent{
 		Timestamp: time.Now().Unix(),
 		Event:     encodedTECMetricsEvt,
+		Type:      api.TimeoutErrorCountMetricsEventType,
 	}
 	encodedMetricsEvt, err := json.Marshal(metricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: PushTimeoutErrorCountMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
-	if err := p.pushEvent(encodedMetricsEvt); err != nil {
+	if err := p.pushEvent(encodedMetricsEvt, api.MetricsEventType); err != nil {
 		p.loggers.Errorf("bucketeer/event: PushTimeoutErrorCountMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
@@ -308,25 +310,30 @@ func (p *processor) PushInternalErrorCountMetricsEvent(ctx context.Context) {
 		p.loggers.Errorf("bucketeer/event: PushInternalErrorCountMetricsEvent failed (err: %v, tag: %s", err, p.tag)
 		return
 	}
-	if err := p.pushEvent(encodedMetricsEvt); err != nil {
+	if err := p.pushEvent(encodedMetricsEvt, api.MetricsEventType); err != nil {
 		p.loggers.Errorf("bucketeer/event: PushInternalErrorCountMetricsEvent failed (err: %v, tag: %s", err, p.tag)
 		return
 	}
 }
 
-func (p *processor) pushEvent(encoded []byte) error {
+func (p *processor) pushEvent(encoded []byte, eventType api.EventType) error {
 	id, err := uuid.NewV4()
 	if err != nil {
 		return fmt.Errorf("failed to new uuid v4: %w", err)
 	}
-	evt := &api.Event{
-		ID:    id.String(),
-		Event: encoded,
-	}
+	evt := newEvent(id.String(), encoded, eventType)
 	if err := p.evtQueue.push(evt); err != nil {
 		return fmt.Errorf("failed to push event: %w", err)
 	}
 	return nil
+}
+
+func newEvent(id string, encoded []byte, eventType api.EventType) *api.Event {
+	return &api.Event{
+		ID:    id,
+		Event: encoded,
+		Type:  eventType,
+	}
 }
 
 func (p *processor) Close(ctx context.Context) error {

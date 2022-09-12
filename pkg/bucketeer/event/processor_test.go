@@ -138,7 +138,7 @@ func TestPushEvent(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			p := newProcessorForTestPushEvent(t, tt.eventQueueCapacity)
-			err := p.pushEvent(tt.encodedEvt)
+			err := p.pushEvent(tt.encodedEvt, api.EvaluationEventType)
 			if tt.isErr {
 				assert.Error(t, err)
 			} else {
@@ -329,6 +329,17 @@ func TestClose(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNewEvent(t *testing.T) {
+	t.Parallel()
+	id := "sample"
+	encoded := []byte{}
+	e := newEvent(id, encoded, api.EvaluationEventType)
+	assert.IsType(t, &api.Event{}, e)
+	assert.Equal(t, e.ID, id)
+	assert.Equal(t, e.Event, json.RawMessage(encoded))
+	assert.Equal(t, e.Type, api.EvaluationEventType)
 }
 
 func newProcessorForTestWorker(t *testing.T, mockCtrl *gomock.Controller) *processor {
