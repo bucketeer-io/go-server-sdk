@@ -324,6 +324,7 @@ func (p *processor) pushEvent(encoded []byte, eventType api.EventType) error {
 	evt := &api.Event{
 		ID:    id.String(),
 		Event: encoded,
+		Type:  eventType,
 	}
 	if err := p.evtQueue.push(evt); err != nil {
 		return fmt.Errorf("failed to push event: %w", err)
