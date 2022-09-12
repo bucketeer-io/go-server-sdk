@@ -47,6 +47,16 @@ func TestRegisterEvents(t *testing.T) {
 		User:      user,
 	})
 	assert.NoError(t, err)
+	iecMetricsEvt, err := json.Marshal(&api.InternalErrorCountMetricsEvent{
+		Tag: tag,
+	})
+	assert.NoError(t, err)
+	metricsEvent, err := json.Marshal(&api.MetricsEvent{
+		Timestamp: time.Now().Unix(),
+		Event:     iecMetricsEvt,
+		Type:      api.InternalErrorCountMetricsEventType,
+	})
+	assert.NoError(t, err)
 	req := &api.RegisterEventsRequest{
 		Events: []*api.Event{
 			{
@@ -58,6 +68,11 @@ func TestRegisterEvents(t *testing.T) {
 				ID:    newUUID(t),
 				Event: goalEvent,
 				Type:  api.GoalEventType,
+			},
+			{
+				ID:    newUUID(t),
+				Event: metricsEvent,
+				Type:  api.MetricsEventType,
 			},
 		},
 	}
