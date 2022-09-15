@@ -2,14 +2,15 @@ package api
 
 import (
 	"fmt"
+	"net/http"
 )
 
 type status struct {
 	code int
 }
 
-type ErrStatus interface {
-	GetStatusCode() int
+type errStatus interface {
+	c() int
 }
 
 func NewErrStatus(code int) error {
@@ -23,14 +24,17 @@ func (s *status) Error() string {
 	return fmt.Sprintf("bucketeer/api: send HTTP request failed: %d", s.code)
 }
 
-func (s *status) GetStatusCode() int {
+func (s *status) c() int {
 	return s.code
 }
 
-func ConvertToErrStatus(err error) (ErrStatus, bool) {
-	s, ok := err.(ErrStatus)
-	if !ok {
-		return nil, false
+func GetStatusCode(err error) (int, bool) {
+	if err == nil {
+		return http.StatusOK, true
 	}
-	return s, true
+	s, ok := err.(errStatus)
+	if !ok {
+		return 0, false
+	}
+	return s.c(), true
 }

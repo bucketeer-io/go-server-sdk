@@ -237,16 +237,20 @@ func (s *sdk) callGetEvaluationAPI(
 	var gserr error
 	reqStart := time.Now()
 	defer func() {
-		status, ok := api.ConvertToErrStatus(gserr)
+		code, ok := api.GetStatusCode(gserr)
 		if !ok {
 			return
 		}
 		mutators := []iotag.Mutator{
 			iotag.Insert(keyFeatureID, featureID),
-			iotag.Insert(keyStatus, strconv.Itoa(status.GetStatusCode())),
+			iotag.Insert(keyStatus, strconv.Itoa(code)),
 		}
 		ctx, err := newMetricsContext(ctx, mutators)
 		if err != nil {
+			s.loggers.Errorf("bucketeer: failed to create metrics context (featureID: %s, statusCode: %d)",
+				featureID,
+				code,
+			)
 			return
 		}
 
@@ -257,12 +261,12 @@ func (s *sdk) callGetEvaluationAPI(
 	res, err := s.apiClient.GetEvaluation(&api.GetEvaluationRequest{Tag: tag, User: user, FeatureID: featureID})
 	if err != nil {
 		gserr = err // set HTTP status error
-		status, ok := api.ConvertToErrStatus(gserr)
+		code, ok := api.GetStatusCode(gserr)
 		if !ok {
 			s.eventProcessor.PushInternalErrorCountMetricsEvent(ctx)
 			return nil, fmt.Errorf("failed to get evaluation: %w", err)
 		}
-		if status.GetStatusCode() == http.StatusGatewayTimeout {
+		if code == http.StatusGatewayTimeout {
 			s.eventProcessor.PushTimeoutErrorCountMetricsEvent(ctx)
 		} else {
 			s.eventProcessor.PushInternalErrorCountMetricsEvent(ctx)
