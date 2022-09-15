@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestConvertPostgresError(t *testing.T) {
+func TestGetStatusCode(t *testing.T) {
 	t.Parallel()
 	patterns := map[string]struct {
 		input        error
