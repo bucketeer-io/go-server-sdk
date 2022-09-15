@@ -251,6 +251,7 @@ func (s *sdk) callGetEvaluationAPI(
 				featureID,
 				code,
 			)
+			s.eventProcessor.PushInternalErrorCountMetricsEvent(ctx)
 			return
 		}
 
