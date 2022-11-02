@@ -32,7 +32,7 @@ jobs:
         run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@${{ env.GOLANGCI_LINT }}
       - name: Lint
         run: make lint
-  unittest:
+  unit-test:
     needs: [pre-check]
     runs-on: ubuntu-latest
     steps:
