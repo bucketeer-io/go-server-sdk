@@ -1,0 +1,30 @@
+name: e2e
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths-ignore:
+      - "**/**.md"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  GO_VERSION: 1.17.13
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      - name: Download vendor
+        run: go mod vendor
+      - name: E2E Test
+        run: API_KEY=${{ secrets.API_KEY_FOR_E2E }} HOST=${{ secrets.HOST_FOR_E2E }} PORT=443 make e2e

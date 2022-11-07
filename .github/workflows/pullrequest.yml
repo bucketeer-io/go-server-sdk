@@ -1,0 +1,88 @@
+name: Pull Request
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths-ignore:
+      - "**/**.md"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  GO_VERSION: 1.17.13
+  GOLANGCI_LINT: v1.47.2
+
+jobs:
+  pre-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      - name: Download vendor
+        run: go mod vendor
+      - name: Format check
+        run: make fmt-check
+      - name: Install golangci-lint
+        run: go install github.com/golangci/golangci-lint/cmd/golangci-lint@${{ env.GOLANGCI_LINT }}
+      - name: Lint
+        run: make lint
+  unit-test:
+    needs: [pre-check]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      - name: Download vendor
+        run: go mod vendor
+      - name: Unit test
+        run: make test
+  build:
+    needs: [pre-check]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      - name: Download vendor
+        run: go mod vendor
+      - name: Build
+        run: make build
+  build-example:
+    needs: [ pre-check ]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      - name: Download vendor
+        run: go mod vendor
+      - name: Build example
+        run: |
+          cd example
+          make build
+  coverage:
+    needs: [pre-check]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      - name: Download vendor
+        run: go mod vendor
+      - name: Report coverage
+        run: make coverage
