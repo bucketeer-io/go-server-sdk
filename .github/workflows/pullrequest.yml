@@ -86,16 +86,3 @@ jobs:
         run: go mod vendor
       - name: Report coverage
         run: make coverage
-  e2e:
-    needs: [pre-check]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
-        with:
-          go-version: ${{ env.GO_VERSION }}
-          cache: true
-      - name: Download vendor
-        run: go mod vendor
-      - name: E2E Test
-        run: API_KEY=${{ secrets.API_KEY_FOR_E2E }} HOST=${{ secrets.HOST_FOR_E2E }} PORT=443 make e2e
