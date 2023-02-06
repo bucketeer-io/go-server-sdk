@@ -112,7 +112,7 @@ type GetEvaluationSizeMetricsEvent struct {
 
 type GetEvaluationLatencyMetricsEvent struct {
 	Labels   map[string]string      `json:"labels,omitempty"`
-	Duration *Duration               `json:"duration,omitempty"`
+	Duration *Duration              `json:"duration,omitempty"`
 	Type     metricsDetailEventType `json:"@type,omitempty"`
 }
 

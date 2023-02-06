@@ -219,14 +219,14 @@ func (p *processor) PushGoalEvent(ctx context.Context, user *user.User, GoalID s
 }
 
 func (p *processor) PushGetEvaluationLatencyMetricsEvent(ctx context.Context, duration time.Duration) {
-	val := fmt.Sprintf("%ds", duration.Microseconds() / 1000)
+	val := fmt.Sprintf("%ds", duration.Microseconds()/1000)
 	gelMetricsEvt := &api.GetEvaluationLatencyMetricsEvent{
-		Labels:   map[string]string{"tag": p.tag, "state": strconv.Itoa(int(api.UserEvaluationsFULL))},
+		Labels: map[string]string{"tag": p.tag, "state": strconv.Itoa(int(api.UserEvaluationsFULL))},
 		Duration: &api.Duration{
-			Type: api.DurationType,
+			Type:  api.DurationType,
 			Value: val,
 		},
-		Type:     api.GetEvaluationLatencyMetricsEventType,
+		Type: api.GetEvaluationLatencyMetricsEventType,
 	}
 	encodedGELMetricsEvt, err := json.Marshal(gelMetricsEvt)
 	if err != nil {
