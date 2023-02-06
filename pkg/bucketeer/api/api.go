@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"time"
 
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
 )
@@ -34,6 +33,10 @@ const (
 	EvaluationEventType EventType = "type.googleapis.com/bucketeer.event.client.EvaluationEvent"
 	MetricsEventType    EventType = "type.googleapis.com/bucketeer.event.client.MetricsEvent"
 )
+
+type wellKnownTypes string
+
+const DurationType wellKnownTypes = "type.googleapis.com/google.protobuf.Duration"
 
 type SourceIDType int32
 
@@ -91,6 +94,11 @@ type GoalEvent struct {
 	Type      EventType    `json:"@type,omitempty"`
 }
 
+type Duration struct {
+	Type  wellKnownTypes `json:"@type,omitempty"`
+	Value string         `json:"value,omitempty"`
+}
+
 type InternalErrorCountMetricsEvent struct {
 	Tag  string                 `json:"tag,omitempty"`
 	Type metricsDetailEventType `json:"@type,omitempty"`
@@ -104,7 +112,7 @@ type GetEvaluationSizeMetricsEvent struct {
 
 type GetEvaluationLatencyMetricsEvent struct {
 	Labels   map[string]string      `json:"labels,omitempty"`
-	Duration time.Duration          `json:"duration,omitempty"`
+	Duration *Duration               `json:"duration,omitempty"`
 	Type     metricsDetailEventType `json:"@type,omitempty"`
 }
 
