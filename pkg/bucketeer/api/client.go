@@ -29,9 +29,5 @@ func NewClient(conf *ClientConfig) (Client, error) {
 		apiKey: conf.APIKey,
 		host:   conf.Host,
 	}
-	// _, err := client.ping()
-	// if err != nil {
-	// 	return nil, fmt.Errorf("bucketeer/api: failed to ping to the server: %w", err)
-	// }
 	return client, nil
 }
