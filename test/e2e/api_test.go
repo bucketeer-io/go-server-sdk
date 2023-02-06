@@ -36,6 +36,7 @@ func TestRegisterEvents(t *testing.T) {
 		VariationID:    "",
 		User:           user,
 		Reason:         &api.Reason{Type: api.ReasonClient},
+		Type:           api.EvaluationEventType,
 	})
 	assert.NoError(t, err)
 	goalEvent, err := json.Marshal(&api.GoalEvent{
@@ -46,6 +47,7 @@ func TestRegisterEvents(t *testing.T) {
 		UserID:    user.ID,
 		Value:     0.0,
 		User:      user,
+		Type:      api.GoalEventType,
 	})
 	assert.NoError(t, err)
 	gesMetricsEvt, err := json.Marshal(&api.GetEvaluationSizeMetricsEvent{
@@ -53,12 +55,13 @@ func TestRegisterEvents(t *testing.T) {
 			"tag":   tag,
 			"state": strconv.Itoa(int(api.UserEvaluationsFULL)),
 		},
+		Type: api.GetEvaluationSizeMetricsEventType,
 	})
 	assert.NoError(t, err)
 	metricsEvent, err := json.Marshal(&api.MetricsEvent{
 		Timestamp: time.Now().Unix(),
 		Event:     gesMetricsEvt,
-		Type:      api.GetEvaluationSizeMetricsEventType,
+		Type:      api.MetricsEventType,
 	})
 	assert.NoError(t, err)
 	req := &api.RegisterEventsRequest{
@@ -66,17 +69,14 @@ func TestRegisterEvents(t *testing.T) {
 			{
 				ID:    newUUID(t),
 				Event: evaluationEvent,
-				Type:  api.EvaluationEventType,
 			},
 			{
 				ID:    newUUID(t),
 				Event: goalEvent,
-				Type:  api.GoalEventType,
 			},
 			{
 				ID:    newUUID(t),
 				Event: metricsEvent,
-				Type:  api.MetricsEventType,
 			},
 		},
 	}

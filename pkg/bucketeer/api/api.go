@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -11,30 +12,27 @@ import (
 )
 
 const (
-	version          = "/v1"
-	service          = "/gateway"
-	pingAPI          = "/ping"
-	evaluationAPI    = "/evaluation"
-	eventsAPI        = "/events"
+	evaluationAPI    = "/get_evaluation"
+	eventsAPI        = "/register_events"
 	authorizationKey = "authorization"
 )
 
-type EventType int
+type EventType string
 
-type metricsDetailEventType int
+type metricsDetailEventType string
 
+//nolint:lll
 const (
-	GetEvaluationLatencyMetricsEventType metricsDetailEventType = iota + 1
-	GetEvaluationSizeMetricsEventType
-	TimeoutErrorCountMetricsEventType
-	InternalErrorCountMetricsEventType
+	GetEvaluationLatencyMetricsEventType metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.GetEvaluationLatencyMetricsEvent"
+	GetEvaluationSizeMetricsEventType    metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.GetEvaluationSizeMetricsEvent"
+	TimeoutErrorCountMetricsEventType    metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.TimeoutErrorCountMetricsEvent"
+	InternalErrorCountMetricsEventType   metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.InternalErrorCountMetricsEvent"
 )
 
 const (
-	GoalEventType EventType = iota + 1 // EventType starts from 1 for validation.
-	GoalBatchEventType
-	EvaluationEventType
-	MetricsEventType
+	GoalEventType       EventType = "type.googleapis.com/bucketeer.event.client.GoalEvent"
+	EvaluationEventType EventType = "type.googleapis.com/bucketeer.event.client.EvaluationEvent"
+	MetricsEventType    EventType = "type.googleapis.com/bucketeer.event.client.MetricsEvent"
 )
 
 type SourceIDType int32
@@ -42,14 +40,6 @@ type SourceIDType int32
 const (
 	SourceIDGoServer SourceIDType = 5
 )
-
-type successResponse struct {
-	Data json.RawMessage `json:"data"`
-}
-
-type pingResponse struct {
-	Time int64 `json:"time,omitempty"`
-}
 
 type RegisterEventsRequest struct {
 	Events []*Event `json:"events,omitempty"`
@@ -66,57 +56,61 @@ type RegisterEventsResponse struct {
 type GetEvaluationRequest struct {
 	Tag       string     `json:"tag,omitempty"`
 	User      *user.User `json:"user,omitempty"`
-	FeatureID string     `json:"feature_id,omitempty"`
+	FeatureID string     `json:"featureId,omitempty"`
 }
 
 type getEvaluationRequest struct {
 	*GetEvaluationRequest
-	SourceID SourceIDType `json:"source_id,omitempty"`
+	SourceID SourceIDType `json:"sourceId,omitempty"`
 }
 
 type GetEvaluationResponse struct {
-	Evaluation *Evaluation `json:"evaluations,omitempty"`
+	Evaluation *Evaluation `json:"evaluation,omitempty"`
 }
 
 type Event struct {
 	ID                   string          `json:"id,omitempty"`
 	Event                json.RawMessage `json:"event,omitempty"`
-	EnvironmentNamespace string          `json:"environment_namespace,omitempty"`
-	Type                 EventType       `json:"type,omitempty"`
+	EnvironmentNamespace string          `json:"environmentNamespace,omitempty"`
 }
 
 type MetricsEvent struct {
-	Timestamp int64                  `json:"timestamp,omitempty"`
-	Event     json.RawMessage        `json:"event,omitempty"`
-	Type      metricsDetailEventType `json:"type,omitempty"`
+	Timestamp int64           `json:"timestamp,omitempty"`
+	Event     json.RawMessage `json:"event,omitempty"`
+	Type      EventType       `json:"@type,omitempty"`
 }
 
 type GoalEvent struct {
 	Timestamp int64        `json:"timestamp,omitempty"`
-	GoalID    string       `json:"goal_id,omitempty"`
-	UserID    string       `json:"user_id,omitempty"`
+	GoalID    string       `json:"goalId,omitempty"`
+	UserID    string       `json:"userId,omitempty"`
 	Value     float64      `json:"value,omitempty"`
 	User      *user.User   `json:"user,omitempty"`
 	Tag       string       `json:"tag,omitempty"`
-	SourceID  SourceIDType `json:"source_id,omitempty"`
+	SourceID  SourceIDType `json:"sourceId,omitempty"`
+	Type      EventType    `json:"@type,omitempty"`
 }
 
 type InternalErrorCountMetricsEvent struct {
-	Tag string `json:"tag,omitempty"`
+	Tag  string                 `json:"tag,omitempty"`
+	Type metricsDetailEventType `json:"@type,omitempty"`
 }
 
 type GetEvaluationSizeMetricsEvent struct {
-	Labels   map[string]string `json:"labels,omitempty"`
-	SizeByte int32             `json:"size_byte,omitempty"`
+	Labels   map[string]string      `json:"labels,omitempty"`
+	SizeByte int32                  `json:"sizeByte,omitempty"`
+	Type     metricsDetailEventType `json:"@type,omitempty"`
 }
 
 type GetEvaluationLatencyMetricsEvent struct {
-	Labels   map[string]string `json:"labels,omitempty"`
-	Duration time.Duration     `json:"duration,omitempty"`
+	Labels   map[string]string      `json:"labels,omitempty"`
+	Duration time.Duration          `json:"duration,omitempty"`
+	Type     metricsDetailEventType `json:"@type,omitempty"`
 }
 
 type TimeoutErrorCountMetricsEvent struct {
-	Tag string `json:"tag,omitempty"`
+	Tag  string                 `json:"tag,omitempty"`
+	Type metricsDetailEventType `json:"@type,omitempty"`
 }
 
 type Variation struct {
@@ -128,23 +122,24 @@ type Variation struct {
 
 type Evaluation struct {
 	ID             string  `json:"id,omitempty"`
-	FeatureID      string  `json:"feature_id,omitempty"`
-	FeatureVersion int32   `json:"feature_version,omitempty"`
-	UserID         string  `json:"user_id,omitempty"`
-	VariationID    string  `json:"variation_id,omitempty"`
+	FeatureID      string  `json:"featureId,omitempty"`
+	FeatureVersion int32   `json:"featureVersion,omitempty"`
+	UserID         string  `json:"userId,omitempty"`
+	VariationID    string  `json:"variationId,omitempty"`
 	Reason         *Reason `json:"reason,omitempty"`
-	VariationValue string  `json:"variation_value,omitempty"`
+	VariationValue string  `json:"variationValue,omitempty"`
 }
 
 type EvaluationEvent struct {
 	Timestamp      int64        `json:"timestamp,omitempty"`
-	FeatureID      string       `json:"feature_id,omitempty"`
-	FeatureVersion int32        `json:"feature_version,omitempty"`
-	VariationID    string       `json:"variation_id,omitempty"`
+	FeatureID      string       `json:"featureId,omitempty"`
+	FeatureVersion int32        `json:"featureVersion,omitempty"`
+	VariationID    string       `json:"variationId,omitempty"`
 	User           *user.User   `json:"user,omitempty"`
 	Reason         *Reason      `json:"reason,omitempty"`
 	Tag            string       `json:"tag,omitempty"`
-	SourceID       SourceIDType `json:"source_id,omitempty"`
+	SourceID       SourceIDType `json:"sourceId,omitempty"`
+	Type           EventType    `json:"@type,omitempty"`
 }
 
 type RegisterEventsResponseError struct {
@@ -152,15 +147,15 @@ type RegisterEventsResponseError struct {
 	Message   string `json:"message,omitempty"`
 }
 
-type ReasonType int32
+type ReasonType string
 
 const (
-	ReasonClient ReasonType = 4
+	ReasonClient ReasonType = "CLIENT"
 )
 
 type Reason struct {
 	Type   ReasonType `json:"type,omitempty"`
-	RuleID string     `json:"rule_id,omitempty"`
+	RuleID string     `json:"ruleId,omitempty"`
 }
 
 type UserEvaluationsState int32
@@ -169,29 +164,9 @@ const (
 	UserEvaluationsFULL UserEvaluationsState = 2
 )
 
-func (c *client) ping() (*pingResponse, error) {
-	url := fmt.Sprintf("https://%s%s%s%s",
-		c.host,
-		version,
-		service,
-		pingAPI,
-	)
-	resp, err := c.sendHTTPRequest(url, struct{}{})
-	if err != nil {
-		return nil, err
-	}
-	var pr pingResponse
-	if err := json.Unmarshal(resp.Data, &pr); err != nil {
-		return nil, err
-	}
-	return &pr, nil
-}
-
 func (c *client) GetEvaluation(req *GetEvaluationRequest) (*GetEvaluationResponse, error) {
-	url := fmt.Sprintf("https://%s%s%s%s",
+	url := fmt.Sprintf("https://%s%s",
 		c.host,
-		version,
-		service,
 		evaluationAPI,
 	)
 	resp, err := c.sendHTTPRequest(
@@ -205,17 +180,15 @@ func (c *client) GetEvaluation(req *GetEvaluationRequest) (*GetEvaluationRespons
 		return nil, err
 	}
 	var ger GetEvaluationResponse
-	if err := json.Unmarshal(resp.Data, &ger); err != nil {
+	if err := json.Unmarshal(resp, &ger); err != nil {
 		return nil, err
 	}
 	return &ger, nil
 }
 
 func (c *client) RegisterEvents(req *RegisterEventsRequest) (*RegisterEventsResponse, error) {
-	url := fmt.Sprintf("https://%s%s%s%s",
+	url := fmt.Sprintf("https://%s%s",
 		c.host,
-		version,
-		service,
 		eventsAPI,
 	)
 	resp, err := c.sendHTTPRequest(
@@ -228,17 +201,18 @@ func (c *client) RegisterEvents(req *RegisterEventsRequest) (*RegisterEventsResp
 		return nil, err
 	}
 	var rer RegisterEventsResponse
-	if err := json.Unmarshal(resp.Data, &rer); err != nil {
+	if err := json.Unmarshal(resp, &rer); err != nil {
 		return nil, err
 	}
 	return &rer, nil
 }
 
-func (c *client) sendHTTPRequest(url string, body interface{}) (*successResponse, error) {
+func (c *client) sendHTTPRequest(url string, body interface{}) ([]byte, error) {
 	encoded, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println(string(encoded))
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(encoded))
 	if err != nil {
 		return nil, err
@@ -254,10 +228,9 @@ func (c *client) sendHTTPRequest(url string, body interface{}) (*successResponse
 	if resp.StatusCode != http.StatusOK {
 		return nil, NewErrStatus(resp.StatusCode)
 	}
-	var sr successResponse
-	err = json.NewDecoder(resp.Body).Decode(&sr)
+	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
-	return &sr, nil
+	return data, nil
 }

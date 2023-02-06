@@ -339,7 +339,6 @@ func TestNewEvent(t *testing.T) {
 	assert.IsType(t, &api.Event{}, e)
 	assert.Equal(t, e.ID, id)
 	assert.Equal(t, e.Event, json.RawMessage(encoded))
-	assert.Equal(t, e.Type, api.EvaluationEventType)
 }
 
 func newProcessorForTestWorker(t *testing.T, mockCtrl *gomock.Controller) *processor {

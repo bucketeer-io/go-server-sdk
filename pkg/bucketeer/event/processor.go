@@ -222,6 +222,7 @@ func (p *processor) PushGetEvaluationLatencyMetricsEvent(ctx context.Context, du
 	gelMetricsEvt := &api.GetEvaluationLatencyMetricsEvent{
 		Labels:   map[string]string{"tag": p.tag, "state": strconv.Itoa(int(api.UserEvaluationsFULL))},
 		Duration: duration,
+		Type:     api.GetEvaluationLatencyMetricsEventType,
 	}
 	encodedGELMetricsEvt, err := json.Marshal(gelMetricsEvt)
 	if err != nil {
@@ -231,7 +232,6 @@ func (p *processor) PushGetEvaluationLatencyMetricsEvent(ctx context.Context, du
 	metricsEvt := &api.MetricsEvent{
 		Timestamp: time.Now().Unix(),
 		Event:     encodedGELMetricsEvt,
-		Type:      api.GetEvaluationLatencyMetricsEventType,
 	}
 	encodedMetricsEvt, err := json.Marshal(metricsEvt)
 	if err != nil {
@@ -248,6 +248,7 @@ func (p *processor) PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeB
 	gesMetricsEvt := &api.GetEvaluationSizeMetricsEvent{
 		Labels:   map[string]string{"tag": p.tag, "state": strconv.Itoa(int(api.UserEvaluationsFULL))},
 		SizeByte: int32(sizeByte),
+		Type:     api.GetEvaluationSizeMetricsEventType,
 	}
 	encodedGESMetricsEvt, err := json.Marshal(gesMetricsEvt)
 	if err != nil {
@@ -257,7 +258,6 @@ func (p *processor) PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeB
 	metricsEvt := &api.MetricsEvent{
 		Timestamp: time.Now().Unix(),
 		Event:     encodedGESMetricsEvt,
-		Type:      api.GetEvaluationSizeMetricsEventType,
 	}
 	encodedMetricsEvt, err := json.Marshal(metricsEvt)
 	if err != nil {
@@ -271,7 +271,8 @@ func (p *processor) PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeB
 }
 
 func (p *processor) PushTimeoutErrorCountMetricsEvent(ctx context.Context) {
-	tecMetricsEvt := &api.TimeoutErrorCountMetricsEvent{Tag: p.tag}
+	tecMetricsEvt := &api.TimeoutErrorCountMetricsEvent{Tag: p.tag, Type: api.TimeoutErrorCountMetricsEventType}
+
 	encodedTECMetricsEvt, err := json.Marshal(tecMetricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: PushTimeoutErrorCountMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
@@ -280,7 +281,6 @@ func (p *processor) PushTimeoutErrorCountMetricsEvent(ctx context.Context) {
 	metricsEvt := &api.MetricsEvent{
 		Timestamp: time.Now().Unix(),
 		Event:     encodedTECMetricsEvt,
-		Type:      api.TimeoutErrorCountMetricsEventType,
 	}
 	encodedMetricsEvt, err := json.Marshal(metricsEvt)
 	if err != nil {
@@ -294,7 +294,7 @@ func (p *processor) PushTimeoutErrorCountMetricsEvent(ctx context.Context) {
 }
 
 func (p *processor) PushInternalErrorCountMetricsEvent(ctx context.Context) {
-	iecMetricsEvt := &api.InternalErrorCountMetricsEvent{Tag: p.tag}
+	iecMetricsEvt := &api.InternalErrorCountMetricsEvent{Tag: p.tag, Type: api.InternalErrorCountMetricsEventType}
 	encodedIECMetricsEvt, err := json.Marshal(iecMetricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: PushInternalErrorCountMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
@@ -303,7 +303,6 @@ func (p *processor) PushInternalErrorCountMetricsEvent(ctx context.Context) {
 	metricsEvt := &api.MetricsEvent{
 		Timestamp: time.Now().Unix(),
 		Event:     encodedIECMetricsEvt,
-		Type:      api.InternalErrorCountMetricsEventType,
 	}
 	encodedMetricsEvt, err := json.Marshal(metricsEvt)
 	if err != nil {
@@ -332,7 +331,6 @@ func newEvent(id string, encoded []byte, eventType api.EventType) *api.Event {
 	return &api.Event{
 		ID:    id,
 		Event: encoded,
-		Type:  eventType,
 	}
 }
 
