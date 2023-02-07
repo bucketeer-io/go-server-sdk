@@ -236,7 +236,7 @@ func (c *client) sendHTTPRequest(url string, body interface{}) ([]byte, error) {
 	if resp.StatusCode != http.StatusOK {
 		return nil, NewErrStatus(resp.StatusCode)
 	}
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
