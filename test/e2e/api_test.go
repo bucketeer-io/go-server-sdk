@@ -56,9 +56,46 @@ func TestRegisterEvents(t *testing.T) {
 		Type: api.GetEvaluationSizeMetricsEventType,
 	})
 	assert.NoError(t, err)
-	metricsEvent, err := json.Marshal(&api.MetricsEvent{
+	gmetricsEvent, err := json.Marshal(&api.MetricsEvent{
 		Timestamp: time.Now().Unix(),
 		Event:     gesMetricsEvt,
+		Type:      api.MetricsEventType,
+	})
+	assert.NoError(t, err)
+	iecMetricsEvt, err := json.Marshal(&api.InternalErrorCountMetricsEvent{
+		Tag:  tag,
+		Type: api.InternalErrorCountMetricsEventType,
+	})
+	assert.NoError(t, err)
+	imetricsEvent, err := json.Marshal(&api.MetricsEvent{
+		Timestamp: time.Now().Unix(),
+		Event:     iecMetricsEvt,
+		Type:      api.MetricsEventType,
+	})
+	assert.NoError(t, err)
+	tecMetricsEvent, err := json.Marshal(&api.TimeoutErrorCountMetricsEvent{
+		Tag:  tag,
+		Type: api.TimeoutErrorCountMetricsEventType,
+	})
+	assert.NoError(t, err)
+	tmetricsEvent, err := json.Marshal(&api.MetricsEvent{
+		Timestamp: time.Now().Unix(),
+		Event:     tecMetricsEvent,
+		Type:      api.MetricsEventType,
+	})
+	assert.NoError(t, err)
+	elmMetricsEvent, err := json.Marshal(&api.GetEvaluationLatencyMetricsEvent{
+		Labels: map[string]string{"tag": tag},
+		Duration: &api.Duration{
+			Type:  api.DurationType,
+			Value: "5s",
+		},
+		Type: api.GetEvaluationLatencyMetricsEventType,
+	})
+	assert.NoError(t, err)
+	emetricsEvent, err := json.Marshal(&api.MetricsEvent{
+		Timestamp: time.Now().Unix(),
+		Event:     elmMetricsEvent,
 		Type:      api.MetricsEventType,
 	})
 	assert.NoError(t, err)
@@ -74,7 +111,19 @@ func TestRegisterEvents(t *testing.T) {
 			},
 			{
 				ID:    newUUID(t),
-				Event: metricsEvent,
+				Event: gmetricsEvent,
+			},
+			{
+				ID:    newUUID(t),
+				Event: imetricsEvent,
+			},
+			{
+				ID:    newUUID(t),
+				Event: tmetricsEvent,
+			},
+			{
+				ID:    newUUID(t),
+				Event: emetricsEvent,
 			},
 		},
 	}
