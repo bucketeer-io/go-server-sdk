@@ -220,7 +220,6 @@ func (c *client) sendHTTPRequest(url string, body interface{}) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println(string(encoded))
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(encoded))
 	if err != nil {
 		return nil, err
