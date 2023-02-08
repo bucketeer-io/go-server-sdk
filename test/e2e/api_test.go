@@ -2,7 +2,6 @@ package e2e
 
 import (
 	"encoding/json"
-	"strconv"
 	"testing"
 	"time"
 
@@ -52,8 +51,7 @@ func TestRegisterEvents(t *testing.T) {
 	assert.NoError(t, err)
 	gesMetricsEvt, err := json.Marshal(&api.GetEvaluationSizeMetricsEvent{
 		Labels: map[string]string{
-			"tag":   tag,
-			"state": strconv.Itoa(int(api.UserEvaluationsFULL)),
+			"tag": tag,
 		},
 		Type: api.GetEvaluationSizeMetricsEventType,
 	})

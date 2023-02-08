@@ -80,6 +80,9 @@ type Event struct {
 type MetricsEvent struct {
 	Timestamp int64           `json:"timestamp,omitempty"`
 	Event     json.RawMessage `json:"event,omitempty"`
+	SourceID  SourceIDType `json:"sourceId,omitempty"`
+	SDKVersion string `json:"sdkVersion,omitempty"`
+	Metadata map[string]string `json:"metadata,omitempty"`
 	Type      EventType       `json:"@type,omitempty"`
 }
 
@@ -91,6 +94,8 @@ type GoalEvent struct {
 	User      *user.User   `json:"user,omitempty"`
 	Tag       string       `json:"tag,omitempty"`
 	SourceID  SourceIDType `json:"sourceId,omitempty"`
+	SDKVersion string `json:"sdkVersion,omitempty"`
+	Metadata map[string]string `json:"metadata,omitempty"`
 	Type      EventType    `json:"@type,omitempty"`
 }
 
@@ -146,7 +151,9 @@ type EvaluationEvent struct {
 	User           *user.User   `json:"user,omitempty"`
 	Reason         *Reason      `json:"reason,omitempty"`
 	Tag            string       `json:"tag,omitempty"`
-	SourceID       SourceIDType `json:"sourceId,omitempty"`
+	SourceID  SourceIDType `json:"sourceId,omitempty"`
+	SDKVersion string `json:"sdkVersion,omitempty"`
+	Metadata map[string]string `json:"metadata,omitempty"`
 	Type           EventType    `json:"@type,omitempty"`
 }
 
@@ -165,12 +172,6 @@ type Reason struct {
 	Type   ReasonType `json:"type,omitempty"`
 	RuleID string     `json:"ruleId,omitempty"`
 }
-
-type UserEvaluationsState int32
-
-const (
-	UserEvaluationsFULL UserEvaluationsState = 2
-)
 
 func (c *client) GetEvaluation(req *GetEvaluationRequest) (*GetEvaluationResponse, error) {
 	url := fmt.Sprintf("https://%s%s",

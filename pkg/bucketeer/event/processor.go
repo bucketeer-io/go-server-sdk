@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"sync"
 	"time"
 
@@ -13,6 +12,7 @@ import (
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/uuid"
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/version"
 )
 
 // Processor defines the interface for processing events.
@@ -209,7 +209,7 @@ func (p *processor) PushGoalEvent(ctx context.Context, user *user.User, GoalID s
 func (p *processor) PushGetEvaluationLatencyMetricsEvent(ctx context.Context, duration time.Duration) {
 	val := fmt.Sprintf("%ds", duration.Microseconds()/1000)
 	gelMetricsEvt := &api.GetEvaluationLatencyMetricsEvent{
-		Labels: map[string]string{"tag": p.tag, "state": strconv.Itoa(int(api.UserEvaluationsFULL))},
+		Labels: map[string]string{"tag": p.tag},
 		Duration: &api.Duration{
 			Type:  api.DurationType,
 			Value: val,
@@ -235,7 +235,7 @@ func (p *processor) PushGetEvaluationLatencyMetricsEvent(ctx context.Context, du
 
 func (p *processor) PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeByte int) {
 	gesMetricsEvt := &api.GetEvaluationSizeMetricsEvent{
-		Labels:   map[string]string{"tag": p.tag, "state": strconv.Itoa(int(api.UserEvaluationsFULL))},
+		Labels:   map[string]string{"tag": p.tag},
 		SizeByte: int32(sizeByte),
 		Type:     api.GetEvaluationSizeMetricsEventType,
 	}
@@ -316,22 +316,27 @@ func newEvent(id string, encoded []byte) *api.Event {
 
 func newMetricsEvent(encoded json.RawMessage) *api.MetricsEvent {
 	return &api.MetricsEvent{
-		Timestamp: time.Now().Unix(),
-		Event:     encoded,
-		Type:      api.MetricsEventType,
+		Timestamp:  time.Now().Unix(),
+		Event:      encoded,
+		SourceID:   api.SourceIDGoServer,
+		SDKVersion: version.SDKVersion,
+		Metadata:   map[string]string{},
+		Type:       api.MetricsEventType,
 	}
 }
 
 func newGoalEvent(tag, goalID string, value float64, user *user.User) *api.GoalEvent {
 	return &api.GoalEvent{
-		SourceID:  api.SourceIDGoServer,
-		Tag:       tag,
-		Timestamp: time.Now().Unix(),
-		GoalID:    goalID,
-		UserID:    user.ID,
-		Value:     value,
-		User:      user,
-		Type:      api.GoalEventType,
+		Tag:        tag,
+		Timestamp:  time.Now().Unix(),
+		GoalID:     goalID,
+		UserID:     user.ID,
+		Value:      value,
+		User:       user,
+		SourceID:   api.SourceIDGoServer,
+		SDKVersion: version.SDKVersion,
+		Metadata:   map[string]string{},
+		Type:       api.GoalEventType,
 	}
 }
 
@@ -342,7 +347,6 @@ func newEvaluationEvent(
 	reason *api.Reason,
 ) *api.EvaluationEvent {
 	return &api.EvaluationEvent{
-		SourceID:       api.SourceIDGoServer,
 		Tag:            tag,
 		Timestamp:      time.Now().Unix(),
 		FeatureID:      featureID,
@@ -350,6 +354,9 @@ func newEvaluationEvent(
 		VariationID:    variationID,
 		User:           user,
 		Reason:         reason,
+		SourceID:       api.SourceIDGoServer,
+		SDKVersion:     version.SDKVersion,
+		Metadata:       map[string]string{},
 		Type:           api.EvaluationEventType,
 	}
 }
