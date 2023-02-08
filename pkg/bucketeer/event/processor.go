@@ -208,14 +208,7 @@ func (p *processor) PushGoalEvent(ctx context.Context, user *user.User, GoalID s
 
 func (p *processor) PushGetEvaluationLatencyMetricsEvent(ctx context.Context, duration time.Duration) {
 	val := fmt.Sprintf("%ds", duration.Microseconds()/1000)
-	gelMetricsEvt := &api.GetEvaluationLatencyMetricsEvent{
-		Labels: map[string]string{"tag": p.tag},
-		Duration: &api.Duration{
-			Type:  api.DurationType,
-			Value: val,
-		},
-		Type: api.GetEvaluationLatencyMetricsEventType,
-	}
+	gelMetricsEvt := newGetEvaluationLatencyMetricsEvent(p.tag, val)
 	encodedGELMetricsEvt, err := json.Marshal(gelMetricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: PushGetEvaluationLatencyMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
@@ -234,11 +227,7 @@ func (p *processor) PushGetEvaluationLatencyMetricsEvent(ctx context.Context, du
 }
 
 func (p *processor) PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeByte int) {
-	gesMetricsEvt := &api.GetEvaluationSizeMetricsEvent{
-		Labels:   map[string]string{"tag": p.tag},
-		SizeByte: int32(sizeByte),
-		Type:     api.GetEvaluationSizeMetricsEventType,
-	}
+	gesMetricsEvt := newGetEvaluationSizeMetricsEvent(p.tag, int32(sizeByte))
 	encodedGESMetricsEvt, err := json.Marshal(gesMetricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: PushGetEvaluationSizeMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
@@ -257,7 +246,7 @@ func (p *processor) PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeB
 }
 
 func (p *processor) PushTimeoutErrorCountMetricsEvent(ctx context.Context) {
-	tecMetricsEvt := &api.TimeoutErrorCountMetricsEvent{Tag: p.tag, Type: api.TimeoutErrorCountMetricsEventType}
+	tecMetricsEvt := newTimeoutErrorCountMetricsEvent(p.tag)
 
 	encodedTECMetricsEvt, err := json.Marshal(tecMetricsEvt)
 	if err != nil {
@@ -277,7 +266,7 @@ func (p *processor) PushTimeoutErrorCountMetricsEvent(ctx context.Context) {
 }
 
 func (p *processor) PushInternalErrorCountMetricsEvent(ctx context.Context) {
-	iecMetricsEvt := &api.InternalErrorCountMetricsEvent{Tag: p.tag, Type: api.InternalErrorCountMetricsEventType}
+	iecMetricsEvt := newInternalErrorCountMetricsEvent(p.tag)
 	encodedIECMetricsEvt, err := json.Marshal(iecMetricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: PushInternalErrorCountMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
@@ -358,6 +347,39 @@ func newEvaluationEvent(
 		SDKVersion:     version.SDKVersion,
 		Metadata:       map[string]string{},
 		Type:           api.EvaluationEventType,
+	}
+}
+
+func newInternalErrorCountMetricsEvent(tag string) *api.InternalErrorCountMetricsEvent {
+	return &api.InternalErrorCountMetricsEvent{
+		Tag: tag, 
+		Type: api.InternalErrorCountMetricsEventType,
+	}
+}
+
+func newTimeoutErrorCountMetricsEvent(tag string) *api.TimeoutErrorCountMetricsEvent {
+	return &api.TimeoutErrorCountMetricsEvent{
+		Tag: tag, 
+		Type: api.TimeoutErrorCountMetricsEventType,
+	}
+}
+
+func newGetEvaluationSizeMetricsEvent(tag string, sizeByte int32) *api.GetEvaluationSizeMetricsEvent {
+	return &api.GetEvaluationSizeMetricsEvent{
+		Labels:   map[string]string{"tag": tag},
+		SizeByte: sizeByte,
+		Type:     api.GetEvaluationSizeMetricsEventType,
+	}
+}
+
+func newGetEvaluationLatencyMetricsEvent(tag, val string) *api.GetEvaluationLatencyMetricsEvent {
+	return &api.GetEvaluationLatencyMetricsEvent{
+		Labels: map[string]string{"tag": tag},
+		Duration: &api.Duration{
+			Type:  api.DurationType,
+			Value: val,
+		},
+		Type: api.GetEvaluationLatencyMetricsEventType,
 	}
 }
 

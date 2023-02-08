@@ -13,14 +13,24 @@ import (
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/version"
 	mockapi "github.com/ca-dp/bucketeer-go-server-sdk/test/mock/api"
 )
 
 const (
-	processorUserID      = "user-id"
-	processorFeatureID   = "feature-id"
-	processorVariationID = "variation-id"
-	processorGoalID      = "goal-id"
+	processorUserID            = "user-id"
+	processorFeatureID         = "feature-id"
+	processorVariationID       = "variation-id"
+	processorGoalID            = "goal-id"
+	tag                        = "tag"
+	value                      = "1s"
+	goalID                     = "goalID"
+	id                         = "id"
+	featureVersion             = 7
+	variationID                = "vid"
+	variationValue             = "value"
+	sizeByte             int32 = 1000
+	featureID                  = "fid"
 )
 
 type registerEventsResponseError struct {
@@ -339,6 +349,76 @@ func TestNewEvent(t *testing.T) {
 	assert.IsType(t, &api.Event{}, e)
 	assert.Equal(t, e.ID, id)
 	assert.Equal(t, e.Event, json.RawMessage(encoded))
+}
+
+func TestNewInternalErrorCountMetricsEvent(t *testing.T) {
+	t.Parallel()
+	e := newInternalErrorCountMetricsEvent(tag)
+	assert.IsType(t, &api.InternalErrorCountMetricsEvent{}, e)
+	assert.Equal(t, tag, e.Tag)
+	assert.Equal(t, api.InternalErrorCountMetricsEventType, e.Type)
+}
+
+func TestNewTimeoutErrorCountMetricsEvent(t *testing.T) {
+	t.Parallel()
+	e := newTimeoutErrorCountMetricsEvent(tag)
+	assert.IsType(t, &api.TimeoutErrorCountMetricsEvent{}, e)
+	assert.Equal(t, tag, e.Tag)
+	assert.Equal(t, api.TimeoutErrorCountMetricsEventType, e.Type)
+}
+
+func TestNewGetEvaluationSizeMetricsEvent(t *testing.T) {
+	t.Parallel()
+	e := newGetEvaluationSizeMetricsEvent(tag, sizeByte)
+	assert.IsType(t, &api.GetEvaluationSizeMetricsEvent{}, e)
+	assert.Equal(t, tag, e.Labels["tag"])
+	assert.Equal(t, sizeByte, e.SizeByte)
+	assert.Equal(t, api.GetEvaluationSizeMetricsEventType, e.Type)
+}
+func TestNewGetEvaluationLatencyMetricsEvent(t *testing.T) {
+	t.Parallel()
+	e := newGetEvaluationLatencyMetricsEvent(tag, value)
+	assert.IsType(t, &api.GetEvaluationLatencyMetricsEvent{}, e)
+	assert.Equal(t, tag, e.Labels["tag"])
+	assert.Equal(t, value, e.Duration.Value)
+	assert.Equal(t, api.DurationType, e.Duration.Type)
+	assert.Equal(t, api.GetEvaluationLatencyMetricsEventType, e.Type)
+}
+
+func TestNewEvaluationEvent(t *testing.T) {
+	t.Parallel()
+	e := newEvaluationEvent(tag, featureID, variationID, featureVersion, newUser(t, id), &api.Reason{Type: api.ReasonClient})
+	assert.IsType(t, &api.EvaluationEvent{}, e)
+	assert.Equal(t, tag, e.Tag)
+	assert.Equal(t, api.EvaluationEventType, e.Type)
+	assert.Equal(t, featureID, e.FeatureID)
+	assert.Equal(t, variationID, e.VariationID)
+	assert.Equal(t, featureID, e.FeatureID)
+	assert.Equal(t, id, e.User.ID)
+	assert.Equal(t, api.ReasonClient, e.Reason.Type)
+	assert.Equal(t, e.SourceID, api.SourceIDGoServer)
+	assert.Equal(t, version.SDKVersion, e.SDKVersion)
+}
+func TestNewGoalEvent(t *testing.T) {
+	t.Parallel()
+	e := newGoalEvent(tag, goalID, 0.2, newUser(t, id))
+	assert.IsType(t, &api.GoalEvent{}, e)
+	assert.Equal(t, tag, e.Tag)
+	assert.Equal(t, api.GoalEventType, e.Type)
+	assert.Equal(t, id, e.User.ID)
+	assert.Equal(t, goalID, e.GoalID)
+	assert.Equal(t, 0.2, e.Value)
+	assert.Equal(t, e.SourceID, api.SourceIDGoServer)
+	assert.Equal(t, version.SDKVersion, e.SDKVersion)
+}
+func TestNewMetricsEvent(t *testing.T) {
+	t.Parallel()
+	json := json.RawMessage{}
+	e := newMetricsEvent(json)
+	assert.IsType(t, &api.MetricsEvent{}, e)
+	assert.Equal(t, api.MetricsEventType, e.Type)
+	assert.Equal(t, e.SourceID, api.SourceIDGoServer)
+	assert.Equal(t, version.SDKVersion, e.SDKVersion)
 }
 
 func newProcessorForTestWorker(t *testing.T, mockCtrl *gomock.Controller) *processor {
