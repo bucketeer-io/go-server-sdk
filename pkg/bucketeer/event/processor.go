@@ -352,14 +352,14 @@ func newEvaluationEvent(
 
 func newInternalErrorCountMetricsEvent(tag string) *api.InternalErrorCountMetricsEvent {
 	return &api.InternalErrorCountMetricsEvent{
-		Tag: tag, 
+		Tag:  tag,
 		Type: api.InternalErrorCountMetricsEventType,
 	}
 }
 
 func newTimeoutErrorCountMetricsEvent(tag string) *api.TimeoutErrorCountMetricsEvent {
 	return &api.TimeoutErrorCountMetricsEvent{
-		Tag: tag, 
+		Tag:  tag,
 		Type: api.TimeoutErrorCountMetricsEventType,
 	}
 }

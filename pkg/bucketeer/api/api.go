@@ -78,25 +78,25 @@ type Event struct {
 }
 
 type MetricsEvent struct {
-	Timestamp int64           `json:"timestamp,omitempty"`
-	Event     json.RawMessage `json:"event,omitempty"`
-	SourceID  SourceIDType `json:"sourceId,omitempty"`
-	SDKVersion string `json:"sdkVersion,omitempty"`
-	Metadata map[string]string `json:"metadata,omitempty"`
-	Type      EventType       `json:"@type,omitempty"`
+	Timestamp  int64             `json:"timestamp,omitempty"`
+	Event      json.RawMessage   `json:"event,omitempty"`
+	SourceID   SourceIDType      `json:"sourceId,omitempty"`
+	SDKVersion string            `json:"sdkVersion,omitempty"`
+	Metadata   map[string]string `json:"metadata,omitempty"`
+	Type       EventType         `json:"@type,omitempty"`
 }
 
 type GoalEvent struct {
-	Timestamp int64        `json:"timestamp,omitempty"`
-	GoalID    string       `json:"goalId,omitempty"`
-	UserID    string       `json:"userId,omitempty"`
-	Value     float64      `json:"value,omitempty"`
-	User      *user.User   `json:"user,omitempty"`
-	Tag       string       `json:"tag,omitempty"`
-	SourceID  SourceIDType `json:"sourceId,omitempty"`
-	SDKVersion string `json:"sdkVersion,omitempty"`
-	Metadata map[string]string `json:"metadata,omitempty"`
-	Type      EventType    `json:"@type,omitempty"`
+	Timestamp  int64             `json:"timestamp,omitempty"`
+	GoalID     string            `json:"goalId,omitempty"`
+	UserID     string            `json:"userId,omitempty"`
+	Value      float64           `json:"value,omitempty"`
+	User       *user.User        `json:"user,omitempty"`
+	Tag        string            `json:"tag,omitempty"`
+	SourceID   SourceIDType      `json:"sourceId,omitempty"`
+	SDKVersion string            `json:"sdkVersion,omitempty"`
+	Metadata   map[string]string `json:"metadata,omitempty"`
+	Type       EventType         `json:"@type,omitempty"`
 }
 
 type Duration struct {
@@ -144,17 +144,17 @@ type Evaluation struct {
 }
 
 type EvaluationEvent struct {
-	Timestamp      int64        `json:"timestamp,omitempty"`
-	FeatureID      string       `json:"featureId,omitempty"`
-	FeatureVersion int32        `json:"featureVersion,omitempty"`
-	VariationID    string       `json:"variationId,omitempty"`
-	User           *user.User   `json:"user,omitempty"`
-	Reason         *Reason      `json:"reason,omitempty"`
-	Tag            string       `json:"tag,omitempty"`
-	SourceID  SourceIDType `json:"sourceId,omitempty"`
-	SDKVersion string `json:"sdkVersion,omitempty"`
-	Metadata map[string]string `json:"metadata,omitempty"`
-	Type           EventType    `json:"@type,omitempty"`
+	Timestamp      int64             `json:"timestamp,omitempty"`
+	FeatureID      string            `json:"featureId,omitempty"`
+	FeatureVersion int32             `json:"featureVersion,omitempty"`
+	VariationID    string            `json:"variationId,omitempty"`
+	User           *user.User        `json:"user,omitempty"`
+	Reason         *Reason           `json:"reason,omitempty"`
+	Tag            string            `json:"tag,omitempty"`
+	SourceID       SourceIDType      `json:"sourceId,omitempty"`
+	SDKVersion     string            `json:"sdkVersion,omitempty"`
+	Metadata       map[string]string `json:"metadata,omitempty"`
+	Type           EventType         `json:"@type,omitempty"`
 }
 
 type RegisterEventsResponseError struct {
