@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/models"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/uuid"
 )
@@ -16,7 +17,7 @@ func TestGetEvaluation(t *testing.T) {
 	t.Parallel()
 	client := newAPIClient(t)
 	user := user.NewUser(userID, nil)
-	res, err := client.GetEvaluation(&api.GetEvaluationRequest{Tag: tag, User: user, FeatureID: featureID})
+	res, err := client.GetEvaluation(&models.GetEvaluationRequest{Tag: tag, User: user, FeatureID: featureID})
 	assert.NoError(t, err)
 	assert.Equal(t, featureID, res.Evaluation.FeatureID)
 	assert.Equal(t, featureIDVariation2, res.Evaluation.VariationValue)
@@ -26,81 +27,81 @@ func TestRegisterEvents(t *testing.T) {
 	t.Parallel()
 	client := newAPIClient(t)
 	user := user.NewUser(userID, nil)
-	evaluationEvent, err := json.Marshal(api.EvaluationEvent{
+	evaluationEvent, err := json.Marshal(&models.EvaluationEvent{
 		Timestamp:      time.Now().Unix(),
-		SourceID:       api.SourceIDGoServer,
+		SourceID:       models.SourceIDGoServer,
 		Tag:            tag,
 		FeatureID:      featureID,
 		FeatureVersion: 0,
 		VariationID:    "",
 		User:           user,
-		Reason:         &api.Reason{Type: api.ReasonClient},
-		Type:           api.EvaluationEventType,
+		Reason:         &models.Reason{Type: models.ReasonClient},
+		Type:           models.EvaluationEventType,
 	})
 	assert.NoError(t, err)
-	goalEvent, err := json.Marshal(&api.GoalEvent{
+	goalEvent, err := json.Marshal(&models.GoalEvent{
 		Timestamp: time.Now().Unix(),
-		SourceID:  api.SourceIDGoServer,
+		SourceID:  models.SourceIDGoServer,
 		Tag:       tag,
 		GoalID:    goalID,
 		UserID:    user.ID,
 		Value:     0.0,
 		User:      user,
-		Type:      api.GoalEventType,
+		Type:      models.GoalEventType,
 	})
 	assert.NoError(t, err)
-	gesMetricsEvt, err := json.Marshal(&api.GetEvaluationSizeMetricsEvent{
+	gesMetricsEvt, err := json.Marshal(&models.GetEvaluationSizeMetricsEvent{
 		Labels: map[string]string{
 			"tag": tag,
 		},
-		Type: api.GetEvaluationSizeMetricsEventType,
+		Type: models.GetEvaluationSizeMetricsEventType,
 	})
 	assert.NoError(t, err)
-	gmetricsEvent, err := json.Marshal(&api.MetricsEvent{
+	gmetricsEvent, err := json.Marshal(&models.MetricsEvent{
 		Timestamp: time.Now().Unix(),
 		Event:     gesMetricsEvt,
-		Type:      api.MetricsEventType,
+		Type:      models.MetricsEventType,
 	})
 	assert.NoError(t, err)
-	iecMetricsEvt, err := json.Marshal(&api.InternalErrorCountMetricsEvent{
+	iecMetricsEvt, err := json.Marshal(&models.InternalErrorCountMetricsEvent{
 		Tag:  tag,
-		Type: api.InternalErrorCountMetricsEventType,
+		Type: models.InternalErrorCountMetricsEventType,
 	})
 	assert.NoError(t, err)
-	imetricsEvent, err := json.Marshal(&api.MetricsEvent{
+	imetricsEvent, err := json.Marshal(&models.MetricsEvent{
 		Timestamp: time.Now().Unix(),
 		Event:     iecMetricsEvt,
-		Type:      api.MetricsEventType,
+		Type:      models.MetricsEventType,
 	})
 	assert.NoError(t, err)
-	tecMetricsEvent, err := json.Marshal(&api.TimeoutErrorCountMetricsEvent{
+	tecMetricsEvent, err := json.Marshal(&models.TimeoutErrorCountMetricsEvent{
 		Tag:  tag,
-		Type: api.TimeoutErrorCountMetricsEventType,
+		Type: models.TimeoutErrorCountMetricsEventType,
 	})
 	assert.NoError(t, err)
-	tmetricsEvent, err := json.Marshal(&api.MetricsEvent{
+	tmetricsEvent, err := json.Marshal(&models.MetricsEvent{
 		Timestamp: time.Now().Unix(),
 		Event:     tecMetricsEvent,
-		Type:      api.MetricsEventType,
+		Type:      models.MetricsEventType,
 	})
 	assert.NoError(t, err)
-	elmMetricsEvent, err := json.Marshal(&api.GetEvaluationLatencyMetricsEvent{
+	elmMetricsEvent, err := json.Marshal(&models.GetEvaluationLatencyMetricsEvent{
 		Labels: map[string]string{"tag": tag},
-		Duration: &api.Duration{
-			Type:  api.DurationType,
+		Duration: &models.Duration{
+			Type:  models.DurationType,
 			Value: "5s",
 		},
-		Type: api.GetEvaluationLatencyMetricsEventType,
+		Type: models.GetEvaluationLatencyMetricsEventType,
 	})
 	assert.NoError(t, err)
-	emetricsEvent, err := json.Marshal(&api.MetricsEvent{
+	emetricsEvent, err := json.Marshal(&models.MetricsEvent{
 		Timestamp: time.Now().Unix(),
 		Event:     elmMetricsEvent,
-		Type:      api.MetricsEventType,
+		Type:      models.MetricsEventType,
 	})
 	assert.NoError(t, err)
-	req := &api.RegisterEventsRequest{
-		Events: []*api.Event{
+	req := &models.RegisterEventsRequest{
+		Events: []*models.Event{
 			{
 				ID:    newUUID(t),
 				Event: evaluationEvent,

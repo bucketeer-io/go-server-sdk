@@ -8,11 +8,12 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
+
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/models"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/uuid"
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/version"
 )
 
 // Processor defines the interface for processing events.
@@ -24,7 +25,7 @@ import (
 // every time the specified time elapses or the specified capacity is exceeded.
 type Processor interface {
 	// PushEvaluationEvent pushes the evaluation event to the queue.
-	PushEvaluationEvent(ctx context.Context, user *user.User, evaluation *api.Evaluation)
+	PushEvaluationEvent(ctx context.Context, user *user.User, evaluation *models.Evaluation)
 
 	// PushDefaultEvaluationEvent pushes the default evaluation event to the queue.
 	PushDefaultEvaluationEvent(ctx context.Context, user *user.User, featureID string)
@@ -120,9 +121,9 @@ func NewProcessor(conf *ProcessorConfig) Processor {
 func (p *processor) PushEvaluationEvent(
 	ctx context.Context,
 	user *user.User,
-	evaluation *api.Evaluation,
+	evaluation *models.Evaluation,
 ) {
-	evaluationEvt := newEvaluationEvent(
+	evaluationEvt := models.NewEvaluationEvent(
 		p.tag,
 		evaluation.FeatureID,
 		evaluation.VariationID,
@@ -152,13 +153,13 @@ func (p *processor) PushEvaluationEvent(
 }
 
 func (p *processor) PushDefaultEvaluationEvent(ctx context.Context, user *user.User, featureID string) {
-	evaluationEvt := newEvaluationEvent(
+	evaluationEvt := models.NewEvaluationEvent(
 		p.tag,
 		featureID,
 		"",
 		0,
 		user,
-		&api.Reason{Type: api.ReasonClient},
+		&models.Reason{Type: models.ReasonClient},
 	)
 	encodedEvaluationEvt, err := json.Marshal(evaluationEvt)
 	if err != nil {
@@ -182,7 +183,7 @@ func (p *processor) PushDefaultEvaluationEvent(ctx context.Context, user *user.U
 }
 
 func (p *processor) PushGoalEvent(ctx context.Context, user *user.User, GoalID string, value float64) {
-	goalEvt := newGoalEvent(p.tag, GoalID, value, user)
+	goalEvt := models.NewGoalEvent(p.tag, GoalID, value, user)
 	encodedGoalEvt, err := json.Marshal(goalEvt)
 	if err != nil {
 		p.loggers.Errorf(
@@ -208,13 +209,13 @@ func (p *processor) PushGoalEvent(ctx context.Context, user *user.User, GoalID s
 
 func (p *processor) PushGetEvaluationLatencyMetricsEvent(ctx context.Context, duration time.Duration) {
 	val := fmt.Sprintf("%ds", duration.Microseconds()/1000)
-	gelMetricsEvt := newGetEvaluationLatencyMetricsEvent(p.tag, val)
+	gelMetricsEvt := models.NewGetEvaluationLatencyMetricsEvent(p.tag, val)
 	encodedGELMetricsEvt, err := json.Marshal(gelMetricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: PushGetEvaluationLatencyMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
-	metricsEvt := newMetricsEvent(encodedGELMetricsEvt)
+	metricsEvt := models.NewMetricsEvent(encodedGELMetricsEvt)
 	encodedMetricsEvt, err := json.Marshal(metricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: PushGetEvaluationLatencyMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
@@ -227,13 +228,13 @@ func (p *processor) PushGetEvaluationLatencyMetricsEvent(ctx context.Context, du
 }
 
 func (p *processor) PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeByte int) {
-	gesMetricsEvt := newGetEvaluationSizeMetricsEvent(p.tag, int32(sizeByte))
+	gesMetricsEvt := models.NewGetEvaluationSizeMetricsEvent(p.tag, int32(sizeByte))
 	encodedGESMetricsEvt, err := json.Marshal(gesMetricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: PushGetEvaluationSizeMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
-	metricsEvt := newMetricsEvent(encodedGESMetricsEvt)
+	metricsEvt := models.NewMetricsEvent(encodedGESMetricsEvt)
 	encodedMetricsEvt, err := json.Marshal(metricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: PushGetEvaluationSizeMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
@@ -246,14 +247,14 @@ func (p *processor) PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeB
 }
 
 func (p *processor) PushTimeoutErrorCountMetricsEvent(ctx context.Context) {
-	tecMetricsEvt := newTimeoutErrorCountMetricsEvent(p.tag)
+	tecMetricsEvt := models.NewTimeoutErrorCountMetricsEvent(p.tag)
 
 	encodedTECMetricsEvt, err := json.Marshal(tecMetricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: PushTimeoutErrorCountMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
-	metricsEvt := newMetricsEvent(encodedTECMetricsEvt)
+	metricsEvt := models.NewMetricsEvent(encodedTECMetricsEvt)
 	encodedMetricsEvt, err := json.Marshal(metricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: PushTimeoutErrorCountMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
@@ -266,13 +267,13 @@ func (p *processor) PushTimeoutErrorCountMetricsEvent(ctx context.Context) {
 }
 
 func (p *processor) PushInternalErrorCountMetricsEvent(ctx context.Context) {
-	iecMetricsEvt := newInternalErrorCountMetricsEvent(p.tag)
+	iecMetricsEvt := models.NewInternalErrorCountMetricsEvent(p.tag)
 	encodedIECMetricsEvt, err := json.Marshal(iecMetricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: PushInternalErrorCountMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
-	metricsEvt := newMetricsEvent(encodedIECMetricsEvt)
+	metricsEvt := models.NewMetricsEvent(encodedIECMetricsEvt)
 	encodedMetricsEvt, err := json.Marshal(metricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: PushInternalErrorCountMetricsEvent failed (err: %v, tag: %s", err, p.tag)
@@ -287,100 +288,13 @@ func (p *processor) PushInternalErrorCountMetricsEvent(ctx context.Context) {
 func (p *processor) pushEvent(encoded []byte) error {
 	id, err := uuid.NewV4()
 	if err != nil {
-		return fmt.Errorf("failed to new uuid v4: %w", err)
+		return fmt.Errorf("failed to models.New uuid v4: %w", err)
 	}
-	evt := newEvent(id.String(), encoded)
+	evt := models.NewEvent(id.String(), encoded)
 	if err := p.evtQueue.push(evt); err != nil {
 		return fmt.Errorf("failed to push event: %w", err)
 	}
 	return nil
-}
-
-func newEvent(id string, encoded []byte) *api.Event {
-	return &api.Event{
-		ID:    id,
-		Event: encoded,
-	}
-}
-
-func newMetricsEvent(encoded json.RawMessage) *api.MetricsEvent {
-	return &api.MetricsEvent{
-		Timestamp:  time.Now().Unix(),
-		Event:      encoded,
-		SourceID:   api.SourceIDGoServer,
-		SDKVersion: version.SDKVersion,
-		Metadata:   map[string]string{},
-		Type:       api.MetricsEventType,
-	}
-}
-
-func newGoalEvent(tag, goalID string, value float64, user *user.User) *api.GoalEvent {
-	return &api.GoalEvent{
-		Tag:        tag,
-		Timestamp:  time.Now().Unix(),
-		GoalID:     goalID,
-		UserID:     user.ID,
-		Value:      value,
-		User:       user,
-		SourceID:   api.SourceIDGoServer,
-		SDKVersion: version.SDKVersion,
-		Metadata:   map[string]string{},
-		Type:       api.GoalEventType,
-	}
-}
-
-func newEvaluationEvent(
-	tag, featureID, variationID string,
-	featureVersion int32,
-	user *user.User,
-	reason *api.Reason,
-) *api.EvaluationEvent {
-	return &api.EvaluationEvent{
-		Tag:            tag,
-		Timestamp:      time.Now().Unix(),
-		FeatureID:      featureID,
-		FeatureVersion: featureVersion,
-		VariationID:    variationID,
-		User:           user,
-		Reason:         reason,
-		SourceID:       api.SourceIDGoServer,
-		SDKVersion:     version.SDKVersion,
-		Metadata:       map[string]string{},
-		Type:           api.EvaluationEventType,
-	}
-}
-
-func newInternalErrorCountMetricsEvent(tag string) *api.InternalErrorCountMetricsEvent {
-	return &api.InternalErrorCountMetricsEvent{
-		Tag:  tag,
-		Type: api.InternalErrorCountMetricsEventType,
-	}
-}
-
-func newTimeoutErrorCountMetricsEvent(tag string) *api.TimeoutErrorCountMetricsEvent {
-	return &api.TimeoutErrorCountMetricsEvent{
-		Tag:  tag,
-		Type: api.TimeoutErrorCountMetricsEventType,
-	}
-}
-
-func newGetEvaluationSizeMetricsEvent(tag string, sizeByte int32) *api.GetEvaluationSizeMetricsEvent {
-	return &api.GetEvaluationSizeMetricsEvent{
-		Labels:   map[string]string{"tag": tag},
-		SizeByte: sizeByte,
-		Type:     api.GetEvaluationSizeMetricsEventType,
-	}
-}
-
-func newGetEvaluationLatencyMetricsEvent(tag, val string) *api.GetEvaluationLatencyMetricsEvent {
-	return &api.GetEvaluationLatencyMetricsEvent{
-		Labels: map[string]string{"tag": tag},
-		Duration: &api.Duration{
-			Type:  api.DurationType,
-			Value: val,
-		},
-		Type: api.GetEvaluationLatencyMetricsEventType,
-	}
 }
 
 func (p *processor) Close(ctx context.Context) error {
@@ -407,7 +321,7 @@ func (p *processor) runWorkerProcessLoop() {
 		p.loggers.Debug("bucketeer/event: runWorkerProcessLoop done")
 		p.workerWG.Done()
 	}()
-	events := make([]*api.Event, 0, p.flushSize)
+	events := make([]*models.Event, 0, p.flushSize)
 	ticker := time.NewTicker(p.flushInterval)
 	defer ticker.Stop()
 	for {
@@ -422,19 +336,19 @@ func (p *processor) runWorkerProcessLoop() {
 				continue
 			}
 			p.flushEvents(events)
-			events = make([]*api.Event, 0, p.flushSize)
+			events = make([]*models.Event, 0, p.flushSize)
 		case <-ticker.C:
 			p.flushEvents(events)
-			events = make([]*api.Event, 0, p.flushSize)
+			events = make([]*models.Event, 0, p.flushSize)
 		}
 	}
 }
 
-func (p *processor) flushEvents(events []*api.Event) {
+func (p *processor) flushEvents(events []*models.Event) {
 	if len(events) == 0 {
 		return
 	}
-	res, err := p.apiClient.RegisterEvents(&api.RegisterEventsRequest{Events: events})
+	res, err := p.apiClient.RegisterEvents(&models.RegisterEventsRequest{Events: events})
 	if err != nil {
 		p.loggers.Debugf("bucketeer/event: failed to register events: %v", err)
 		// Re-push all events to the event queue.

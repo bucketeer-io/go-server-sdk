@@ -7,7 +7,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/models"
 )
 
 const (
@@ -16,164 +16,16 @@ const (
 	authorizationKey = "authorization"
 )
 
-type EventType string
-
-type metricsDetailEventType string
-
-//nolint:lll
-const (
-	GetEvaluationLatencyMetricsEventType metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.GetEvaluationLatencyMetricsEvent"
-	GetEvaluationSizeMetricsEventType    metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.GetEvaluationSizeMetricsEvent"
-	TimeoutErrorCountMetricsEventType    metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.TimeoutErrorCountMetricsEvent"
-	InternalErrorCountMetricsEventType   metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.InternalErrorCountMetricsEvent"
-)
-
-const (
-	GoalEventType       EventType = "type.googleapis.com/bucketeer.event.client.GoalEvent"
-	EvaluationEventType EventType = "type.googleapis.com/bucketeer.event.client.EvaluationEvent"
-	MetricsEventType    EventType = "type.googleapis.com/bucketeer.event.client.MetricsEvent"
-)
-
-type wellKnownTypes string
-
-const DurationType wellKnownTypes = "type.googleapis.com/google.protobuf.Duration"
-
-type SourceIDType int32
-
-const (
-	SourceIDGoServer SourceIDType = 5
-)
-
-type RegisterEventsRequest struct {
-	Events []*Event `json:"events,omitempty"`
+type getEvaluationRequest struct {
+	*models.GetEvaluationRequest
+	SourceID models.SourceIDType `json:"sourceId,omitempty"`
 }
 
 type registerEventsRequest struct {
-	*RegisterEventsRequest
+	*models.RegisterEventsRequest
 }
 
-type RegisterEventsResponse struct {
-	Errors map[string]*RegisterEventsResponseError `json:"errors,omitempty"`
-}
-
-type GetEvaluationRequest struct {
-	Tag       string     `json:"tag,omitempty"`
-	User      *user.User `json:"user,omitempty"`
-	FeatureID string     `json:"featureId,omitempty"`
-}
-
-type getEvaluationRequest struct {
-	*GetEvaluationRequest
-	SourceID SourceIDType `json:"sourceId,omitempty"`
-}
-
-type GetEvaluationResponse struct {
-	Evaluation *Evaluation `json:"evaluation,omitempty"`
-}
-
-type Event struct {
-	ID                   string          `json:"id,omitempty"`
-	Event                json.RawMessage `json:"event,omitempty"`
-	EnvironmentNamespace string          `json:"environmentNamespace,omitempty"`
-}
-
-type MetricsEvent struct {
-	Timestamp  int64             `json:"timestamp,omitempty"`
-	Event      json.RawMessage   `json:"event,omitempty"`
-	SourceID   SourceIDType      `json:"sourceId,omitempty"`
-	SDKVersion string            `json:"sdkVersion,omitempty"`
-	Metadata   map[string]string `json:"metadata,omitempty"`
-	Type       EventType         `json:"@type,omitempty"`
-}
-
-type GoalEvent struct {
-	Timestamp  int64             `json:"timestamp,omitempty"`
-	GoalID     string            `json:"goalId,omitempty"`
-	UserID     string            `json:"userId,omitempty"`
-	Value      float64           `json:"value,omitempty"`
-	User       *user.User        `json:"user,omitempty"`
-	Tag        string            `json:"tag,omitempty"`
-	SourceID   SourceIDType      `json:"sourceId,omitempty"`
-	SDKVersion string            `json:"sdkVersion,omitempty"`
-	Metadata   map[string]string `json:"metadata,omitempty"`
-	Type       EventType         `json:"@type,omitempty"`
-}
-
-type Duration struct {
-	Type  wellKnownTypes `json:"@type,omitempty"`
-	Value string         `json:"value,omitempty"`
-}
-
-type InternalErrorCountMetricsEvent struct {
-	Tag  string                 `json:"tag,omitempty"`
-	Type metricsDetailEventType `json:"@type,omitempty"`
-}
-
-type GetEvaluationSizeMetricsEvent struct {
-	Labels   map[string]string      `json:"labels,omitempty"`
-	SizeByte int32                  `json:"sizeByte,omitempty"`
-	Type     metricsDetailEventType `json:"@type,omitempty"`
-}
-
-type GetEvaluationLatencyMetricsEvent struct {
-	Labels   map[string]string      `json:"labels,omitempty"`
-	Duration *Duration              `json:"duration,omitempty"`
-	Type     metricsDetailEventType `json:"@type,omitempty"`
-}
-
-type TimeoutErrorCountMetricsEvent struct {
-	Tag  string                 `json:"tag,omitempty"`
-	Type metricsDetailEventType `json:"@type,omitempty"`
-}
-
-type Variation struct {
-	ID          string `json:"id,omitempty"`
-	Value       string `json:"value,omitempty"` // number or even json object
-	Name        string `json:"name,omitempty"`
-	Description string `json:"description,omitempty"`
-}
-
-type Evaluation struct {
-	ID             string  `json:"id,omitempty"`
-	FeatureID      string  `json:"featureId,omitempty"`
-	FeatureVersion int32   `json:"featureVersion,omitempty"`
-	UserID         string  `json:"userId,omitempty"`
-	VariationID    string  `json:"variationId,omitempty"`
-	Reason         *Reason `json:"reason,omitempty"`
-	VariationValue string  `json:"variationValue,omitempty"`
-}
-
-type EvaluationEvent struct {
-	Timestamp      int64             `json:"timestamp,omitempty"`
-	FeatureID      string            `json:"featureId,omitempty"`
-	FeatureVersion int32             `json:"featureVersion,omitempty"`
-	VariationID    string            `json:"variationId,omitempty"`
-	User           *user.User        `json:"user,omitempty"`
-	Reason         *Reason           `json:"reason,omitempty"`
-	Tag            string            `json:"tag,omitempty"`
-	SourceID       SourceIDType      `json:"sourceId,omitempty"`
-	SDKVersion     string            `json:"sdkVersion,omitempty"`
-	Metadata       map[string]string `json:"metadata,omitempty"`
-	Type           EventType         `json:"@type,omitempty"`
-}
-
-type RegisterEventsResponseError struct {
-	Retriable bool   `json:"retriable,omitempty"`
-	Message   string `json:"message,omitempty"`
-}
-
-type ReasonType string
-
-const (
-	ReasonClient ReasonType = "CLIENT"
-)
-
-type Reason struct {
-	Type   ReasonType `json:"type,omitempty"`
-	RuleID string     `json:"ruleId,omitempty"`
-}
-
-func (c *client) GetEvaluation(req *GetEvaluationRequest) (*GetEvaluationResponse, error) {
+func (c *client) GetEvaluation(req *models.GetEvaluationRequest) (*models.GetEvaluationResponse, error) {
 	url := fmt.Sprintf("https://%s%s",
 		c.host,
 		evaluationAPI,
@@ -182,20 +34,20 @@ func (c *client) GetEvaluation(req *GetEvaluationRequest) (*GetEvaluationRespons
 		url,
 		&getEvaluationRequest{
 			GetEvaluationRequest: req,
-			SourceID:             SourceIDGoServer,
+			SourceID:             models.SourceIDGoServer,
 		},
 	)
 	if err != nil {
 		return nil, err
 	}
-	var ger GetEvaluationResponse
+	var ger models.GetEvaluationResponse
 	if err := json.Unmarshal(resp, &ger); err != nil {
 		return nil, err
 	}
 	return &ger, nil
 }
 
-func (c *client) RegisterEvents(req *RegisterEventsRequest) (*RegisterEventsResponse, error) {
+func (c *client) RegisterEvents(req *models.RegisterEventsRequest) (*models.RegisterEventsResponse, error) {
 	url := fmt.Sprintf("https://%s%s",
 		c.host,
 		eventsAPI,
@@ -209,7 +61,7 @@ func (c *client) RegisterEvents(req *RegisterEventsRequest) (*RegisterEventsResp
 	if err != nil {
 		return nil, err
 	}
-	var rer RegisterEventsResponse
+	var rer models.RegisterEventsResponse
 	if err := json.Unmarshal(resp, &rer); err != nil {
 		return nil, err
 	}

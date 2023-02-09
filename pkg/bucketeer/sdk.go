@@ -10,13 +10,15 @@ import (
 	"time"
 	"unsafe"
 
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
+
 	// nolint:staticcheck
 	iotag "go.opencensus.io/tag"
 
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/event"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/models"
 )
 
 // SDK is the Bucketeer SDK.
@@ -215,7 +217,7 @@ func (s *sdk) JSONVariation(ctx context.Context, user *user.User, featureID stri
 	s.eventProcessor.PushEvaluationEvent(ctx, user, evaluation)
 }
 
-func (s *sdk) getEvaluation(ctx context.Context, user *user.User, featureID string) (*api.Evaluation, error) {
+func (s *sdk) getEvaluation(ctx context.Context, user *user.User, featureID string) (*models.Evaluation, error) {
 	if !user.Valid() {
 		return nil, fmt.Errorf("invalid user: %v", user)
 	}
@@ -233,7 +235,7 @@ func (s *sdk) callGetEvaluationAPI(
 	ctx context.Context,
 	user *user.User,
 	tag, featureID string,
-) (*api.GetEvaluationResponse, error) {
+) (*models.GetEvaluationResponse, error) {
 	var gserr error
 	reqStart := time.Now()
 	defer func() {
@@ -259,7 +261,7 @@ func (s *sdk) callGetEvaluationAPI(
 		measure(ctx, time.Since(reqStart))
 	}()
 
-	res, err := s.apiClient.GetEvaluation(&api.GetEvaluationRequest{Tag: tag, User: user, FeatureID: featureID})
+	res, err := s.apiClient.GetEvaluation(&models.GetEvaluationRequest{Tag: tag, User: user, FeatureID: featureID})
 	if err != nil {
 		gserr = err // set HTTP status error
 		code, ok := api.GetStatusCode(gserr)
@@ -279,7 +281,7 @@ func (s *sdk) callGetEvaluationAPI(
 	return res, nil
 }
 
-func (s *sdk) validateGetEvaluationResponse(res *api.GetEvaluationResponse, featureID string) error {
+func (s *sdk) validateGetEvaluationResponse(res *models.GetEvaluationResponse, featureID string) error {
 	if res == nil {
 		return errors.New("res is nil")
 	}
