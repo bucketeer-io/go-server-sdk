@@ -4,11 +4,11 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/models"
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/model"
 )
 
 type queue struct {
-	evtCh    chan *models.Event
+	evtCh    chan *model.Event
 	closedMu sync.RWMutex
 	closed   bool
 }
@@ -19,11 +19,11 @@ type queueConfig struct {
 
 func newQueue(conf *queueConfig) *queue {
 	return &queue{
-		evtCh: make(chan *models.Event, conf.capacity),
+		evtCh: make(chan *model.Event, conf.capacity),
 	}
 }
 
-func (q *queue) push(evt *models.Event) error {
+func (q *queue) push(evt *model.Event) error {
 	q.closedMu.RLock()
 	defer q.closedMu.RUnlock()
 	if q.closed {
@@ -39,7 +39,7 @@ func (q *queue) push(evt *models.Event) error {
 	}
 }
 
-func (q *queue) eventCh() <-chan *models.Event {
+func (q *queue) eventCh() <-chan *model.Event {
 	return q.evtCh
 }
 

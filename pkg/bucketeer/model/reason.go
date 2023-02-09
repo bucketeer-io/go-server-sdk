@@ -1,4 +1,4 @@
-package models
+package model
 
 type Reason struct {
 	Type   ReasonType `json:"type,omitempty"`

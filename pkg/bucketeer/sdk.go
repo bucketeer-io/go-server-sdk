@@ -18,7 +18,7 @@ import (
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/event"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/models"
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/model"
 )
 
 // SDK is the Bucketeer SDK.
@@ -217,7 +217,7 @@ func (s *sdk) JSONVariation(ctx context.Context, user *user.User, featureID stri
 	s.eventProcessor.PushEvaluationEvent(ctx, user, evaluation)
 }
 
-func (s *sdk) getEvaluation(ctx context.Context, user *user.User, featureID string) (*models.Evaluation, error) {
+func (s *sdk) getEvaluation(ctx context.Context, user *user.User, featureID string) (*model.Evaluation, error) {
 	if !user.Valid() {
 		return nil, fmt.Errorf("invalid user: %v", user)
 	}
@@ -235,7 +235,7 @@ func (s *sdk) callGetEvaluationAPI(
 	ctx context.Context,
 	user *user.User,
 	tag, featureID string,
-) (*models.GetEvaluationResponse, error) {
+) (*model.GetEvaluationResponse, error) {
 	var gserr error
 	reqStart := time.Now()
 	defer func() {
@@ -261,7 +261,7 @@ func (s *sdk) callGetEvaluationAPI(
 		measure(ctx, time.Since(reqStart))
 	}()
 
-	res, err := s.apiClient.GetEvaluation(models.NewGetEvaluationRequest(
+	res, err := s.apiClient.GetEvaluation(model.NewGetEvaluationRequest(
 		tag, featureID,
 		user,
 	))
@@ -284,7 +284,7 @@ func (s *sdk) callGetEvaluationAPI(
 	return res, nil
 }
 
-func (s *sdk) validateGetEvaluationResponse(res *models.GetEvaluationResponse, featureID string) error {
+func (s *sdk) validateGetEvaluationResponse(res *model.GetEvaluationResponse, featureID string) error {
 	if res == nil {
 		return errors.New("res is nil")
 	}

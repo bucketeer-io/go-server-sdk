@@ -1,4 +1,4 @@
-package models
+package model
 
 type Evaluation struct {
 	ID             string  `json:"id,omitempty"`

@@ -1,4 +1,4 @@
-package models
+package model
 
 type RegisterEventsResponse struct {
 	Errors map[string]*RegisterEventsResponseError `json:"errors,omitempty"`

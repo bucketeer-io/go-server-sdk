@@ -9,7 +9,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 
-	models "github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/models"
+	model "github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/model"
 )
 
 // MockClient is a mock of Client interface.
@@ -36,10 +36,10 @@ func (m *MockClient) EXPECT() *MockClientMockRecorder {
 }
 
 // GetEvaluation mocks base method.
-func (m *MockClient) GetEvaluation(req *models.GetEvaluationRequest) (*models.GetEvaluationResponse, error) {
+func (m *MockClient) GetEvaluation(req *model.GetEvaluationRequest) (*model.GetEvaluationResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEvaluation", req)
-	ret0, _ := ret[0].(*models.GetEvaluationResponse)
+	ret0, _ := ret[0].(*model.GetEvaluationResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -51,10 +51,10 @@ func (mr *MockClientMockRecorder) GetEvaluation(req interface{}) *gomock.Call {
 }
 
 // RegisterEvents mocks base method.
-func (m *MockClient) RegisterEvents(req *models.RegisterEventsRequest) (*models.RegisterEventsResponse, error) {
+func (m *MockClient) RegisterEvents(req *model.RegisterEventsRequest) (*model.RegisterEventsResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RegisterEvents", req)
-	ret0, _ := ret[0].(*models.RegisterEventsResponse)
+	ret0, _ := ret[0].(*model.RegisterEventsResponse)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

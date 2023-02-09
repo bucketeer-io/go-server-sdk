@@ -1,4 +1,4 @@
-package models
+package model
 
 type InternalErrorCountMetricsEvent struct {
 	Tag  string                 `json:"tag,omitempty"`

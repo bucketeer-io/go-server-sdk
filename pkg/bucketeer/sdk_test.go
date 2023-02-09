@@ -12,7 +12,7 @@ import (
 
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/models"
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/model"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
 	mockapi "github.com/ca-dp/bucketeer-go-server-sdk/test/mock/api"
 	mockevent "github.com/ca-dp/bucketeer-go-server-sdk/test/mock/event"
@@ -40,7 +40,7 @@ func TestBoolVariation(t *testing.T) {
 		{
 			desc: "return default value when failed to get evaluation",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
-				req := &models.GetEvaluationRequest{
+				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
@@ -65,7 +65,7 @@ func TestBoolVariation(t *testing.T) {
 		{
 			desc: "return default value when faled to parse variation",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
-				req := &models.GetEvaluationRequest{
+				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
@@ -95,7 +95,7 @@ func TestBoolVariation(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
-				req := &models.GetEvaluationRequest{
+				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
@@ -151,7 +151,7 @@ func TestIntVariation(t *testing.T) {
 		{
 			desc: "return default value when failed to get evaluation",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
-				req := &models.GetEvaluationRequest{
+				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
@@ -176,7 +176,7 @@ func TestIntVariation(t *testing.T) {
 		{
 			desc: "return default value when faled to parse variation",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
-				req := &models.GetEvaluationRequest{
+				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
@@ -206,7 +206,7 @@ func TestIntVariation(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
-				req := &models.GetEvaluationRequest{
+				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
@@ -262,7 +262,7 @@ func TestInt64Variation(t *testing.T) {
 		{
 			desc: "return default value when failed to get evaluation",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
-				req := &models.GetEvaluationRequest{
+				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
@@ -287,7 +287,7 @@ func TestInt64Variation(t *testing.T) {
 		{
 			desc: "return default value when faled to parse variation",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
-				req := &models.GetEvaluationRequest{
+				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
@@ -317,7 +317,7 @@ func TestInt64Variation(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
-				req := &models.GetEvaluationRequest{
+				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
@@ -373,7 +373,7 @@ func TestFloat64Variation(t *testing.T) {
 		{
 			desc: "return default value when failed to get evaluation",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
-				req := &models.GetEvaluationRequest{
+				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
@@ -398,7 +398,7 @@ func TestFloat64Variation(t *testing.T) {
 		{
 			desc: "return default value when faled to parse variation",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
-				req := &models.GetEvaluationRequest{
+				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
@@ -428,7 +428,7 @@ func TestFloat64Variation(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
-				req := &models.GetEvaluationRequest{
+				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
@@ -484,7 +484,7 @@ func TestStringVariation(t *testing.T) {
 		{
 			desc: "return default value when failed to get evaluation",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
-				req := &models.GetEvaluationRequest{
+				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
@@ -509,7 +509,7 @@ func TestStringVariation(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
-				req := &models.GetEvaluationRequest{
+				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
@@ -569,7 +569,7 @@ func TestJSONVariation(t *testing.T) {
 		{
 			desc: "failed to get evaluation",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
-				req := &models.GetEvaluationRequest{
+				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
@@ -594,7 +594,7 @@ func TestJSONVariation(t *testing.T) {
 		{
 			desc: "faled to unmarshal variation",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
-				req := &models.GetEvaluationRequest{
+				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
@@ -624,7 +624,7 @@ func TestJSONVariation(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
-				req := &models.GetEvaluationRequest{
+				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
@@ -688,7 +688,7 @@ func TestGetEvaluation(t *testing.T) {
 		{
 			desc: "get evaluations returns timeout error",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
-				req := &models.GetEvaluationRequest{
+				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
@@ -708,7 +708,7 @@ func TestGetEvaluation(t *testing.T) {
 		{
 			desc: "get evaluations returns internal error",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
-				req := &models.GetEvaluationRequest{
+				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
@@ -728,13 +728,13 @@ func TestGetEvaluation(t *testing.T) {
 		{
 			desc: "invalid get evaluation res: res is nil",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
-				req := &models.GetEvaluationRequest{
+				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
 					SourceID:  SourceIDGoServer,
 				}
-				var res *models.GetEvaluationResponse
+				var res *model.GetEvaluationResponse
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
 					ctx,
@@ -753,7 +753,7 @@ func TestGetEvaluation(t *testing.T) {
 		{
 			desc: "invalid get evaluation res: evaluation is nil",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
-				req := &models.GetEvaluationRequest{
+				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
@@ -779,7 +779,7 @@ func TestGetEvaluation(t *testing.T) {
 		{
 			desc: "invalid get evaluation res: feature id doesn't match",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
-				req := &models.GetEvaluationRequest{
+				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
@@ -804,7 +804,7 @@ func TestGetEvaluation(t *testing.T) {
 		{
 			desc: "invalid get evaluation res: variation value is empty",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
-				req := &models.GetEvaluationRequest{
+				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
@@ -829,7 +829,7 @@ func TestGetEvaluation(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
-				req := &models.GetEvaluationRequest{
+				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
@@ -1027,10 +1027,10 @@ func newUser(t *testing.T, id string) *user.User {
 	return &user.User{ID: id}
 }
 
-func newGetEvaluationResponse(t *testing.T, featureID, value string) *models.GetEvaluationResponse {
+func newGetEvaluationResponse(t *testing.T, featureID, value string) *model.GetEvaluationResponse {
 	t.Helper()
-	return &models.GetEvaluationResponse{
-		Evaluation: &models.Evaluation{
+	return &model.GetEvaluationResponse{
+		Evaluation: &model.Evaluation{
 			FeatureID:      featureID,
 			VariationValue: value,
 		},

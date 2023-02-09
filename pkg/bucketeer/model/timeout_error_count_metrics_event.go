@@ -1,4 +1,4 @@
-package models
+package model
 
 type TimeoutErrorCountMetricsEvent struct {
 	Tag  string                 `json:"tag,omitempty"`

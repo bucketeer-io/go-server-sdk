@@ -1,4 +1,4 @@
-package models
+package model
 
 type GetEvaluationLatencyMetricsEvent struct {
 	Labels   map[string]string      `json:"labels,omitempty"`

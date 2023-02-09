@@ -1,4 +1,4 @@
-package models
+package model
 
 type Variation struct {
 	ID          string `json:"id,omitempty"`

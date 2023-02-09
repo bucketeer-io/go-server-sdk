@@ -11,7 +11,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 
-	models "github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/models"
+	model "github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/model"
 	user "github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
 )
 
@@ -65,7 +65,7 @@ func (mr *MockProcessorMockRecorder) PushDefaultEvaluationEvent(ctx, user, featu
 }
 
 // PushEvaluationEvent mocks base method.
-func (m *MockProcessor) PushEvaluationEvent(ctx context.Context, user *user.User, evaluation *models.Evaluation) {
+func (m *MockProcessor) PushEvaluationEvent(ctx context.Context, user *user.User, evaluation *model.Evaluation) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "PushEvaluationEvent", ctx, user, evaluation)
 }

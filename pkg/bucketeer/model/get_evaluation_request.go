@@ -1,4 +1,4 @@
-package models
+package model
 
 import "github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
 

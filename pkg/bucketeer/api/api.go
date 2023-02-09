@@ -7,7 +7,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/models"
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/model"
 )
 
 const (
@@ -16,7 +16,7 @@ const (
 	authorizationKey = "authorization"
 )
 
-func (c *client) GetEvaluation(req *models.GetEvaluationRequest) (*models.GetEvaluationResponse, error) {
+func (c *client) GetEvaluation(req *model.GetEvaluationRequest) (*model.GetEvaluationResponse, error) {
 	url := fmt.Sprintf("https://%s%s",
 		c.host,
 		evaluationAPI,
@@ -28,14 +28,14 @@ func (c *client) GetEvaluation(req *models.GetEvaluationRequest) (*models.GetEva
 	if err != nil {
 		return nil, err
 	}
-	var ger models.GetEvaluationResponse
+	var ger model.GetEvaluationResponse
 	if err := json.Unmarshal(resp, &ger); err != nil {
 		return nil, err
 	}
 	return &ger, nil
 }
 
-func (c *client) RegisterEvents(req *models.RegisterEventsRequest) (*models.RegisterEventsResponse, error) {
+func (c *client) RegisterEvents(req *model.RegisterEventsRequest) (*model.RegisterEventsResponse, error) {
 	url := fmt.Sprintf("https://%s%s",
 		c.host,
 		eventsAPI,
@@ -47,7 +47,7 @@ func (c *client) RegisterEvents(req *models.RegisterEventsRequest) (*models.Regi
 	if err != nil {
 		return nil, err
 	}
-	var rer models.RegisterEventsResponse
+	var rer model.RegisterEventsResponse
 	if err := json.Unmarshal(resp, &rer); err != nil {
 		return nil, err
 	}

@@ -1,4 +1,4 @@
-package models
+package model
 
 type GetEvaluationSizeMetricsEvent struct {
 	Labels   map[string]string      `json:"labels,omitempty"`

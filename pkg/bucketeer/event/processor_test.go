@@ -12,7 +12,7 @@ import (
 
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/models"
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/model"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
 	mockapi "github.com/ca-dp/bucketeer-go-server-sdk/test/mock/api"
 )
@@ -36,7 +36,7 @@ func TestPushEvaluationEvent(t *testing.T) {
 	evaluation := newEvaluation(t, processorFeatureID, processorVariationID)
 	p.PushEvaluationEvent(context.Background(), user, evaluation)
 	evt := <-p.evtQueue.eventCh()
-	evalationEvt := &models.EvaluationEvent{}
+	evalationEvt := &model.EvaluationEvent{}
 	err := json.Unmarshal(evt.Event, evalationEvt)
 	assert.NoError(t, err)
 }
@@ -47,7 +47,7 @@ func TestPushDefaultEvaluationEvent(t *testing.T) {
 	user := newUser(t, processorUserID)
 	p.PushDefaultEvaluationEvent(context.Background(), user, processorFeatureID)
 	evt := <-p.evtQueue.eventCh()
-	evalationEvt := &models.EvaluationEvent{}
+	evalationEvt := &model.EvaluationEvent{}
 	err := json.Unmarshal(evt.Event, evalationEvt)
 	assert.NoError(t, err)
 }
@@ -58,7 +58,7 @@ func TestPushGoalEvent(t *testing.T) {
 	user := newUser(t, processorUserID)
 	p.PushGoalEvent(context.Background(), user, processorGoalID, 1.1)
 	evt := <-p.evtQueue.eventCh()
-	goalEvt := &models.GoalEvent{}
+	goalEvt := &model.GoalEvent{}
 	err := json.Unmarshal(evt.Event, goalEvt)
 	assert.NoError(t, err)
 }
@@ -68,10 +68,10 @@ func TestPushGetEvaluationLatencyMetricsEvent(t *testing.T) {
 	p := newProcessorForTestPushEvent(t, 10)
 	p.PushGetEvaluationLatencyMetricsEvent(context.Background(), time.Duration(1))
 	evt := <-p.evtQueue.eventCh()
-	metricsEvt := &models.MetricsEvent{}
+	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
-	gelMetricsEvt := &models.GetEvaluationLatencyMetricsEvent{}
+	gelMetricsEvt := &model.GetEvaluationLatencyMetricsEvent{}
 	err = json.Unmarshal(metricsEvt.Event, gelMetricsEvt)
 	assert.NoError(t, err)
 }
@@ -81,10 +81,10 @@ func TestPushGetEvaluationSizeMetricsEvent(t *testing.T) {
 	p := newProcessorForTestPushEvent(t, 10)
 	p.PushGetEvaluationSizeMetricsEvent(context.Background(), 1)
 	evt := <-p.evtQueue.eventCh()
-	metricsEvt := &models.MetricsEvent{}
+	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
-	gesMetricsEvt := &models.GetEvaluationSizeMetricsEvent{}
+	gesMetricsEvt := &model.GetEvaluationSizeMetricsEvent{}
 	err = json.Unmarshal(metricsEvt.Event, gesMetricsEvt)
 	assert.NoError(t, err)
 }
@@ -94,10 +94,10 @@ func TestPushTimeoutErrorCountMetricsEvent(t *testing.T) {
 	p := newProcessorForTestPushEvent(t, 10)
 	p.PushTimeoutErrorCountMetricsEvent(context.Background())
 	evt := <-p.evtQueue.eventCh()
-	metricsEvt := &models.MetricsEvent{}
+	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
-	tecMetricsEvt := &models.TimeoutErrorCountMetricsEvent{}
+	tecMetricsEvt := &model.TimeoutErrorCountMetricsEvent{}
 	err = json.Unmarshal(metricsEvt.Event, tecMetricsEvt)
 	assert.NoError(t, err)
 }
@@ -107,10 +107,10 @@ func TestPushInternalErrorCountMetricsEvent(t *testing.T) {
 	p := newProcessorForTestPushEvent(t, 10)
 	p.PushInternalErrorCountMetricsEvent(context.Background())
 	evt := <-p.evtQueue.eventCh()
-	metricsEvt := &models.MetricsEvent{}
+	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
-	iecMetricsEvt := &models.InternalErrorCountMetricsEvent{}
+	iecMetricsEvt := &model.InternalErrorCountMetricsEvent{}
 	err = json.Unmarshal(metricsEvt.Event, iecMetricsEvt)
 	assert.NoError(t, err)
 }
@@ -145,7 +145,7 @@ func TestPushEvent(t *testing.T) {
 			} else {
 				assert.NoError(t, err)
 				evt := <-p.evtQueue.eventCh()
-				evalationEvt := &models.EvaluationEvent{}
+				evalationEvt := &model.EvaluationEvent{}
 				err := json.Unmarshal(evt.Event, evalationEvt)
 				assert.NoError(t, err)
 			}
@@ -171,19 +171,19 @@ func newUser(t *testing.T, id string) *user.User {
 	return &user.User{ID: id}
 }
 
-func newEvaluation(t *testing.T, featureID, variationID string) *models.Evaluation {
+func newEvaluation(t *testing.T, featureID, variationID string) *model.Evaluation {
 	t.Helper()
-	return &models.Evaluation{
+	return &model.Evaluation{
 		FeatureID:      featureID,
 		FeatureVersion: 0,
 		VariationID:    variationID,
-		Reason:         &models.Reason{Type: models.ReasonClient},
+		Reason:         &model.Reason{Type: model.ReasonClient},
 	}
 }
 
 func newEncodedEvaluationEvent(t *testing.T, featureID string) []byte {
 	t.Helper()
-	evaluationEvt := &models.EvaluationEvent{FeatureID: featureID}
+	evaluationEvt := &model.EvaluationEvent{FeatureID: featureID}
 	encodedEvt, err := json.Marshal(evaluationEvt)
 	assert.NoError(t, err)
 	return encodedEvt
@@ -195,47 +195,47 @@ func TestFlushEvents(t *testing.T) {
 	defer mockCtrl.Finish()
 	tests := []struct {
 		desc             string
-		setup            func(*processor, []*models.Event)
-		events           []*models.Event
+		setup            func(*processor, []*model.Event)
+		events           []*model.Event
 		expectedQueueLen int
 	}{
 		{
 			desc: "do nothing when events length is 0",
-			setup: func(p *processor, events []*models.Event) {
-				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&models.RegisterEventsRequest{Events: events}).Times(0)
+			setup: func(p *processor, events []*model.Event) {
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&model.RegisterEventsRequest{Events: events}).Times(0)
 			},
-			events:           make([]*models.Event, 0, 10),
+			events:           make([]*model.Event, 0, 10),
 			expectedQueueLen: 0,
 		},
 		{
 			desc: "re-push all events when failed to register events",
-			setup: func(p *processor, events []*models.Event) {
-				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&models.RegisterEventsRequest{Events: events}).Return(
+			setup: func(p *processor, events []*model.Event) {
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&model.RegisterEventsRequest{Events: events}).Return(
 					nil,
 					api.NewErrStatus(http.StatusInternalServerError),
 				)
 			},
-			events:           []*models.Event{{ID: "id-0"}, {ID: "id-1"}, {ID: "id-2"}},
+			events:           []*model.Event{{ID: "id-0"}, {ID: "id-1"}, {ID: "id-2"}},
 			expectedQueueLen: 3,
 		},
 		{
 			desc: "faled to re-push all events when failed to register events if queue is closed",
-			setup: func(p *processor, events []*models.Event) {
+			setup: func(p *processor, events []*model.Event) {
 				p.evtQueue.close()
-				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&models.RegisterEventsRequest{Events: events}).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&model.RegisterEventsRequest{Events: events}).Return(
 					nil,
 					api.NewErrStatus(http.StatusInternalServerError),
 				)
 			},
-			events:           []*models.Event{{ID: "id-0"}, {ID: "id-1"}, {ID: "id-2"}},
+			events:           []*model.Event{{ID: "id-0"}, {ID: "id-1"}, {ID: "id-2"}},
 			expectedQueueLen: 0,
 		},
 		{
 			desc: "re-push events when register events res contains retriable errors",
-			setup: func(p *processor, events []*models.Event) {
-				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&models.RegisterEventsRequest{Events: events}).Return(
-					&models.RegisterEventsResponse{
-						Errors: map[string]*models.RegisterEventsResponseError{
+			setup: func(p *processor, events []*model.Event) {
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&model.RegisterEventsRequest{Events: events}).Return(
+					&model.RegisterEventsResponse{
+						Errors: map[string]*model.RegisterEventsResponseError{
 							"id-0": {Retriable: true, Message: "retriable"},
 							"id-1": {Retriable: false, Message: "non retriable"},
 						},
@@ -243,16 +243,16 @@ func TestFlushEvents(t *testing.T) {
 					nil,
 				)
 			},
-			events:           []*models.Event{{ID: "id-0"}, {ID: "id-1"}, {ID: "id-2"}},
+			events:           []*model.Event{{ID: "id-0"}, {ID: "id-1"}, {ID: "id-2"}},
 			expectedQueueLen: 1,
 		},
 		{
 			desc: "faled to re-push events when register events res contains retriable errors if queue is closed",
-			setup: func(p *processor, events []*models.Event) {
+			setup: func(p *processor, events []*model.Event) {
 				p.evtQueue.close()
-				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&models.RegisterEventsRequest{Events: events}).Return(
-					&models.RegisterEventsResponse{
-						Errors: map[string]*models.RegisterEventsResponseError{
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&model.RegisterEventsRequest{Events: events}).Return(
+					&model.RegisterEventsResponse{
+						Errors: map[string]*model.RegisterEventsResponseError{
 							"id-0": {Retriable: true, Message: "retriable"},
 							"id-1": {Retriable: false, Message: "non retriable"},
 						},
@@ -260,20 +260,20 @@ func TestFlushEvents(t *testing.T) {
 					nil,
 				)
 			},
-			events:           []*models.Event{{ID: "id-0"}, {ID: "id-1"}, {ID: "id-2"}},
+			events:           []*model.Event{{ID: "id-0"}, {ID: "id-1"}, {ID: "id-2"}},
 			expectedQueueLen: 0,
 		},
 		{
 			desc: "success",
-			setup: func(p *processor, events []*models.Event) {
-				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&models.RegisterEventsRequest{Events: events}).Return(
-					&models.RegisterEventsResponse{
-						Errors: make(map[string]*models.RegisterEventsResponseError),
+			setup: func(p *processor, events []*model.Event) {
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&model.RegisterEventsRequest{Events: events}).Return(
+					&model.RegisterEventsResponse{
+						Errors: make(map[string]*model.RegisterEventsResponseError),
 					},
 					nil,
 				)
 			},
-			events:           []*models.Event{{ID: "id-0"}, {ID: "id-1"}, {ID: "id-2"}},
+			events:           []*model.Event{{ID: "id-0"}, {ID: "id-1"}, {ID: "id-2"}},
 			expectedQueueLen: 0,
 		},
 	}
