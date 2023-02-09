@@ -1,14 +1,12 @@
 //go:generate mockgen -source=$GOFILE -package=$GOPACKAGE -destination=../../../test/mock/$GOPACKAGE/$GOFILE
 package api
 
-import (
-	"fmt"
-)
+import "github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/model"
 
 // Client is the client interface for the Bucketeer APIGateway service.
 type Client interface {
-	GetEvaluation(req *GetEvaluationRequest) (*GetEvaluationResponse, error)
-	RegisterEvents(req *RegisterEventsRequest) (*RegisterEventsResponse, error)
+	GetEvaluation(req *model.GetEvaluationRequest) (*model.GetEvaluationResponse, error)
+	RegisterEvents(req *model.RegisterEventsRequest) (*model.RegisterEventsResponse, error)
 }
 
 type client struct {
@@ -32,10 +30,6 @@ func NewClient(conf *ClientConfig) (Client, error) {
 	client := &client{
 		apiKey: conf.APIKey,
 		host:   conf.Host,
-	}
-	_, err := client.ping()
-	if err != nil {
-		return nil, fmt.Errorf("bucketeer/api: failed to ping to the server: %w", err)
 	}
 	return client, nil
 }
