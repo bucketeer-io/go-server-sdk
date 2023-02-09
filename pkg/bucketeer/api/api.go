@@ -16,15 +16,6 @@ const (
 	authorizationKey = "authorization"
 )
 
-type getEvaluationRequest struct {
-	*models.GetEvaluationRequest
-	SourceID models.SourceIDType `json:"sourceId,omitempty"`
-}
-
-type registerEventsRequest struct {
-	*models.RegisterEventsRequest
-}
-
 func (c *client) GetEvaluation(req *models.GetEvaluationRequest) (*models.GetEvaluationResponse, error) {
 	url := fmt.Sprintf("https://%s%s",
 		c.host,
@@ -32,10 +23,7 @@ func (c *client) GetEvaluation(req *models.GetEvaluationRequest) (*models.GetEva
 	)
 	resp, err := c.sendHTTPRequest(
 		url,
-		&getEvaluationRequest{
-			GetEvaluationRequest: req,
-			SourceID:             models.SourceIDGoServer,
-		},
+		req,
 	)
 	if err != nil {
 		return nil, err
@@ -54,9 +42,7 @@ func (c *client) RegisterEvents(req *models.RegisterEventsRequest) (*models.Regi
 	)
 	resp, err := c.sendHTTPRequest(
 		url,
-		&registerEventsRequest{
-			RegisterEventsRequest: req,
-		},
+		req,
 	)
 	if err != nil {
 		return nil, err

@@ -261,7 +261,10 @@ func (s *sdk) callGetEvaluationAPI(
 		measure(ctx, time.Since(reqStart))
 	}()
 
-	res, err := s.apiClient.GetEvaluation(&models.GetEvaluationRequest{Tag: tag, User: user, FeatureID: featureID})
+	res, err := s.apiClient.GetEvaluation(models.NewGetEvaluationRequest(
+		tag, featureID,
+		user,
+	))
 	if err != nil {
 		gserr = err // set HTTP status error
 		code, ok := api.GetStatusCode(gserr)

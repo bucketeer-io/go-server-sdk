@@ -44,6 +44,7 @@ func TestBoolVariation(t *testing.T) {
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
+					SourceID:  SourceIDGoServer,
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
@@ -68,6 +69,7 @@ func TestBoolVariation(t *testing.T) {
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
+					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, "invalid")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
@@ -97,6 +99,7 @@ func TestBoolVariation(t *testing.T) {
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
+					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, "true")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
@@ -152,6 +155,7 @@ func TestIntVariation(t *testing.T) {
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
+					SourceID:  SourceIDGoServer,
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
@@ -176,6 +180,7 @@ func TestIntVariation(t *testing.T) {
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
+					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, "invalid")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
@@ -205,6 +210,7 @@ func TestIntVariation(t *testing.T) {
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
+					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, "2")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
@@ -260,6 +266,7 @@ func TestInt64Variation(t *testing.T) {
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
+					SourceID:  SourceIDGoServer,
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
@@ -284,6 +291,7 @@ func TestInt64Variation(t *testing.T) {
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
+					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, "invalid")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
@@ -313,6 +321,7 @@ func TestInt64Variation(t *testing.T) {
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
+					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, "2")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
@@ -368,6 +377,7 @@ func TestFloat64Variation(t *testing.T) {
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
+					SourceID:  SourceIDGoServer,
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
@@ -392,6 +402,7 @@ func TestFloat64Variation(t *testing.T) {
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
+					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, "invalid")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
@@ -421,6 +432,7 @@ func TestFloat64Variation(t *testing.T) {
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
+					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, "2.2")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
@@ -476,6 +488,7 @@ func TestStringVariation(t *testing.T) {
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
+					SourceID:  SourceIDGoServer,
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
@@ -500,6 +513,7 @@ func TestStringVariation(t *testing.T) {
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
+					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, "value")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
@@ -559,6 +573,7 @@ func TestJSONVariation(t *testing.T) {
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
+					SourceID:  SourceIDGoServer,
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
@@ -583,6 +598,7 @@ func TestJSONVariation(t *testing.T) {
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
+					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, `invalid`)
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
@@ -612,6 +628,7 @@ func TestJSONVariation(t *testing.T) {
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
+					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, `{"str": "str2", "int": "int2"}`)
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
@@ -675,6 +692,7 @@ func TestGetEvaluation(t *testing.T) {
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
+					SourceID:  SourceIDGoServer,
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
@@ -694,6 +712,7 @@ func TestGetEvaluation(t *testing.T) {
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
+					SourceID:  SourceIDGoServer,
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
@@ -713,6 +732,7 @@ func TestGetEvaluation(t *testing.T) {
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
+					SourceID:  SourceIDGoServer,
 				}
 				var res *models.GetEvaluationResponse
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
@@ -737,6 +757,7 @@ func TestGetEvaluation(t *testing.T) {
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
+					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, "value")
 				res.Evaluation = nil
@@ -762,6 +783,7 @@ func TestGetEvaluation(t *testing.T) {
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
+					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, "invalid-feature-id", "value")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
@@ -786,6 +808,7 @@ func TestGetEvaluation(t *testing.T) {
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
+					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, "")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
@@ -810,6 +833,7 @@ func TestGetEvaluation(t *testing.T) {
 					Tag:       sdkTag,
 					User:      user,
 					FeatureID: featureID,
+					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, "value")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
