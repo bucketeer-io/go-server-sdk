@@ -76,18 +76,6 @@ func (mr *MockProcessorMockRecorder) PushEvaluationEvent(ctx, user, evaluation i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushEvaluationEvent", reflect.TypeOf((*MockProcessor)(nil).PushEvaluationEvent), ctx, user, evaluation)
 }
 
-// PushGetEvaluationLatencyMetricsEvent mocks base method.
-func (m *MockProcessor) PushGetEvaluationLatencyMetricsEvent(ctx context.Context, duration time.Duration) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PushGetEvaluationLatencyMetricsEvent", ctx, duration)
-}
-
-// PushGetEvaluationLatencyMetricsEvent indicates an expected call of PushGetEvaluationLatencyMetricsEvent.
-func (mr *MockProcessorMockRecorder) PushGetEvaluationLatencyMetricsEvent(ctx, duration interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushGetEvaluationLatencyMetricsEvent", reflect.TypeOf((*MockProcessor)(nil).PushGetEvaluationLatencyMetricsEvent), ctx, duration)
-}
-
 // PushGetEvaluationSizeMetricsEvent mocks base method.
 func (m *MockProcessor) PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeByte int) {
 	m.ctrl.T.Helper()
@@ -122,6 +110,18 @@ func (m *MockProcessor) PushInternalErrorMetricsEvent(ctx context.Context, api m
 func (mr *MockProcessorMockRecorder) PushInternalErrorMetricsEvent(ctx, api interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushInternalErrorMetricsEvent", reflect.TypeOf((*MockProcessor)(nil).PushInternalErrorMetricsEvent), ctx, api)
+}
+
+// PushLatencyMetricsEvent mocks base method.
+func (m *MockProcessor) PushLatencyMetricsEvent(ctx context.Context, duration time.Duration, api model.APIID) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "PushLatencyMetricsEvent", ctx, duration, api)
+}
+
+// PushLatencyMetricsEvent indicates an expected call of PushLatencyMetricsEvent.
+func (mr *MockProcessorMockRecorder) PushLatencyMetricsEvent(ctx, duration, api interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushLatencyMetricsEvent", reflect.TypeOf((*MockProcessor)(nil).PushLatencyMetricsEvent), ctx, duration, api)
 }
 
 // PushTimeoutErrorCountMetricsEvent mocks base method.

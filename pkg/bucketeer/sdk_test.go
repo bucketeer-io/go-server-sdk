@@ -73,9 +73,10 @@ func TestBoolVariation(t *testing.T) {
 				}
 				res := newGetEvaluationResponse(t, featureID, "invalid")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
+					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
@@ -103,9 +104,10 @@ func TestBoolVariation(t *testing.T) {
 				}
 				res := newGetEvaluationResponse(t, featureID, "true")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
+					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
@@ -184,9 +186,10 @@ func TestIntVariation(t *testing.T) {
 				}
 				res := newGetEvaluationResponse(t, featureID, "invalid")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
+					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
@@ -214,9 +217,10 @@ func TestIntVariation(t *testing.T) {
 				}
 				res := newGetEvaluationResponse(t, featureID, "2")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
+					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
@@ -295,9 +299,10 @@ func TestInt64Variation(t *testing.T) {
 				}
 				res := newGetEvaluationResponse(t, featureID, "invalid")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
+					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
@@ -325,9 +330,10 @@ func TestInt64Variation(t *testing.T) {
 				}
 				res := newGetEvaluationResponse(t, featureID, "2")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
+					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
@@ -406,9 +412,10 @@ func TestFloat64Variation(t *testing.T) {
 				}
 				res := newGetEvaluationResponse(t, featureID, "invalid")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
+					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
@@ -436,9 +443,10 @@ func TestFloat64Variation(t *testing.T) {
 				}
 				res := newGetEvaluationResponse(t, featureID, "2.2")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
+					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
@@ -517,9 +525,10 @@ func TestStringVariation(t *testing.T) {
 				}
 				res := newGetEvaluationResponse(t, featureID, "value")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
+					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
@@ -602,9 +611,10 @@ func TestJSONVariation(t *testing.T) {
 				}
 				res := newGetEvaluationResponse(t, featureID, `invalid`)
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
+					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
@@ -632,9 +642,10 @@ func TestJSONVariation(t *testing.T) {
 				}
 				res := newGetEvaluationResponse(t, featureID, `{"str": "str2", "int": "int2"}`)
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
+					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
@@ -736,9 +747,10 @@ func TestGetEvaluation(t *testing.T) {
 				}
 				var res *model.GetEvaluationResponse
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
+					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
@@ -762,9 +774,10 @@ func TestGetEvaluation(t *testing.T) {
 				res := newGetEvaluationResponse(t, featureID, "value")
 				res.Evaluation = nil
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
+					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
@@ -787,9 +800,10 @@ func TestGetEvaluation(t *testing.T) {
 				}
 				res := newGetEvaluationResponse(t, "invalid-feature-id", "value")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
+					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
@@ -812,9 +826,10 @@ func TestGetEvaluation(t *testing.T) {
 				}
 				res := newGetEvaluationResponse(t, featureID, "")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
+					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,
@@ -840,9 +855,10 @@ func TestGetEvaluation(t *testing.T) {
 					res,
 					nil,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationLatencyMetricsEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
+					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushGetEvaluationSizeMetricsEvent(
 					ctx,

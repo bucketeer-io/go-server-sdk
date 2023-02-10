@@ -279,7 +279,7 @@ func (s *sdk) callGetEvaluationAPI(
 		}
 		return nil, fmt.Errorf("failed to get evaluation: %w", err)
 	}
-	s.eventProcessor.PushGetEvaluationLatencyMetricsEvent(ctx, time.Since(reqStart))
+	s.eventProcessor.PushLatencyMetricsEvent(ctx, time.Since(reqStart), model.GetEvaluation)
 	s.eventProcessor.PushGetEvaluationSizeMetricsEvent(ctx, int(unsafe.Sizeof(res)))
 	return res, nil
 }

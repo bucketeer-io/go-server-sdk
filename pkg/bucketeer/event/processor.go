@@ -33,8 +33,8 @@ type Processor interface {
 	// PushGoalEvent pushes the goal event to the queue.
 	PushGoalEvent(ctx context.Context, user *user.User, GoalID string, value float64)
 
-	// PushGetEvaluationLatencyMetricsEvent pushes the get evaluation latency metrics event to the queue.
-	PushGetEvaluationLatencyMetricsEvent(ctx context.Context, duration time.Duration)
+	// PushLatencyMetricsEvent pushes the get evaluation latency metrics event to the queue.
+	PushLatencyMetricsEvent(ctx context.Context, duration time.Duration, api model.APIID)
 
 	// PushGetEvaluationSizeMetricsEvent pushes the get evaluation size metrics event to the queue.
 	PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeByte int)
@@ -207,22 +207,22 @@ func (p *processor) PushGoalEvent(ctx context.Context, user *user.User, GoalID s
 	}
 }
 
-func (p *processor) PushGetEvaluationLatencyMetricsEvent(ctx context.Context, duration time.Duration) {
+func (p *processor) PushLatencyMetricsEvent(ctx context.Context, duration time.Duration, api model.APIID) {
 	val := fmt.Sprintf("%ds", duration.Microseconds()/1000)
-	gelMetricsEvt := model.NewGetEvaluationLatencyMetricsEvent(p.tag, val)
+	gelMetricsEvt := model.NewLatencyMetricsEvent(p.tag, val, api)
 	encodedGELMetricsEvt, err := json.Marshal(gelMetricsEvt)
 	if err != nil {
-		p.loggers.Errorf("bucketeer/event: PushGetEvaluationLatencyMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
+		p.loggers.Errorf("bucketeer/event: PushLatencyMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
 	metricsEvt := model.NewMetricsEvent(encodedGELMetricsEvt)
 	encodedMetricsEvt, err := json.Marshal(metricsEvt)
 	if err != nil {
-		p.loggers.Errorf("bucketeer/event: PushGetEvaluationLatencyMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
+		p.loggers.Errorf("bucketeer/event: PushLatencyMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
 	if err := p.pushEvent(encodedMetricsEvt); err != nil {
-		p.loggers.Errorf("bucketeer/event: PushGetEvaluationLatencyMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
+		p.loggers.Errorf("bucketeer/event: PushLatencyMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
 }
