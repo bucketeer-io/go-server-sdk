@@ -3,6 +3,7 @@ package event
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"testing"
 	"time"
@@ -127,6 +128,127 @@ func TestPushErrorStatusCodeMetricsEvent(t *testing.T) {
 	err = json.Unmarshal(metricsEvt.Event, iseMetricsEvt)
 	assert.NoError(t, err)
 }
+
+func TestRegisterErrorEventWhenNetworkError(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc     string
+		err      error
+	}{
+		{
+			desc:     "connection refused",
+			err:      errors.New("Get \"http://localhost:9999\": dial tcp [::1]:9999: connect: connection refused"),
+		},
+		{
+			desc:     "no route to host",
+			err:      errors.New("Get \"https://example.com\": dial tcp: lookup https://example.com: connect: no route to host"),
+		},
+	}
+	for _, pt := range patterns {
+		t.Run(pt.desc, func(t *testing.T) {
+			p := newProcessorForTestPushEvent(t, 10)
+			p.RegisterErrorEvent(context.Background(), pt.err, model.RegisterEvents)
+			evt := <-p.evtQueue.eventCh()
+			metricsEvt := &model.MetricsEvent{}
+			err := json.Unmarshal(evt.Event, metricsEvt)
+			assert.NoError(t, err)
+			actual := &model.NetworkErrorMetricsEvent{}
+			err = json.Unmarshal(metricsEvt.Event, actual)
+			assert.NoError(t, err)
+			assert.Equal(t, model.RegisterEvents, actual.APIID)
+			assert.Equal(t, p.tag, actual.Labels["tag"])
+			assert.Equal(t, model.NetworkErrorMetricsEventType, actual.Type)
+		})
+	}
+}
+
+func TestRegisterErrorEventWhenInternalSDKError(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc     string
+		err      error
+	}{
+		{
+			desc:     "Internal error",
+			err:      errors.New("Internal error"),
+		},
+	}
+	for _, pt := range patterns {
+		t.Run(pt.desc, func(t *testing.T) {
+			p := newProcessorForTestPushEvent(t, 10)
+			p.RegisterErrorEvent(context.Background(), pt.err, model.RegisterEvents)
+			evt := <-p.evtQueue.eventCh()
+			metricsEvt := &model.MetricsEvent{}
+			err := json.Unmarshal(evt.Event, metricsEvt)
+			assert.NoError(t, err)
+			actual := &model.InternalSDKErrorMetricsEvent{}
+			err = json.Unmarshal(metricsEvt.Event, actual)
+			assert.NoError(t, err)
+			assert.Equal(t, model.RegisterEvents, actual.APIID)
+			assert.Equal(t, p.tag, actual.Labels["tag"])
+			assert.Equal(t, model.InternalSDKErrorMetricsEventType, actual.Type)
+		})
+	}
+}
+
+func TestRegisterErrorEventWhenStatusGatewayTimeout(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc     string
+		err      error
+	}{
+		{
+			desc:     "StatusGatewayTimeout",
+			err:      api.NewErrStatus(http.StatusGatewayTimeout),
+		},
+	}
+	for _, pt := range patterns {
+		t.Run(pt.desc, func(t *testing.T) {
+			p := newProcessorForTestPushEvent(t, 10)
+			p.RegisterErrorEvent(context.Background(), pt.err, model.RegisterEvents)
+			evt := <-p.evtQueue.eventCh()
+			metricsEvt := &model.MetricsEvent{}
+			err := json.Unmarshal(evt.Event, metricsEvt)
+			assert.NoError(t, err)
+			actual := &model.TimeoutErrorMetricsEvent{}
+			err = json.Unmarshal(metricsEvt.Event, actual)
+			assert.NoError(t, err)
+			assert.Equal(t, model.RegisterEvents, actual.APIID)
+			assert.Equal(t, p.tag, actual.Labels["tag"])
+			assert.Equal(t, model.TimeoutErrorMetricsEventType, actual.Type)
+		})
+	}
+}
+
+func TestRegisterErrorEventWhenOtherStatus(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc     string
+		err      error
+	}{
+		{
+			desc:     "InternalServerError",
+			err:      api.NewErrStatus(http.StatusInternalServerError),
+		},
+	}
+	for _, pt := range patterns {
+		t.Run(pt.desc, func(t *testing.T) {
+			p := newProcessorForTestPushEvent(t, 10)
+			p.RegisterErrorEvent(context.Background(), pt.err, model.RegisterEvents)
+			evt := <-p.evtQueue.eventCh()
+			metricsEvt := &model.MetricsEvent{}
+			err := json.Unmarshal(evt.Event, metricsEvt)
+			assert.NoError(t, err)
+			actual := &model.InternalServerErrorMetricsEvent{}
+			err = json.Unmarshal(metricsEvt.Event, actual)
+			assert.NoError(t, err)
+			assert.Equal(t, model.RegisterEvents, actual.APIID)
+			assert.Equal(t, p.tag, actual.Labels["tag"])
+			assert.Equal(t, model.InternalServerErrorMetricsEventType, actual.Type)
+		})
+	}
+}
+
 
 func TestPushEvent(t *testing.T) {
 	t.Parallel()
