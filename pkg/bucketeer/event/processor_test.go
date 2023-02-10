@@ -115,6 +115,19 @@ func TestPushInternalErrorMetricsEvent(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestPushErrorStatusCodeMetricsEvent(t *testing.T) {
+	t.Parallel()
+	p := newProcessorForTestPushEvent(t, 10)
+	p.PushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusInternalServerError)
+	evt := <-p.evtQueue.eventCh()
+	metricsEvt := &model.MetricsEvent{}
+	err := json.Unmarshal(evt.Event, metricsEvt)
+	assert.NoError(t, err)
+	iseMetricsEvt := &model.InternalServerErrorMetricsEvent{}
+	err = json.Unmarshal(metricsEvt.Event, iseMetricsEvt)
+	assert.NoError(t, err)
+}
+
 func TestPushEvent(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
