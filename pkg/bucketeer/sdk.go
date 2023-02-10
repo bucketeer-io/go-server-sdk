@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"internal/oserror"
 	"net/http"
 	"strconv"
+	"syscall"
 	"time"
 	"unsafe"
 
@@ -275,9 +277,8 @@ func (s *sdk) callGetEvaluationAPI(
 		if code == http.StatusGatewayTimeout {
 			s.eventProcessor.PushTimeoutErrorMetricsEvent(ctx, model.GetEvaluation)
 		} else {
-			s.eventProcessor.PushInternalSDKErrorMetricsEvent(ctx, model.GetEvaluation)
+			s.eventProcessor.PushErrorStatusCodeMetricsEvent(ctx, model.GetEvaluation, code)
 		}
-		s.eventProcessor.PushErrorStatusCodeMetricsEvent(ctx, model.GetEvaluation, code)
 		return nil, fmt.Errorf("failed to get evaluation: %w", err)
 	}
 	s.eventProcessor.PushLatencyMetricsEvent(ctx, time.Since(reqStart), model.GetEvaluation)
