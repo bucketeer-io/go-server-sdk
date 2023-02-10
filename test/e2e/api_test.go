@@ -60,10 +60,10 @@ func TestRegisterEvents(t *testing.T) {
 	assert.NoError(t, err)
 	sizeMetricsEvent, err := json.Marshal(model.NewMetricsEvent(sizeMetrics))
 	assert.NoError(t, err)
-	internalError, err := json.Marshal(&model.InternalErrorMetricsEvent{
+	internalError, err := json.Marshal(&model.InternalSDKErrorMetricsEvent{
 		APIID:  model.GetEvaluation,
 		Labels: map[string]string{"tag": tag},
-		Type:   model.InternalErrorMetricsEventType,
+		Type:   model.InternalSDKErrorMetricsEventType,
 	})
 	assert.NoError(t, err)
 	iemetricsEvent, err := json.Marshal(model.NewMetricsEvent(internalError))

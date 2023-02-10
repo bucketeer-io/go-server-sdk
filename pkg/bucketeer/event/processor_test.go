@@ -102,15 +102,15 @@ func TestPushTimeoutErrorMetricsEvent(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestPushInternalErrorMetricsEvent(t *testing.T) {
+func TestPushInternalSDKErrorMetricsEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.PushInternalErrorMetricsEvent(context.Background(), model.GetEvaluation)
+	p.PushInternalSDKErrorMetricsEvent(context.Background(), model.GetEvaluation)
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
-	iecMetricsEvt := &model.InternalErrorMetricsEvent{}
+	iecMetricsEvt := &model.InternalSDKErrorMetricsEvent{}
 	err = json.Unmarshal(metricsEvt.Event, iecMetricsEvt)
 	assert.NoError(t, err)
 }

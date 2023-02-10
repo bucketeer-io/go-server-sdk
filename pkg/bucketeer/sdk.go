@@ -253,7 +253,7 @@ func (s *sdk) callGetEvaluationAPI(
 				featureID,
 				code,
 			)
-			s.eventProcessor.PushInternalErrorMetricsEvent(ctx, model.GetEvaluation)
+			s.eventProcessor.PushInternalSDKErrorMetricsEvent(ctx, model.GetEvaluation)
 			return
 		}
 
@@ -269,13 +269,13 @@ func (s *sdk) callGetEvaluationAPI(
 		gserr = err // set HTTP status error
 		code, ok := api.GetStatusCode(gserr)
 		if !ok {
-			s.eventProcessor.PushInternalErrorMetricsEvent(ctx, model.GetEvaluation)
+			s.eventProcessor.PushInternalSDKErrorMetricsEvent(ctx, model.GetEvaluation)
 			return nil, fmt.Errorf("failed to get evaluation: %w", err)
 		}
 		if code == http.StatusGatewayTimeout {
 			s.eventProcessor.PushTimeoutErrorMetricsEvent(ctx, model.GetEvaluation)
 		} else {
-			s.eventProcessor.PushInternalErrorMetricsEvent(ctx, model.GetEvaluation)
+			s.eventProcessor.PushInternalSDKErrorMetricsEvent(ctx, model.GetEvaluation)
 		}
 		s.eventProcessor.PushErrorStatusCodeMetricsEvent(ctx, model.GetEvaluation, code)
 		return nil, fmt.Errorf("failed to get evaluation: %w", err)

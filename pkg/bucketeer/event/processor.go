@@ -43,8 +43,8 @@ type Processor interface {
 	// PushTimeoutErrorMetricsEvent pushes the timeout error count metrics event to the queue.
 	PushTimeoutErrorMetricsEvent(ctx context.Context, api model.APIID)
 
-	// PushInternalErrorMetricsEvent pushes the internal error count metrics event to the queue.
-	PushInternalErrorMetricsEvent(ctx context.Context, api model.APIID)
+	// PushInternalSDKErrorMetricsEvent pushes the internal error count metrics event to the queue.
+	PushInternalSDKErrorMetricsEvent(ctx context.Context, api model.APIID)
 
 	// PushErrorStatusCodeMetricsEvent pushes the error status code metrics event to the queue.
 	PushErrorStatusCodeMetricsEvent(ctx context.Context, api model.APIID, code int)
@@ -270,21 +270,21 @@ func (p *processor) PushTimeoutErrorMetricsEvent(ctx context.Context, api model.
 	}
 }
 
-func (p *processor) PushInternalErrorMetricsEvent(ctx context.Context, api model.APIID) {
-	iecMetricsEvt := model.NewInternalErrorMetricsEvent(p.tag, api)
+func (p *processor) PushInternalSDKErrorMetricsEvent(ctx context.Context, api model.APIID) {
+	iecMetricsEvt := model.NewInternalSDKErrorMetricsEvent(p.tag, api)
 	encodedIECMetricsEvt, err := json.Marshal(iecMetricsEvt)
 	if err != nil {
-		p.loggers.Errorf("bucketeer/event: PushInternalErrorMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
+		p.loggers.Errorf("bucketeer/event: PushInternalSDKErrorMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
 	metricsEvt := model.NewMetricsEvent(encodedIECMetricsEvt)
 	encodedMetricsEvt, err := json.Marshal(metricsEvt)
 	if err != nil {
-		p.loggers.Errorf("bucketeer/event: PushInternalErrorMetricsEvent failed (err: %v, tag: %s", err, p.tag)
+		p.loggers.Errorf("bucketeer/event: PushInternalSDKErrorMetricsEvent failed (err: %v, tag: %s", err, p.tag)
 		return
 	}
 	if err := p.pushEvent(encodedMetricsEvt); err != nil {
-		p.loggers.Errorf("bucketeer/event: PushInternalErrorMetricsEvent failed (err: %v, tag: %s", err, p.tag)
+		p.loggers.Errorf("bucketeer/event: PushInternalSDKErrorMetricsEvent failed (err: %v, tag: %s", err, p.tag)
 		return
 	}
 }
