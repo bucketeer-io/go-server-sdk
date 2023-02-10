@@ -102,15 +102,15 @@ func TestPushTimeoutErrorCountMetricsEvent(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestPushInternalErrorCountMetricsEvent(t *testing.T) {
+func TestPushInternalErrorMetricsEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.PushInternalErrorCountMetricsEvent(context.Background())
+	p.PushInternalErrorMetricsEvent(context.Background(), model.GetEvaluation)
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
-	iecMetricsEvt := &model.InternalErrorCountMetricsEvent{}
+	iecMetricsEvt := &model.InternalErrorMetricsEvent{}
 	err = json.Unmarshal(metricsEvt.Event, iecMetricsEvt)
 	assert.NoError(t, err)
 }

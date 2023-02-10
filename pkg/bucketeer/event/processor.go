@@ -42,8 +42,8 @@ type Processor interface {
 	// PushTimeoutErrorCountMetricsEvent pushes the timeout error count metrics event to the queue.
 	PushTimeoutErrorCountMetricsEvent(ctx context.Context)
 
-	// PushInternalErrorCountMetricsEvent pushes the internal error count metrics event to the queue.
-	PushInternalErrorCountMetricsEvent(ctx context.Context)
+	// PushInternalErrorMetricsEvent pushes the internal error count metrics event to the queue.
+	PushInternalErrorMetricsEvent(ctx context.Context, api model.APIID)
 
 	// Close tears down all Processor activities, after ensuring that all events have been delivered.
 	Close(ctx context.Context) error
@@ -266,21 +266,21 @@ func (p *processor) PushTimeoutErrorCountMetricsEvent(ctx context.Context) {
 	}
 }
 
-func (p *processor) PushInternalErrorCountMetricsEvent(ctx context.Context) {
-	iecMetricsEvt := model.NewInternalErrorCountMetricsEvent(p.tag)
+func (p *processor) PushInternalErrorMetricsEvent(ctx context.Context, api model.APIID) {
+	iecMetricsEvt := model.NewInternalErrorMetricsEvent(p.tag, api)
 	encodedIECMetricsEvt, err := json.Marshal(iecMetricsEvt)
 	if err != nil {
-		p.loggers.Errorf("bucketeer/event: PushInternalErrorCountMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
+		p.loggers.Errorf("bucketeer/event: PushInternalErrorMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
 	metricsEvt := model.NewMetricsEvent(encodedIECMetricsEvt)
 	encodedMetricsEvt, err := json.Marshal(metricsEvt)
 	if err != nil {
-		p.loggers.Errorf("bucketeer/event: PushInternalErrorCountMetricsEvent failed (err: %v, tag: %s", err, p.tag)
+		p.loggers.Errorf("bucketeer/event: PushInternalErrorMetricsEvent failed (err: %v, tag: %s", err, p.tag)
 		return
 	}
 	if err := p.pushEvent(encodedMetricsEvt); err != nil {
-		p.loggers.Errorf("bucketeer/event: PushInternalErrorCountMetricsEvent failed (err: %v, tag: %s", err, p.tag)
+		p.loggers.Errorf("bucketeer/event: PushInternalErrorMetricsEvent failed (err: %v, tag: %s", err, p.tag)
 		return
 	}
 }

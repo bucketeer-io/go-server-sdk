@@ -50,7 +50,7 @@ func TestBoolVariation(t *testing.T) {
 					nil,
 					api.NewErrStatus(http.StatusInternalServerError),
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorMetricsEvent(ctx, model.GetEvaluation)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
 					user,
@@ -161,7 +161,7 @@ func TestIntVariation(t *testing.T) {
 					nil,
 					api.NewErrStatus(http.StatusInternalServerError),
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorMetricsEvent(ctx, model.GetEvaluation)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
 					user,
@@ -272,7 +272,7 @@ func TestInt64Variation(t *testing.T) {
 					nil,
 					api.NewErrStatus(http.StatusInternalServerError),
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorMetricsEvent(ctx, model.GetEvaluation)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
 					user,
@@ -383,7 +383,7 @@ func TestFloat64Variation(t *testing.T) {
 					nil,
 					api.NewErrStatus(http.StatusInternalServerError),
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorMetricsEvent(ctx, model.GetEvaluation)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
 					user,
@@ -494,7 +494,7 @@ func TestStringVariation(t *testing.T) {
 					nil,
 					api.NewErrStatus(http.StatusInternalServerError),
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorMetricsEvent(ctx, model.GetEvaluation)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
 					user,
@@ -579,7 +579,7 @@ func TestJSONVariation(t *testing.T) {
 					nil,
 					api.NewErrStatus(http.StatusInternalServerError),
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorMetricsEvent(ctx, model.GetEvaluation)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
 					user,
@@ -718,7 +718,7 @@ func TestGetEvaluation(t *testing.T) {
 					nil,
 					api.NewErrStatus(http.StatusInternalServerError),
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorCountMetricsEvent(ctx)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorMetricsEvent(ctx, model.GetEvaluation)
 			},
 			user:          newUser(t, sdkUserID),
 			featureID:     sdkFeatureID,

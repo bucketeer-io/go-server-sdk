@@ -63,9 +63,10 @@ func TestRegisterEvents(t *testing.T) {
 		Type:      model.MetricsEventType,
 	})
 	assert.NoError(t, err)
-	iecMetricsEvt, err := json.Marshal(&model.InternalErrorCountMetricsEvent{
-		Tag:  tag,
-		Type: model.InternalErrorCountMetricsEventType,
+	iecMetricsEvt, err := json.Marshal(&model.InternalErrorMetricsEvent{
+		APIID: model.GetEvaluation,
+		Labels:  map[string]string{"tag": tag},
+		Type: model.InternalErrorMetricsEventType,
 	})
 	assert.NoError(t, err)
 	imetricsEvent, err := json.Marshal(&model.MetricsEvent{

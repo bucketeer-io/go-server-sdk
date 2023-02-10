@@ -34,5 +34,14 @@ const (
 	GetEvaluationLatencyMetricsEventType metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.GetEvaluationLatencyMetricsEvent"
 	GetEvaluationSizeMetricsEventType    metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.GetEvaluationSizeMetricsEvent"
 	TimeoutErrorCountMetricsEventType    metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.TimeoutErrorCountMetricsEvent"
-	InternalErrorCountMetricsEventType   metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.InternalErrorCountMetricsEvent"
+	InternalErrorMetricsEventType        metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.InternalErrorMetricsEvent"
+)
+
+type APIID int
+
+const (
+	UnknownAPI APIID = iota
+	GetEvaluation
+	GetEvaluations
+	RegisterEvents
 )
