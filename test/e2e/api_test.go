@@ -51,6 +51,7 @@ func TestRegisterEvents(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	gesMetricsEvt, err := json.Marshal(&model.SizeMetricsEvent{
+		APIID:  model.GetEvaluation,
 		Labels: map[string]string{
 			"tag": tag,
 		},
@@ -76,6 +77,7 @@ func TestRegisterEvents(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	tecMetricsEvent, err := json.Marshal(&model.TimeoutErrorMetricsEvent{
+		APIID:  model.GetEvaluation,
 		Labels: map[string]string{"tag": tag},
 		Type:   model.TimeoutErrorMetricsEventType,
 	})
@@ -87,6 +89,7 @@ func TestRegisterEvents(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	elmMetricsEvent, err := json.Marshal(&model.LatencyMetricsEvent{
+		APIID:  model.GetEvaluation,
 		Labels: map[string]string{"tag": tag},
 		Duration: &model.Duration{
 			Type:  model.DurationType,
