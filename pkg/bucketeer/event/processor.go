@@ -307,7 +307,8 @@ func (p *processor) PushErrorStatusCodeMetricsEvent(ctx context.Context, api mod
 	case http.StatusServiceUnavailable:
 		evt = model.NewServiceUnavailableErrorMetricsEvent(p.tag, api)
 	default:
-		p.loggers.Errorf("bucketeer/event: PushErrorStatusCodeMetricsEvent failed (err: %v, tag: %s", fmt.Errorf("unknown status code: %d", code), p.tag)
+		p.loggers.Errorf("bucketeer/event: PushErrorStatusCodeMetricsEvent failed (err: %v, tag: %s",
+			fmt.Errorf("unknown status code: %d", code), p.tag)
 		return
 	}
 	encodedESCMetricsEvt, err := json.Marshal(evt)
