@@ -76,15 +76,15 @@ func TestPushLatencyMetricsEvent(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestPushGetEvaluationSizeMetricsEvent(t *testing.T) {
+func TestPushSizeMetricsEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.PushGetEvaluationSizeMetricsEvent(context.Background(), 1)
+	p.PushSizeMetricsEvent(context.Background(), 1, model.GetEvaluation)
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
-	gesMetricsEvt := &model.GetEvaluationSizeMetricsEvent{}
+	gesMetricsEvt := &model.SizeMetricsEvent{}
 	err = json.Unmarshal(metricsEvt.Event, gesMetricsEvt)
 	assert.NoError(t, err)
 }

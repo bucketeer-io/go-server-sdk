@@ -76,18 +76,6 @@ func (mr *MockProcessorMockRecorder) PushEvaluationEvent(ctx, user, evaluation i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushEvaluationEvent", reflect.TypeOf((*MockProcessor)(nil).PushEvaluationEvent), ctx, user, evaluation)
 }
 
-// PushGetEvaluationSizeMetricsEvent mocks base method.
-func (m *MockProcessor) PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeByte int) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PushGetEvaluationSizeMetricsEvent", ctx, sizeByte)
-}
-
-// PushGetEvaluationSizeMetricsEvent indicates an expected call of PushGetEvaluationSizeMetricsEvent.
-func (mr *MockProcessorMockRecorder) PushGetEvaluationSizeMetricsEvent(ctx, sizeByte interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushGetEvaluationSizeMetricsEvent", reflect.TypeOf((*MockProcessor)(nil).PushGetEvaluationSizeMetricsEvent), ctx, sizeByte)
-}
-
 // PushGoalEvent mocks base method.
 func (m *MockProcessor) PushGoalEvent(ctx context.Context, user *user.User, GoalID string, value float64) {
 	m.ctrl.T.Helper()
@@ -122,6 +110,18 @@ func (m *MockProcessor) PushLatencyMetricsEvent(ctx context.Context, duration ti
 func (mr *MockProcessorMockRecorder) PushLatencyMetricsEvent(ctx, duration, api interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushLatencyMetricsEvent", reflect.TypeOf((*MockProcessor)(nil).PushLatencyMetricsEvent), ctx, duration, api)
+}
+
+// PushSizeMetricsEvent mocks base method.
+func (m *MockProcessor) PushSizeMetricsEvent(ctx context.Context, sizeByte int, api model.APIID) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "PushSizeMetricsEvent", ctx, sizeByte, api)
+}
+
+// PushSizeMetricsEvent indicates an expected call of PushSizeMetricsEvent.
+func (mr *MockProcessorMockRecorder) PushSizeMetricsEvent(ctx, sizeByte, api interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushSizeMetricsEvent", reflect.TypeOf((*MockProcessor)(nil).PushSizeMetricsEvent), ctx, sizeByte, api)
 }
 
 // PushTimeoutErrorMetricsEvent mocks base method.

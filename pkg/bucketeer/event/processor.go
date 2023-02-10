@@ -36,8 +36,8 @@ type Processor interface {
 	// PushLatencyMetricsEvent pushes the get evaluation latency metrics event to the queue.
 	PushLatencyMetricsEvent(ctx context.Context, duration time.Duration, api model.APIID)
 
-	// PushGetEvaluationSizeMetricsEvent pushes the get evaluation size metrics event to the queue.
-	PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeByte int)
+	// PushSizeMetricsEvent pushes the get evaluation size metrics event to the queue.
+	PushSizeMetricsEvent(ctx context.Context, sizeByte int, api model.APIID)
 
 	// PushTimeoutErrorMetricsEvent pushes the timeout error count metrics event to the queue.
 	PushTimeoutErrorMetricsEvent(ctx context.Context, api model.APIID)
@@ -227,21 +227,21 @@ func (p *processor) PushLatencyMetricsEvent(ctx context.Context, duration time.D
 	}
 }
 
-func (p *processor) PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeByte int) {
-	gesMetricsEvt := model.NewGetEvaluationSizeMetricsEvent(p.tag, int32(sizeByte))
+func (p *processor) PushSizeMetricsEvent(ctx context.Context, sizeByte int, api model.APIID) {
+	gesMetricsEvt := model.NewSizeMetricsEvent(p.tag, int32(sizeByte), api)
 	encodedGESMetricsEvt, err := json.Marshal(gesMetricsEvt)
 	if err != nil {
-		p.loggers.Errorf("bucketeer/event: PushGetEvaluationSizeMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
+		p.loggers.Errorf("bucketeer/event: PushSizeMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
 	metricsEvt := model.NewMetricsEvent(encodedGESMetricsEvt)
 	encodedMetricsEvt, err := json.Marshal(metricsEvt)
 	if err != nil {
-		p.loggers.Errorf("bucketeer/event: PushGetEvaluationSizeMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
+		p.loggers.Errorf("bucketeer/event: PushSizeMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
 	if err := p.pushEvent(encodedMetricsEvt); err != nil {
-		p.loggers.Errorf("bucketeer/event: PushGetEvaluationSizeMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
+		p.loggers.Errorf("bucketeer/event: PushSizeMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
 }
