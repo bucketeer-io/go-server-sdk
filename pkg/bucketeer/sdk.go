@@ -273,7 +273,7 @@ func (s *sdk) callGetEvaluationAPI(
 			return nil, fmt.Errorf("failed to get evaluation: %w", err)
 		}
 		if code == http.StatusGatewayTimeout {
-			s.eventProcessor.PushTimeoutErrorCountMetricsEvent(ctx)
+			s.eventProcessor.PushTimeoutErrorMetricsEvent(ctx, model.GetEvaluation)
 		} else {
 			s.eventProcessor.PushInternalErrorMetricsEvent(ctx, model.GetEvaluation)
 		}

@@ -124,14 +124,14 @@ func (mr *MockProcessorMockRecorder) PushLatencyMetricsEvent(ctx, duration, api 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushLatencyMetricsEvent", reflect.TypeOf((*MockProcessor)(nil).PushLatencyMetricsEvent), ctx, duration, api)
 }
 
-// PushTimeoutErrorCountMetricsEvent mocks base method.
-func (m *MockProcessor) PushTimeoutErrorCountMetricsEvent(ctx context.Context) {
+// PushTimeoutErrorMetricsEvent mocks base method.
+func (m *MockProcessor) PushTimeoutErrorMetricsEvent(ctx context.Context, api model.APIID) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PushTimeoutErrorCountMetricsEvent", ctx)
+	m.ctrl.Call(m, "PushTimeoutErrorMetricsEvent", ctx, api)
 }
 
-// PushTimeoutErrorCountMetricsEvent indicates an expected call of PushTimeoutErrorCountMetricsEvent.
-func (mr *MockProcessorMockRecorder) PushTimeoutErrorCountMetricsEvent(ctx interface{}) *gomock.Call {
+// PushTimeoutErrorMetricsEvent indicates an expected call of PushTimeoutErrorMetricsEvent.
+func (mr *MockProcessorMockRecorder) PushTimeoutErrorMetricsEvent(ctx, api interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushTimeoutErrorCountMetricsEvent", reflect.TypeOf((*MockProcessor)(nil).PushTimeoutErrorCountMetricsEvent), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushTimeoutErrorMetricsEvent", reflect.TypeOf((*MockProcessor)(nil).PushTimeoutErrorMetricsEvent), ctx, api)
 }

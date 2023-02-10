@@ -709,7 +709,7 @@ func TestGetEvaluation(t *testing.T) {
 					nil,
 					api.NewErrStatus(http.StatusGatewayTimeout),
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushTimeoutErrorCountMetricsEvent(ctx)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushTimeoutErrorMetricsEvent(ctx, model.GetEvaluation)
 			},
 			user:          newUser(t, sdkUserID),
 			featureID:     sdkFeatureID,

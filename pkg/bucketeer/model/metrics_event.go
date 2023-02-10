@@ -33,7 +33,7 @@ type metricsDetailEventType string
 const (
 	LatencyMetricsEventType           metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.LatencyMetricsEvent"
 	GetEvaluationSizeMetricsEventType metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.GetEvaluationSizeMetricsEvent"
-	TimeoutErrorCountMetricsEventType metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.TimeoutErrorCountMetricsEvent"
+	TimeoutErrorMetricsEventType      metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.TimeoutErrorMetricsEvent"
 	InternalErrorMetricsEventType     metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.InternalErrorMetricsEvent"
 )
 

@@ -75,9 +75,9 @@ func TestRegisterEvents(t *testing.T) {
 		Type:      model.MetricsEventType,
 	})
 	assert.NoError(t, err)
-	tecMetricsEvent, err := json.Marshal(&model.TimeoutErrorCountMetricsEvent{
-		Tag:  tag,
-		Type: model.TimeoutErrorCountMetricsEventType,
+	tecMetricsEvent, err := json.Marshal(&model.TimeoutErrorMetricsEvent{
+		Labels: map[string]string{"tag": tag},
+		Type: model.TimeoutErrorMetricsEventType,
 	})
 	assert.NoError(t, err)
 	tmetricsEvent, err := json.Marshal(&model.MetricsEvent{

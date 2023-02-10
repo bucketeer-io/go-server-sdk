@@ -1,13 +1,15 @@
 package model
 
-type TimeoutErrorCountMetricsEvent struct {
-	Tag  string                 `json:"tag,omitempty"`
-	Type metricsDetailEventType `json:"@type,omitempty"`
+type TimeoutErrorMetricsEvent struct {
+	APIID  APIID                  `json:"api_id,omitempty"`
+	Labels map[string]string      `json:"labels,omitempty"`
+	Type   metricsDetailEventType `json:"@type,omitempty"`
 }
 
-func NewTimeoutErrorCountMetricsEvent(tag string) *TimeoutErrorCountMetricsEvent {
-	return &TimeoutErrorCountMetricsEvent{
-		Tag:  tag,
-		Type: TimeoutErrorCountMetricsEventType,
+func NewTimeoutErrorMetricsEvent(tag string, api APIID) *TimeoutErrorMetricsEvent {
+	return &TimeoutErrorMetricsEvent{
+		APIID:  api,
+		Labels: map[string]string{"tag": tag},
+		Type:   TimeoutErrorMetricsEventType,
 	}
 }

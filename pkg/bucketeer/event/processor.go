@@ -39,8 +39,8 @@ type Processor interface {
 	// PushGetEvaluationSizeMetricsEvent pushes the get evaluation size metrics event to the queue.
 	PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeByte int)
 
-	// PushTimeoutErrorCountMetricsEvent pushes the timeout error count metrics event to the queue.
-	PushTimeoutErrorCountMetricsEvent(ctx context.Context)
+	// PushTimeoutErrorMetricsEvent pushes the timeout error count metrics event to the queue.
+	PushTimeoutErrorMetricsEvent(ctx context.Context, api model.APIID)
 
 	// PushInternalErrorMetricsEvent pushes the internal error count metrics event to the queue.
 	PushInternalErrorMetricsEvent(ctx context.Context, api model.APIID)
@@ -246,22 +246,22 @@ func (p *processor) PushGetEvaluationSizeMetricsEvent(ctx context.Context, sizeB
 	}
 }
 
-func (p *processor) PushTimeoutErrorCountMetricsEvent(ctx context.Context) {
-	tecMetricsEvt := model.NewTimeoutErrorCountMetricsEvent(p.tag)
+func (p *processor) PushTimeoutErrorMetricsEvent(ctx context.Context, api model.APIID) {
+	tecMetricsEvt := model.NewTimeoutErrorMetricsEvent(p.tag, api)
 
 	encodedTECMetricsEvt, err := json.Marshal(tecMetricsEvt)
 	if err != nil {
-		p.loggers.Errorf("bucketeer/event: PushTimeoutErrorCountMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
+		p.loggers.Errorf("bucketeer/event: PushTimeoutErrorMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
 	metricsEvt := model.NewMetricsEvent(encodedTECMetricsEvt)
 	encodedMetricsEvt, err := json.Marshal(metricsEvt)
 	if err != nil {
-		p.loggers.Errorf("bucketeer/event: PushTimeoutErrorCountMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
+		p.loggers.Errorf("bucketeer/event: PushTimeoutErrorMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
 	if err := p.pushEvent(encodedMetricsEvt); err != nil {
-		p.loggers.Errorf("bucketeer/event: PushTimeoutErrorCountMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
+		p.loggers.Errorf("bucketeer/event: PushTimeoutErrorMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
 }
