@@ -7,6 +7,9 @@ type LatencyMetricsEvent struct {
 	Type     metricsDetailEventType `json:"@type,omitempty"`
 }
 
+//nolint:lll
+const LatencyMetricsEventType metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.LatencyMetricsEvent"
+
 func NewLatencyMetricsEvent(tag, val string, api APIID) *LatencyMetricsEvent {
 	return &LatencyMetricsEvent{
 		APIID:  api,

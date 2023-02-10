@@ -29,14 +29,6 @@ func NewMetricsEvent(encoded json.RawMessage) *MetricsEvent {
 
 type metricsDetailEventType string
 
-//nolint:lll
-const (
-	LatencyMetricsEventType          metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.LatencyMetricsEvent"
-	SizeMetricsEventType             metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.SizeMetricsEvent"
-	TimeoutErrorMetricsEventType     metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.TimeoutErrorMetricsEvent"
-	InternalSDKErrorMetricsEventType metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.InternalSDKErrorMetricsEvent"
-)
-
 type APIID int
 
 const (

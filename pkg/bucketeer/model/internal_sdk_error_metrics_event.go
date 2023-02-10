@@ -6,6 +6,9 @@ type InternalSDKErrorMetricsEvent struct {
 	Type   metricsDetailEventType `json:"@type,omitempty"`
 }
 
+//nolint:lll
+const InternalSDKErrorMetricsEventType metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.InternalSDKErrorMetricsEvent"
+
 func NewInternalSDKErrorMetricsEvent(tag string, api APIID) *InternalSDKErrorMetricsEvent {
 	return &InternalSDKErrorMetricsEvent{
 		APIID:  api,

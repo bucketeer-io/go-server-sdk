@@ -7,6 +7,9 @@ type SizeMetricsEvent struct {
 	Type     metricsDetailEventType `json:"@type,omitempty"`
 }
 
+//nolint:lll
+const SizeMetricsEventType metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.SizeMetricsEvent"
+
 func NewSizeMetricsEvent(tag string, sizeByte int32, api APIID) *SizeMetricsEvent {
 	return &SizeMetricsEvent{
 		APIID:    api,

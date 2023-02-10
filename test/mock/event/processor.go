@@ -64,18 +64,6 @@ func (mr *MockProcessorMockRecorder) PushDefaultEvaluationEvent(ctx, user, featu
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushDefaultEvaluationEvent", reflect.TypeOf((*MockProcessor)(nil).PushDefaultEvaluationEvent), ctx, user, featureID)
 }
 
-// PushErrorStatusCodeMetricsEvent mocks base method.
-func (m *MockProcessor) PushErrorStatusCodeMetricsEvent(ctx context.Context, api model.APIID, code int) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PushErrorStatusCodeMetricsEvent", ctx, api, code)
-}
-
-// PushErrorStatusCodeMetricsEvent indicates an expected call of PushErrorStatusCodeMetricsEvent.
-func (mr *MockProcessorMockRecorder) PushErrorStatusCodeMetricsEvent(ctx, api, code interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushErrorStatusCodeMetricsEvent", reflect.TypeOf((*MockProcessor)(nil).PushErrorStatusCodeMetricsEvent), ctx, api, code)
-}
-
 // PushEvaluationEvent mocks base method.
 func (m *MockProcessor) PushEvaluationEvent(ctx context.Context, user *user.User, evaluation *model.Evaluation) {
 	m.ctrl.T.Helper()
@@ -98,18 +86,6 @@ func (m *MockProcessor) PushGoalEvent(ctx context.Context, user *user.User, Goal
 func (mr *MockProcessorMockRecorder) PushGoalEvent(ctx, user, GoalID, value interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushGoalEvent", reflect.TypeOf((*MockProcessor)(nil).PushGoalEvent), ctx, user, GoalID, value)
-}
-
-// PushInternalSDKErrorMetricsEvent mocks base method.
-func (m *MockProcessor) PushInternalSDKErrorMetricsEvent(ctx context.Context, api model.APIID) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PushInternalSDKErrorMetricsEvent", ctx, api)
-}
-
-// PushInternalSDKErrorMetricsEvent indicates an expected call of PushInternalSDKErrorMetricsEvent.
-func (mr *MockProcessorMockRecorder) PushInternalSDKErrorMetricsEvent(ctx, api interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushInternalSDKErrorMetricsEvent", reflect.TypeOf((*MockProcessor)(nil).PushInternalSDKErrorMetricsEvent), ctx, api)
 }
 
 // PushLatencyMetricsEvent mocks base method.
@@ -136,14 +112,14 @@ func (mr *MockProcessorMockRecorder) PushSizeMetricsEvent(ctx, sizeByte, api int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushSizeMetricsEvent", reflect.TypeOf((*MockProcessor)(nil).PushSizeMetricsEvent), ctx, sizeByte, api)
 }
 
-// PushTimeoutErrorMetricsEvent mocks base method.
-func (m *MockProcessor) PushTimeoutErrorMetricsEvent(ctx context.Context, api model.APIID) {
+// RegisterErrorEvent mocks base method.
+func (m *MockProcessor) RegisterErrorEvent(ctx context.Context, err error, api model.APIID) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PushTimeoutErrorMetricsEvent", ctx, api)
+	m.ctrl.Call(m, "RegisterErrorEvent", ctx, err, api)
 }
 
-// PushTimeoutErrorMetricsEvent indicates an expected call of PushTimeoutErrorMetricsEvent.
-func (mr *MockProcessorMockRecorder) PushTimeoutErrorMetricsEvent(ctx, api interface{}) *gomock.Call {
+// RegisterErrorEvent indicates an expected call of RegisterErrorEvent.
+func (mr *MockProcessorMockRecorder) RegisterErrorEvent(ctx, err, api interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushTimeoutErrorMetricsEvent", reflect.TypeOf((*MockProcessor)(nil).PushTimeoutErrorMetricsEvent), ctx, api)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterErrorEvent", reflect.TypeOf((*MockProcessor)(nil).RegisterErrorEvent), ctx, err, api)
 }

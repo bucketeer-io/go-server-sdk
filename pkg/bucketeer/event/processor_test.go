@@ -206,6 +206,7 @@ func TestFlushEvents(t *testing.T) {
 	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
+	ctx := context.TODO()
 	tests := []struct {
 		desc             string
 		setup            func(*processor, []*model.Event)
@@ -229,7 +230,7 @@ func TestFlushEvents(t *testing.T) {
 				)
 			},
 			events:           []*model.Event{{ID: "id-0"}, {ID: "id-1"}, {ID: "id-2"}},
-			expectedQueueLen: 3,
+			expectedQueueLen: 4,
 		},
 		{
 			desc: "faled to re-push all events when failed to register events if queue is closed",
@@ -296,7 +297,7 @@ func TestFlushEvents(t *testing.T) {
 			if tt.setup != nil {
 				tt.setup(p, tt.events)
 			}
-			p.flushEvents(tt.events)
+			p.flushEvents(ctx, tt.events)
 			assert.Len(t, p.evtQueue.eventCh(), tt.expectedQueueLen)
 		})
 	}
@@ -306,6 +307,7 @@ func TestClose(t *testing.T) {
 	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
+	ctx := context.TODO()
 	tests := []struct {
 		desc    string
 		setup   func(*processor)
@@ -321,7 +323,7 @@ func TestClose(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(p *processor) {
-				go p.startWorkers()
+				go p.startWorkers(ctx)
 			},
 			timeout: 1 * time.Minute,
 			isErr:   false,

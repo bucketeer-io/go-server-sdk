@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
@@ -40,17 +42,11 @@ type Processor interface {
 	// PushSizeMetricsEvent pushes the get evaluation size metrics event to the queue.
 	PushSizeMetricsEvent(ctx context.Context, sizeByte int, api model.APIID)
 
-	// PushTimeoutErrorMetricsEvent pushes the timeout error count metrics event to the queue.
-	PushTimeoutErrorMetricsEvent(ctx context.Context, api model.APIID)
-
-	// PushInternalSDKErrorMetricsEvent pushes the internal error count metrics event to the queue.
-	PushInternalSDKErrorMetricsEvent(ctx context.Context, api model.APIID)
-
-	// PushErrorStatusCodeMetricsEvent pushes the error status code metrics event to the queue.
-	PushErrorStatusCodeMetricsEvent(ctx context.Context, api model.APIID, code int)
-
 	// Close tears down all Processor activities, after ensuring that all events have been delivered.
 	Close(ctx context.Context) error
+
+	// RegisterErrorEvent pushed the error event to the queue.
+	RegisterErrorEvent(ctx context.Context, err error, api model.APIID)
 }
 
 type processor struct {
@@ -102,7 +98,7 @@ type ProcessorConfig struct {
 }
 
 // NewProcessor creates a new Processor.
-func NewProcessor(conf *ProcessorConfig) Processor {
+func NewProcessor(ctx context.Context, conf *ProcessorConfig) Processor {
 	q := newQueue(&queueConfig{
 		capacity: conf.QueueCapacity,
 	})
@@ -118,7 +114,7 @@ func NewProcessor(conf *ProcessorConfig) Processor {
 		closeCh:         make(chan struct{}),
 		tag:             conf.Tag,
 	}
-	go p.startWorkers()
+	go p.startWorkers(ctx)
 	return p
 }
 
@@ -326,6 +322,25 @@ func (p *processor) PushErrorStatusCodeMetricsEvent(ctx context.Context, api mod
 	}
 }
 
+func (p *processor) PushNetworkErrorMetricsEvent(ctx context.Context, api model.APIID) {
+	neMetricsEvt := model.NewNetworkErrorMetricsEvent(p.tag, api)
+	encodedNEMetricsEvt, err := json.Marshal(neMetricsEvt)
+	if err != nil {
+		p.loggers.Errorf("bucketeer/event: PushNetworkErrorMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
+		return
+	}
+	metricsEvt := model.NewMetricsEvent(encodedNEMetricsEvt)
+	encodedMetricsEvt, err := json.Marshal(metricsEvt)
+	if err != nil {
+		p.loggers.Errorf("bucketeer/event: PushNetworkErrorMetricsEvent failed (err: %v, tag: %s", err, p.tag)
+		return
+	}
+	if err := p.pushEvent(encodedMetricsEvt); err != nil {
+		p.loggers.Errorf("bucketeer/event: PushNetworkErrorMetricsEvent failed (err: %v, tag: %s", err, p.tag)
+		return
+	}
+}
+
 func (p *processor) pushEvent(encoded []byte) error {
 	id, err := uuid.NewV4()
 	if err != nil {
@@ -348,16 +363,16 @@ func (p *processor) Close(ctx context.Context) error {
 	}
 }
 
-func (p *processor) startWorkers() {
+func (p *processor) startWorkers(ctx context.Context) {
 	for i := 0; i < p.numFlushWorkers; i++ {
 		p.workerWG.Add(1)
-		go p.runWorkerProcessLoop()
+		go p.runWorkerProcessLoop(ctx)
 	}
 	p.workerWG.Wait()
 	close(p.closeCh)
 }
 
-func (p *processor) runWorkerProcessLoop() {
+func (p *processor) runWorkerProcessLoop(ctx context.Context) {
 	defer func() {
 		p.loggers.Debug("bucketeer/event: runWorkerProcessLoop done")
 		p.workerWG.Done()
@@ -369,23 +384,23 @@ func (p *processor) runWorkerProcessLoop() {
 		select {
 		case evt, ok := <-p.evtQueue.eventCh():
 			if !ok {
-				p.flushEvents(events)
+				p.flushEvents(ctx, events)
 				return
 			}
 			events = append(events, evt)
 			if len(events) < p.flushSize {
 				continue
 			}
-			p.flushEvents(events)
+			p.flushEvents(ctx, events)
 			events = make([]*model.Event, 0, p.flushSize)
 		case <-ticker.C:
-			p.flushEvents(events)
+			p.flushEvents(ctx, events)
 			events = make([]*model.Event, 0, p.flushSize)
 		}
 	}
 }
 
-func (p *processor) flushEvents(events []*model.Event) {
+func (p *processor) flushEvents(ctx context.Context, events []*model.Event) {
 	if len(events) == 0 {
 		return
 	}
@@ -398,6 +413,7 @@ func (p *processor) flushEvents(events []*model.Event) {
 				p.loggers.Errorf("bucketeer/event: failed to re-push event: %v", err)
 			}
 		}
+		p.RegisterErrorEvent(ctx, err, model.RegisterEvents)
 		return
 	}
 	if len(res.Errors) > 0 {
@@ -416,5 +432,24 @@ func (p *processor) flushEvents(events []*model.Event) {
 				p.loggers.Errorf("bucketeer/event: failed to re-push retriable event: %v", err)
 			}
 		}
+	}
+}
+
+func (p *processor) RegisterErrorEvent(ctx context.Context, err error, apiID model.APIID) {
+	code, ok := api.GetStatusCode(err)
+	if !ok {
+		switch {
+		case strings.Contains(err.Error(), syscall.EHOSTUNREACH.Error()) ||
+			strings.Contains(err.Error(), syscall.ECONNREFUSED.Error()):
+			p.PushNetworkErrorMetricsEvent(ctx, apiID)
+		default:
+			p.PushInternalSDKErrorMetricsEvent(ctx, apiID)
+		}
+		return
+	}
+	if code == http.StatusGatewayTimeout {
+		p.PushTimeoutErrorMetricsEvent(ctx, apiID)
+	} else {
+		p.PushErrorStatusCodeMetricsEvent(ctx, apiID, code)
 	}
 }

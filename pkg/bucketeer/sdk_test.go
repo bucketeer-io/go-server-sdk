@@ -40,6 +40,7 @@ func TestBoolVariation(t *testing.T) {
 		{
 			desc: "return default value when failed to get evaluation",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				err := api.NewErrStatus(http.StatusInternalServerError)
 				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
@@ -48,15 +49,18 @@ func TestBoolVariation(t *testing.T) {
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
-					api.NewErrStatus(http.StatusInternalServerError),
+					err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalSDKErrorMetricsEvent(ctx, model.GetEvaluation)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
 					user,
 					featureID,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorStatusCodeMetricsEvent(ctx, model.GetEvaluation, http.StatusInternalServerError)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().RegisterErrorEvent(
+					ctx,
+					err,
+					model.GetEvaluation,
+				)
 			},
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
@@ -156,6 +160,7 @@ func TestIntVariation(t *testing.T) {
 		{
 			desc: "return default value when failed to get evaluation",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				err := api.NewErrStatus(http.StatusInternalServerError)
 				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
@@ -164,15 +169,18 @@ func TestIntVariation(t *testing.T) {
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
-					api.NewErrStatus(http.StatusInternalServerError),
+					err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalSDKErrorMetricsEvent(ctx, model.GetEvaluation)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
 					user,
 					featureID,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorStatusCodeMetricsEvent(ctx, model.GetEvaluation, http.StatusInternalServerError)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().RegisterErrorEvent(
+					ctx,
+					err,
+					model.GetEvaluation,
+				)
 			},
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
@@ -272,6 +280,7 @@ func TestInt64Variation(t *testing.T) {
 		{
 			desc: "return default value when failed to get evaluation",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				err := api.NewErrStatus(http.StatusInternalServerError)
 				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
@@ -280,15 +289,18 @@ func TestInt64Variation(t *testing.T) {
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
-					api.NewErrStatus(http.StatusInternalServerError),
+					err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalSDKErrorMetricsEvent(ctx, model.GetEvaluation)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
 					user,
 					featureID,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorStatusCodeMetricsEvent(ctx, model.GetEvaluation, http.StatusInternalServerError)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().RegisterErrorEvent(
+					ctx,
+					err,
+					model.GetEvaluation,
+				)
 			},
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
@@ -388,6 +400,7 @@ func TestFloat64Variation(t *testing.T) {
 		{
 			desc: "return default value when failed to get evaluation",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				err := api.NewErrStatus(http.StatusInternalServerError)
 				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
@@ -396,15 +409,18 @@ func TestFloat64Variation(t *testing.T) {
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
-					api.NewErrStatus(http.StatusInternalServerError),
+					err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalSDKErrorMetricsEvent(ctx, model.GetEvaluation)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
 					user,
 					featureID,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorStatusCodeMetricsEvent(ctx, model.GetEvaluation, http.StatusInternalServerError)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().RegisterErrorEvent(
+					ctx,
+					err,
+					model.GetEvaluation,
+				)
 			},
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
@@ -504,6 +520,7 @@ func TestStringVariation(t *testing.T) {
 		{
 			desc: "return default value when failed to get evaluation",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				err := api.NewErrStatus(http.StatusInternalServerError)
 				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
@@ -512,15 +529,18 @@ func TestStringVariation(t *testing.T) {
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
-					api.NewErrStatus(http.StatusInternalServerError),
+					err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalSDKErrorMetricsEvent(ctx, model.GetEvaluation)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
 					user,
 					featureID,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorStatusCodeMetricsEvent(ctx, model.GetEvaluation, http.StatusInternalServerError)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().RegisterErrorEvent(
+					ctx,
+					err,
+					model.GetEvaluation,
+				)
 			},
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
@@ -592,6 +612,7 @@ func TestJSONVariation(t *testing.T) {
 		{
 			desc: "failed to get evaluation",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				err := api.NewErrStatus(http.StatusInternalServerError)
 				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
@@ -600,15 +621,18 @@ func TestJSONVariation(t *testing.T) {
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
-					api.NewErrStatus(http.StatusInternalServerError),
+					err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalSDKErrorMetricsEvent(ctx, model.GetEvaluation)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
 					user,
 					featureID,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorStatusCodeMetricsEvent(ctx, model.GetEvaluation, http.StatusInternalServerError)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().RegisterErrorEvent(
+					ctx,
+					err,
+					model.GetEvaluation,
+				)
 			},
 			user:      newUser(t, sdkUserID),
 			featureID: sdkFeatureID,
@@ -716,6 +740,7 @@ func TestGetEvaluation(t *testing.T) {
 		{
 			desc: "get evaluations returns timeout error",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				err := api.NewErrStatus(http.StatusGatewayTimeout)
 				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
@@ -724,10 +749,13 @@ func TestGetEvaluation(t *testing.T) {
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
-					api.NewErrStatus(http.StatusGatewayTimeout),
+					err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushTimeoutErrorMetricsEvent(ctx, model.GetEvaluation)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorStatusCodeMetricsEvent(ctx, model.GetEvaluation, http.StatusGatewayTimeout)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().RegisterErrorEvent(
+					ctx,
+					err,
+					model.GetEvaluation,
+				)
 			},
 			user:          newUser(t, sdkUserID),
 			featureID:     sdkFeatureID,
@@ -737,6 +765,7 @@ func TestGetEvaluation(t *testing.T) {
 		{
 			desc: "get evaluations returns internal error",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				err := api.NewErrStatus(http.StatusGatewayTimeout)
 				req := &model.GetEvaluationRequest{
 					Tag:       sdkTag,
 					User:      user,
@@ -745,10 +774,13 @@ func TestGetEvaluation(t *testing.T) {
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
-					api.NewErrStatus(http.StatusInternalServerError),
+					err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalSDKErrorMetricsEvent(ctx, model.GetEvaluation)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorStatusCodeMetricsEvent(ctx, model.GetEvaluation, http.StatusInternalServerError)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().RegisterErrorEvent(
+					ctx,
+					err,
+					model.GetEvaluation,
+				)
 			},
 			user:          newUser(t, sdkUserID),
 			featureID:     sdkFeatureID,
