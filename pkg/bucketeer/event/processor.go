@@ -308,7 +308,6 @@ func (p *processor) PushErrorStatusCodeMetricsEvent(ctx context.Context, api mod
 		evt = model.NewServiceUnavailableErrorMetricsEvent(p.tag, api)
 	default:
 		evt = model.NewUnknownErrorMetricsEvent(p.tag, api)
-		return
 	}
 	encodedESCMetricsEvt, err := json.Marshal(evt)
 	if err != nil {

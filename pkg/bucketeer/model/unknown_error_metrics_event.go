@@ -1,5 +1,6 @@
 package model
 
+//nolint:lll
 const UnknownErrorMetricsEventType metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.UnknownErrorMetricsEvent"
 
 type UnknownErrorMetricsEvent struct {
