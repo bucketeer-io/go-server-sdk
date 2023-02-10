@@ -246,46 +246,46 @@ func (p *processor) PushSizeMetricsEvent(ctx context.Context, sizeByte int, api 
 	}
 }
 
-func (p *processor) PushTimeoutErrorMetricsEvent(ctx context.Context, api model.APIID) {
+func (p *processor) pushTimeoutErrorMetricsEvent(ctx context.Context, api model.APIID) {
 	tecMetricsEvt := model.NewTimeoutErrorMetricsEvent(p.tag, api)
 
 	encodedTECMetricsEvt, err := json.Marshal(tecMetricsEvt)
 	if err != nil {
-		p.loggers.Errorf("bucketeer/event: PushTimeoutErrorMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
+		p.loggers.Errorf("bucketeer/event: pushTimeoutErrorMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
 	metricsEvt := model.NewMetricsEvent(encodedTECMetricsEvt)
 	encodedMetricsEvt, err := json.Marshal(metricsEvt)
 	if err != nil {
-		p.loggers.Errorf("bucketeer/event: PushTimeoutErrorMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
+		p.loggers.Errorf("bucketeer/event: pushTimeoutErrorMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
 	if err := p.pushEvent(encodedMetricsEvt); err != nil {
-		p.loggers.Errorf("bucketeer/event: PushTimeoutErrorMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
+		p.loggers.Errorf("bucketeer/event: pushTimeoutErrorMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
 }
 
-func (p *processor) PushInternalSDKErrorMetricsEvent(ctx context.Context, api model.APIID) {
+func (p *processor) pushInternalSDKErrorMetricsEvent(ctx context.Context, api model.APIID) {
 	iecMetricsEvt := model.NewInternalSDKErrorMetricsEvent(p.tag, api)
 	encodedIECMetricsEvt, err := json.Marshal(iecMetricsEvt)
 	if err != nil {
-		p.loggers.Errorf("bucketeer/event: PushInternalSDKErrorMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
+		p.loggers.Errorf("bucketeer/event: pushInternalSDKErrorMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
 	metricsEvt := model.NewMetricsEvent(encodedIECMetricsEvt)
 	encodedMetricsEvt, err := json.Marshal(metricsEvt)
 	if err != nil {
-		p.loggers.Errorf("bucketeer/event: PushInternalSDKErrorMetricsEvent failed (err: %v, tag: %s", err, p.tag)
+		p.loggers.Errorf("bucketeer/event: pushInternalSDKErrorMetricsEvent failed (err: %v, tag: %s", err, p.tag)
 		return
 	}
 	if err := p.pushEvent(encodedMetricsEvt); err != nil {
-		p.loggers.Errorf("bucketeer/event: PushInternalSDKErrorMetricsEvent failed (err: %v, tag: %s", err, p.tag)
+		p.loggers.Errorf("bucketeer/event: pushInternalSDKErrorMetricsEvent failed (err: %v, tag: %s", err, p.tag)
 		return
 	}
 }
 
-func (p *processor) PushErrorStatusCodeMetricsEvent(ctx context.Context, api model.APIID, code int) {
+func (p *processor) pushErrorStatusCodeMetricsEvent(ctx context.Context, api model.APIID, code int) {
 	var evt interface{}
 	switch code {
 	case http.StatusBadRequest:
@@ -307,17 +307,17 @@ func (p *processor) PushErrorStatusCodeMetricsEvent(ctx context.Context, api mod
 	}
 	encodedESCMetricsEvt, err := json.Marshal(evt)
 	if err != nil {
-		p.loggers.Errorf("bucketeer/event: PushErrorStatusCodeMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
+		p.loggers.Errorf("bucketeer/event: pushErrorStatusCodeMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
 	metricsEvt := model.NewMetricsEvent(encodedESCMetricsEvt)
 	encodedMetricsEvt, err := json.Marshal(metricsEvt)
 	if err != nil {
-		p.loggers.Errorf("bucketeer/event: PushErrorStatusCodeMetricsEvent failed (err: %v, tag: %s", err, p.tag)
+		p.loggers.Errorf("bucketeer/event: pushErrorStatusCodeMetricsEvent failed (err: %v, tag: %s", err, p.tag)
 		return
 	}
 	if err := p.pushEvent(encodedMetricsEvt); err != nil {
-		p.loggers.Errorf("bucketeer/event: PushErrorStatusCodeMetricsEvent failed (err: %v, tag: %s", err, p.tag)
+		p.loggers.Errorf("bucketeer/event: pushErrorStatusCodeMetricsEvent failed (err: %v, tag: %s", err, p.tag)
 		return
 	}
 }
@@ -443,13 +443,13 @@ func (p *processor) RegisterErrorEvent(ctx context.Context, err error, apiID mod
 			strings.Contains(err.Error(), syscall.ECONNREFUSED.Error()):
 			p.PushNetworkErrorMetricsEvent(ctx, apiID)
 		default:
-			p.PushInternalSDKErrorMetricsEvent(ctx, apiID)
+			p.pushInternalSDKErrorMetricsEvent(ctx, apiID)
 		}
 		return
 	}
 	if code == http.StatusGatewayTimeout {
-		p.PushTimeoutErrorMetricsEvent(ctx, apiID)
+		p.pushTimeoutErrorMetricsEvent(ctx, apiID)
 	} else {
-		p.PushErrorStatusCodeMetricsEvent(ctx, apiID, code)
+		p.pushErrorStatusCodeMetricsEvent(ctx, apiID, code)
 	}
 }
