@@ -64,6 +64,18 @@ func (mr *MockProcessorMockRecorder) PushDefaultEvaluationEvent(ctx, user, featu
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushDefaultEvaluationEvent", reflect.TypeOf((*MockProcessor)(nil).PushDefaultEvaluationEvent), ctx, user, featureID)
 }
 
+// PushErrorStatusCodeMetricsEvent mocks base method.
+func (m *MockProcessor) PushErrorStatusCodeMetricsEvent(ctx context.Context, api model.APIID, code int) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "PushErrorStatusCodeMetricsEvent", ctx, api, code)
+}
+
+// PushErrorStatusCodeMetricsEvent indicates an expected call of PushErrorStatusCodeMetricsEvent.
+func (mr *MockProcessorMockRecorder) PushErrorStatusCodeMetricsEvent(ctx, api, code interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushErrorStatusCodeMetricsEvent", reflect.TypeOf((*MockProcessor)(nil).PushErrorStatusCodeMetricsEvent), ctx, api, code)
+}
+
 // PushEvaluationEvent mocks base method.
 func (m *MockProcessor) PushEvaluationEvent(ctx context.Context, user *user.User, evaluation *model.Evaluation) {
 	m.ctrl.T.Helper()

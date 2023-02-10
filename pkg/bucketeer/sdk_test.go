@@ -56,6 +56,7 @@ func TestBoolVariation(t *testing.T) {
 					user,
 					featureID,
 				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorStatusCodeMetricsEvent(ctx, model.GetEvaluation, http.StatusInternalServerError)
 			},
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
@@ -171,6 +172,7 @@ func TestIntVariation(t *testing.T) {
 					user,
 					featureID,
 				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorStatusCodeMetricsEvent(ctx, model.GetEvaluation, http.StatusInternalServerError)
 			},
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
@@ -286,6 +288,7 @@ func TestInt64Variation(t *testing.T) {
 					user,
 					featureID,
 				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorStatusCodeMetricsEvent(ctx, model.GetEvaluation, http.StatusInternalServerError)
 			},
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
@@ -401,6 +404,7 @@ func TestFloat64Variation(t *testing.T) {
 					user,
 					featureID,
 				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorStatusCodeMetricsEvent(ctx, model.GetEvaluation, http.StatusInternalServerError)
 			},
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
@@ -516,6 +520,7 @@ func TestStringVariation(t *testing.T) {
 					user,
 					featureID,
 				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorStatusCodeMetricsEvent(ctx, model.GetEvaluation, http.StatusInternalServerError)
 			},
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
@@ -603,6 +608,7 @@ func TestJSONVariation(t *testing.T) {
 					user,
 					featureID,
 				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorStatusCodeMetricsEvent(ctx, model.GetEvaluation, http.StatusInternalServerError)
 			},
 			user:      newUser(t, sdkUserID),
 			featureID: sdkFeatureID,
@@ -721,6 +727,7 @@ func TestGetEvaluation(t *testing.T) {
 					api.NewErrStatus(http.StatusGatewayTimeout),
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushTimeoutErrorMetricsEvent(ctx, model.GetEvaluation)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorStatusCodeMetricsEvent(ctx, model.GetEvaluation, http.StatusGatewayTimeout)
 			},
 			user:          newUser(t, sdkUserID),
 			featureID:     sdkFeatureID,
@@ -741,6 +748,7 @@ func TestGetEvaluation(t *testing.T) {
 					api.NewErrStatus(http.StatusInternalServerError),
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushInternalErrorMetricsEvent(ctx, model.GetEvaluation)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorStatusCodeMetricsEvent(ctx, model.GetEvaluation, http.StatusInternalServerError)
 			},
 			user:          newUser(t, sdkUserID),
 			featureID:     sdkFeatureID,

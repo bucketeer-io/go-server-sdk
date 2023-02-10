@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 	"sync"
 	"time"
 
@@ -44,6 +45,9 @@ type Processor interface {
 
 	// PushInternalErrorMetricsEvent pushes the internal error count metrics event to the queue.
 	PushInternalErrorMetricsEvent(ctx context.Context, api model.APIID)
+
+	// PushErrorStatusCodeMetricsEvent pushes the error status code metrics event to the queue.
+	PushErrorStatusCodeMetricsEvent(ctx context.Context, api model.APIID, code int)
 
 	// Close tears down all Processor activities, after ensuring that all events have been delivered.
 	Close(ctx context.Context) error
@@ -281,6 +285,43 @@ func (p *processor) PushInternalErrorMetricsEvent(ctx context.Context, api model
 	}
 	if err := p.pushEvent(encodedMetricsEvt); err != nil {
 		p.loggers.Errorf("bucketeer/event: PushInternalErrorMetricsEvent failed (err: %v, tag: %s", err, p.tag)
+		return
+	}
+}
+
+func (p *processor) PushErrorStatusCodeMetricsEvent(ctx context.Context, api model.APIID, code int) {
+	var evt interface{}
+	switch code {
+	case http.StatusBadRequest:
+		evt = model.NewBadRequestErrorMetricsEvent(p.tag, api)
+	case http.StatusUnauthorized:
+		evt = model.NewUnauthorizedErrorMetricsEvent(p.tag, api)
+	case http.StatusForbidden:
+		evt = model.NewForbiddenErrorMetricsEvent(p.tag, api)
+	case http.StatusNotFound:
+		evt = model.NewNotFoundErrorMetricsEvent(p.tag, api)
+	case 499:
+		evt = model.NewClientClosedRequestErrorMetricsEvent(p.tag, api)
+	case http.StatusInternalServerError:
+		evt = model.NewInternalServerErrorMetricsEvent(p.tag, api)
+	case http.StatusServiceUnavailable:
+		evt = model.NewServiceUnavailableErrorMetricsEvent(p.tag, api)
+	default:
+		p.loggers.Errorf("bucketeer/event: PushErrorStatusCodeMetricsEvent failed (err: %v, tag: %s", fmt.Errorf("unknown status code: %d", code), p.tag)
+	}
+	encodedESCMetricsEvt, err := json.Marshal(evt)
+	if err != nil {
+		p.loggers.Errorf("bucketeer/event: PushErrorStatusCodeMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
+		return
+	}
+	metricsEvt := model.NewMetricsEvent(encodedESCMetricsEvt)
+	encodedMetricsEvt, err := json.Marshal(metricsEvt)
+	if err != nil {
+		p.loggers.Errorf("bucketeer/event: PushErrorStatusCodeMetricsEvent failed (err: %v, tag: %s", err, p.tag)
+		return
+	}
+	if err := p.pushEvent(encodedMetricsEvt); err != nil {
+		p.loggers.Errorf("bucketeer/event: PushErrorStatusCodeMetricsEvent failed (err: %v, tag: %s", err, p.tag)
 		return
 	}
 }
