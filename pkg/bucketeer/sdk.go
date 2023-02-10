@@ -5,10 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"internal/oserror"
 	"net/http"
 	"strconv"
-	"syscall"
 	"time"
 	"unsafe"
 
