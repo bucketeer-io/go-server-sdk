@@ -1,7 +1,7 @@
 package model
 
 type SizeMetricsEvent struct {
-	APIID    APIID                  `json:"api_id,omitempty"`
+	APIID    APIID                  `json:"apiId,omitempty"`
 	Labels   map[string]string      `json:"labels,omitempty"`
 	SizeByte int32                  `json:"sizeByte,omitempty"`
 	Type     metricsDetailEventType `json:"@type,omitempty"`

@@ -1,7 +1,7 @@
 package model
 
 type LatencyMetricsEvent struct {
-	APIID    APIID                  `json:"api_id,omitempty"`
+	APIID    APIID                  `json:"apiId,omitempty"`
 	Labels   map[string]string      `json:"labels,omitempty"`
 	Duration *Duration              `json:"duration,omitempty"`
 	Type     metricsDetailEventType `json:"@type,omitempty"`

@@ -15,7 +15,7 @@ const (
 
 // HTTP Mapping: 400 Bad Request
 type BadRequestErrorMetricsEvent struct {
-	APIID  APIID                `json:"api_id,omitempty"`
+	APIID  APIID                `json:"apiId,omitempty"`
 	Labels map[string]string    `json:"labels,omitempty"`
 	Type   errorStatusEventType `json:"@type,omitempty"`
 }
@@ -30,7 +30,7 @@ func NewBadRequestErrorMetricsEvent(tag string, api APIID) *BadRequestErrorMetri
 
 // HTTP Mapping: 401 Unauthorized
 type UnauthorizedErrorMetricsEvent struct {
-	APIID  APIID                `json:"api_id,omitempty"`
+	APIID  APIID                `json:"apiId,omitempty"`
 	Labels map[string]string    `json:"labels,omitempty"`
 	Type   errorStatusEventType `json:"@type,omitempty"`
 }
@@ -45,7 +45,7 @@ func NewUnauthorizedErrorMetricsEvent(tag string, api APIID) *UnauthorizedErrorM
 
 // HTTP Mapping: 403 Forbidden
 type ForbiddenErrorMetricsEvent struct {
-	APIID  APIID                `json:"api_id,omitempty"`
+	APIID  APIID                `json:"apiId,omitempty"`
 	Labels map[string]string    `json:"labels,omitempty"`
 	Type   errorStatusEventType `json:"@type,omitempty"`
 }
@@ -60,7 +60,7 @@ func NewForbiddenErrorMetricsEvent(tag string, api APIID) *ForbiddenErrorMetrics
 
 // HTTP Mapping: 404 Not Found
 type NotFoundErrorMetricsEvent struct {
-	APIID  APIID                `json:"api_id,omitempty"`
+	APIID  APIID                `json:"apiId,omitempty"`
 	Labels map[string]string    `json:"labels,omitempty"`
 	Type   errorStatusEventType `json:"@type,omitempty"`
 }
@@ -75,7 +75,7 @@ func NewNotFoundErrorMetricsEvent(tag string, api APIID) *NotFoundErrorMetricsEv
 
 // HTTP Mapping: 499 Client Closed Request
 type ClientClosedRequestErrorMetricsEvent struct {
-	APIID  APIID                `json:"api_id,omitempty"`
+	APIID  APIID                `json:"apiId,omitempty"`
 	Labels map[string]string    `json:"labels,omitempty"`
 	Type   errorStatusEventType `json:"@type,omitempty"`
 }
@@ -90,7 +90,7 @@ func NewClientClosedRequestErrorMetricsEvent(tag string, api APIID) *ClientClose
 
 // HTTP Mapping: 500 Internal Server Error
 type InternalServerErrorMetricsEvent struct {
-	APIID  APIID                `json:"api_id,omitempty"`
+	APIID  APIID                `json:"apiId,omitempty"`
 	Labels map[string]string    `json:"labels,omitempty"`
 	Type   errorStatusEventType `json:"@type,omitempty"`
 }
@@ -105,7 +105,7 @@ func NewInternalServerErrorMetricsEvent(tag string, api APIID) *InternalServerEr
 
 // HTTP Mapping: 503 Service Unavailable
 type ServiceUnavailableErrorMetricsEvent struct {
-	APIID  APIID                `json:"api_id,omitempty"`
+	APIID  APIID                `json:"apiId,omitempty"`
 	Labels map[string]string    `json:"labels,omitempty"`
 	Type   errorStatusEventType `json:"@type,omitempty"`
 }
