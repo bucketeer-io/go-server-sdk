@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -132,16 +133,16 @@ func TestPushErrorStatusCodeMetricsEvent(t *testing.T) {
 func TestRegisterErrorEventWhenNetworkError(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
-		desc     string
-		err      error
+		desc string
+		err  error
 	}{
 		{
-			desc:     "connection refused",
-			err:      errors.New("Get \"http://localhost:9999\": dial tcp [::1]:9999: connect: connection refused"),
+			desc: "connection refused",
+			err:  errors.New("Get \"http://localhost:9999\": dial tcp [::1]:9999: connect: connection refused"),
 		},
 		{
-			desc:     "no route to host",
-			err:      errors.New("Get \"https://example.com\": dial tcp: lookup https://example.com: connect: no route to host"),
+			desc: "no route to host",
+			err:  errors.New("Get \"https://example.com\": dial tcp: lookup https://example.com: connect: no route to host"),
 		},
 	}
 	for _, pt := range patterns {
@@ -165,12 +166,12 @@ func TestRegisterErrorEventWhenNetworkError(t *testing.T) {
 func TestRegisterErrorEventWhenInternalSDKError(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
-		desc     string
-		err      error
+		desc string
+		err  error
 	}{
 		{
-			desc:     "Internal error",
-			err:      errors.New("Internal error"),
+			desc: "Internal error",
+			err:  errors.New("Internal error"),
 		},
 	}
 	for _, pt := range patterns {
@@ -191,15 +192,19 @@ func TestRegisterErrorEventWhenInternalSDKError(t *testing.T) {
 	}
 }
 
-func TestRegisterErrorEventWhenStatusGatewayTimeout(t *testing.T) {
+func TestRegisterErrorEventWhenTimeoutErr(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
-		desc     string
-		err      error
+		desc string
+		err  error
 	}{
 		{
-			desc:     "StatusGatewayTimeout",
-			err:      api.NewErrStatus(http.StatusGatewayTimeout),
+			desc: "StatusGatewayTimeout",
+			err:  api.NewErrStatus(http.StatusGatewayTimeout),
+		},
+		{
+			desc: "err deadline exceeded",
+			err:  os.ErrDeadlineExceeded,
 		},
 	}
 	for _, pt := range patterns {
@@ -223,12 +228,12 @@ func TestRegisterErrorEventWhenStatusGatewayTimeout(t *testing.T) {
 func TestRegisterErrorEventWhenOtherStatus(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
-		desc     string
-		err      error
+		desc string
+		err  error
 	}{
 		{
-			desc:     "InternalServerError",
-			err:      api.NewErrStatus(http.StatusInternalServerError),
+			desc: "InternalServerError",
+			err:  api.NewErrStatus(http.StatusInternalServerError),
 		},
 	}
 	for _, pt := range patterns {
@@ -248,7 +253,6 @@ func TestRegisterErrorEventWhenOtherStatus(t *testing.T) {
 		})
 	}
 }
-
 
 func TestPushEvent(t *testing.T) {
 	t.Parallel()

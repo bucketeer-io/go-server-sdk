@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"syscall"
@@ -442,6 +443,8 @@ func (p *processor) RegisterErrorEvent(ctx context.Context, err error, apiID mod
 		case strings.Contains(err.Error(), syscall.EHOSTUNREACH.Error()) ||
 			strings.Contains(err.Error(), syscall.ECONNREFUSED.Error()):
 			p.PushNetworkErrorMetricsEvent(ctx, apiID)
+		case os.IsTimeout(err):
+			p.pushTimeoutErrorMetricsEvent(ctx, apiID)
 		default:
 			p.pushInternalSDKErrorMetricsEvent(ctx, apiID)
 		}
