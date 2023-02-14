@@ -130,7 +130,7 @@ func TestPushErrorStatusCodeMetricsEvent(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestRegisterErrorEventWhenNetworkError(t *testing.T) {
+func TestPushErrorEventWhenNetworkError(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
 		desc string
@@ -148,7 +148,7 @@ func TestRegisterErrorEventWhenNetworkError(t *testing.T) {
 	for _, pt := range patterns {
 		t.Run(pt.desc, func(t *testing.T) {
 			p := newProcessorForTestPushEvent(t, 10)
-			p.RegisterErrorEvent(context.Background(), pt.err, model.RegisterEvents)
+			p.PushErrorEvent(context.Background(), pt.err, model.RegisterEvents)
 			evt := <-p.evtQueue.eventCh()
 			metricsEvt := &model.MetricsEvent{}
 			err := json.Unmarshal(evt.Event, metricsEvt)
@@ -163,7 +163,7 @@ func TestRegisterErrorEventWhenNetworkError(t *testing.T) {
 	}
 }
 
-func TestRegisterErrorEventWhenInternalSDKError(t *testing.T) {
+func TestPushErrorEventWhenInternalSDKError(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
 		desc string
@@ -177,7 +177,7 @@ func TestRegisterErrorEventWhenInternalSDKError(t *testing.T) {
 	for _, pt := range patterns {
 		t.Run(pt.desc, func(t *testing.T) {
 			p := newProcessorForTestPushEvent(t, 10)
-			p.RegisterErrorEvent(context.Background(), pt.err, model.RegisterEvents)
+			p.PushErrorEvent(context.Background(), pt.err, model.RegisterEvents)
 			evt := <-p.evtQueue.eventCh()
 			metricsEvt := &model.MetricsEvent{}
 			err := json.Unmarshal(evt.Event, metricsEvt)
@@ -192,7 +192,7 @@ func TestRegisterErrorEventWhenInternalSDKError(t *testing.T) {
 	}
 }
 
-func TestRegisterErrorEventWhenTimeoutErr(t *testing.T) {
+func TestPushErrorEventWhenTimeoutErr(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
 		desc string
@@ -210,7 +210,7 @@ func TestRegisterErrorEventWhenTimeoutErr(t *testing.T) {
 	for _, pt := range patterns {
 		t.Run(pt.desc, func(t *testing.T) {
 			p := newProcessorForTestPushEvent(t, 10)
-			p.RegisterErrorEvent(context.Background(), pt.err, model.RegisterEvents)
+			p.PushErrorEvent(context.Background(), pt.err, model.RegisterEvents)
 			evt := <-p.evtQueue.eventCh()
 			metricsEvt := &model.MetricsEvent{}
 			err := json.Unmarshal(evt.Event, metricsEvt)
@@ -225,7 +225,7 @@ func TestRegisterErrorEventWhenTimeoutErr(t *testing.T) {
 	}
 }
 
-func TestRegisterErrorEventWhenOtherStatus(t *testing.T) {
+func TestPushErrorEventWhenOtherStatus(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
 		desc string
@@ -239,7 +239,7 @@ func TestRegisterErrorEventWhenOtherStatus(t *testing.T) {
 	for _, pt := range patterns {
 		t.Run(pt.desc, func(t *testing.T) {
 			p := newProcessorForTestPushEvent(t, 10)
-			p.RegisterErrorEvent(context.Background(), pt.err, model.RegisterEvents)
+			p.PushErrorEvent(context.Background(), pt.err, model.RegisterEvents)
 			evt := <-p.evtQueue.eventCh()
 			metricsEvt := &model.MetricsEvent{}
 			err := json.Unmarshal(evt.Event, metricsEvt)

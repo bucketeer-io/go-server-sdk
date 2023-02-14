@@ -252,7 +252,7 @@ func (s *sdk) callGetEvaluationAPI(
 				featureID,
 				code,
 			)
-			s.eventProcessor.RegisterErrorEvent(ctx, err, model.GetEvaluation)
+			s.eventProcessor.PushErrorEvent(ctx, err, model.GetEvaluation)
 			return
 		}
 
@@ -265,7 +265,7 @@ func (s *sdk) callGetEvaluationAPI(
 		user,
 	))
 	if err != nil {
-		s.eventProcessor.RegisterErrorEvent(ctx, err, model.GetEvaluation)
+		s.eventProcessor.PushErrorEvent(ctx, err, model.GetEvaluation)
 		return nil, fmt.Errorf("failed to get evaluation: %w", err)
 	}
 	s.eventProcessor.PushLatencyMetricsEvent(ctx, time.Since(reqStart), model.GetEvaluation)

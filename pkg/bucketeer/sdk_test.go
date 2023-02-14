@@ -56,7 +56,7 @@ func TestBoolVariation(t *testing.T) {
 					user,
 					featureID,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().RegisterErrorEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
 					ctx,
 					err,
 					model.GetEvaluation,
@@ -176,7 +176,7 @@ func TestIntVariation(t *testing.T) {
 					user,
 					featureID,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().RegisterErrorEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
 					ctx,
 					err,
 					model.GetEvaluation,
@@ -296,7 +296,7 @@ func TestInt64Variation(t *testing.T) {
 					user,
 					featureID,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().RegisterErrorEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
 					ctx,
 					err,
 					model.GetEvaluation,
@@ -416,7 +416,7 @@ func TestFloat64Variation(t *testing.T) {
 					user,
 					featureID,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().RegisterErrorEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
 					ctx,
 					err,
 					model.GetEvaluation,
@@ -536,7 +536,7 @@ func TestStringVariation(t *testing.T) {
 					user,
 					featureID,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().RegisterErrorEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
 					ctx,
 					err,
 					model.GetEvaluation,
@@ -628,7 +628,7 @@ func TestJSONVariation(t *testing.T) {
 					user,
 					featureID,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().RegisterErrorEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
 					ctx,
 					err,
 					model.GetEvaluation,
@@ -751,7 +751,7 @@ func TestGetEvaluation(t *testing.T) {
 					nil,
 					err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().RegisterErrorEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
 					ctx,
 					err,
 					model.GetEvaluation,
@@ -776,7 +776,7 @@ func TestGetEvaluation(t *testing.T) {
 					nil,
 					err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().RegisterErrorEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
 					ctx,
 					err,
 					model.GetEvaluation,

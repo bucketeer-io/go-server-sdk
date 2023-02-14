@@ -46,8 +46,8 @@ type Processor interface {
 	// Close tears down all Processor activities, after ensuring that all events have been delivered.
 	Close(ctx context.Context) error
 
-	// RegisterErrorEvent pushed the error event to the queue.
-	RegisterErrorEvent(ctx context.Context, err error, api model.APIID)
+	// PushErrorEvent pushes the error event to the queue.
+	PushErrorEvent(ctx context.Context, err error, api model.APIID)
 }
 
 type processor struct {
@@ -414,7 +414,7 @@ func (p *processor) flushEvents(ctx context.Context, events []*model.Event) {
 				p.loggers.Errorf("bucketeer/event: failed to re-push event: %v", err)
 			}
 		}
-		p.RegisterErrorEvent(ctx, err, model.RegisterEvents)
+		p.PushErrorEvent(ctx, err, model.RegisterEvents)
 		return
 	}
 	if len(res.Errors) > 0 {
@@ -436,7 +436,7 @@ func (p *processor) flushEvents(ctx context.Context, events []*model.Event) {
 	}
 }
 
-func (p *processor) RegisterErrorEvent(ctx context.Context, err error, apiID model.APIID) {
+func (p *processor) PushErrorEvent(ctx context.Context, err error, apiID model.APIID) {
 	code, ok := api.GetStatusCode(err)
 	if !ok {
 		switch {
