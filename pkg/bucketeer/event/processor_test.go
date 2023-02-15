@@ -16,6 +16,7 @@ import (
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/model"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/version"
 	mockapi "github.com/ca-dp/bucketeer-go-server-sdk/test/mock/api"
 )
 
@@ -38,9 +39,18 @@ func TestPushEvaluationEvent(t *testing.T) {
 	evaluation := newEvaluation(t, processorFeatureID, processorVariationID)
 	p.PushEvaluationEvent(context.Background(), user, evaluation)
 	evt := <-p.evtQueue.eventCh()
-	evalationEvt := &model.EvaluationEvent{}
-	err := json.Unmarshal(evt.Event, evalationEvt)
+	e := &model.EvaluationEvent{}
+	err := json.Unmarshal(evt.Event, e)
 	assert.NoError(t, err)
+	assert.Equal(t, p.tag, e.Tag)
+	assert.Equal(t, model.EvaluationEventType, e.Type)
+	assert.Equal(t, processorFeatureID, e.FeatureID)
+	assert.Equal(t, processorVariationID, e.VariationID)
+	assert.Equal(t, evaluation.FeatureVersion, e.FeatureVersion)
+	assert.Equal(t, processorUserID, e.User.ID)
+	assert.Equal(t, model.ReasonClient, e.Reason.Type)
+	assert.Equal(t, e.SourceID, model.SourceIDGoServer)
+	assert.Equal(t, version.SDKVersion, e.SDKVersion)
 }
 
 func TestPushDefaultEvaluationEvent(t *testing.T) {
@@ -49,9 +59,18 @@ func TestPushDefaultEvaluationEvent(t *testing.T) {
 	user := newUser(t, processorUserID)
 	p.PushDefaultEvaluationEvent(context.Background(), user, processorFeatureID)
 	evt := <-p.evtQueue.eventCh()
-	evalationEvt := &model.EvaluationEvent{}
-	err := json.Unmarshal(evt.Event, evalationEvt)
+	e := &model.EvaluationEvent{}
+	err := json.Unmarshal(evt.Event, e)
 	assert.NoError(t, err)
+	assert.Equal(t, p.tag, e.Tag)
+	assert.Equal(t, model.EvaluationEventType, e.Type)
+	assert.Equal(t, processorFeatureID, e.FeatureID)
+	assert.Equal(t, "", e.VariationID)
+	assert.Equal(t, int32(0), e.FeatureVersion)
+	assert.Equal(t, processorUserID, e.User.ID)
+	assert.Equal(t, model.ReasonClient, e.Reason.Type)
+	assert.Equal(t, e.SourceID, model.SourceIDGoServer)
+	assert.Equal(t, version.SDKVersion, e.SDKVersion)
 }
 
 func TestPushGoalEvent(t *testing.T) {
@@ -60,15 +79,24 @@ func TestPushGoalEvent(t *testing.T) {
 	user := newUser(t, processorUserID)
 	p.PushGoalEvent(context.Background(), user, processorGoalID, 1.1)
 	evt := <-p.evtQueue.eventCh()
-	goalEvt := &model.GoalEvent{}
-	err := json.Unmarshal(evt.Event, goalEvt)
+	e := &model.GoalEvent{}
+	err := json.Unmarshal(evt.Event, e)
 	assert.NoError(t, err)
+	assert.Equal(t, p.tag, e.Tag)
+	assert.Equal(t, model.GoalEventType, e.Type)
+	assert.Equal(t, processorUserID, e.User.ID)
+	assert.Equal(t, processorGoalID, e.GoalID)
+	assert.Equal(t, 1.1, e.Value)
+	assert.Equal(t, model.SourceIDGoServer, e.SourceID)
+	assert.Equal(t, version.SDKVersion, e.SDKVersion)
 }
 
 func TestPushLatencyMetricsEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.PushLatencyMetricsEvent(context.Background(), time.Duration(1), model.GetEvaluation)
+	t1 := time.Date(2020, 12, 25, 0, 0, 0, 0, time.UTC)
+	t2 := time.Date(2020, 12, 26, 0, 0, 0, 0, time.UTC)
+	p.PushLatencyMetricsEvent(context.Background(), t2.Sub(t1), model.GetEvaluation)
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
@@ -76,6 +104,10 @@ func TestPushLatencyMetricsEvent(t *testing.T) {
 	gelMetricsEvt := &model.LatencyMetricsEvent{}
 	err = json.Unmarshal(metricsEvt.Event, gelMetricsEvt)
 	assert.NoError(t, err)
+	assert.Equal(t, model.GetEvaluation, gelMetricsEvt.APIID)
+	assert.Equal(t, p.tag, gelMetricsEvt.Labels["tag"])
+	assert.Equal(t, &model.Duration{Type: model.DurationType, Value: "86400000s"}, gelMetricsEvt.Duration)
+	assert.Equal(t, model.LatencyMetricsEventType, gelMetricsEvt.Type)
 }
 
 func TestPushSizeMetricsEvent(t *testing.T) {
@@ -89,6 +121,10 @@ func TestPushSizeMetricsEvent(t *testing.T) {
 	gesMetricsEvt := &model.SizeMetricsEvent{}
 	err = json.Unmarshal(metricsEvt.Event, gesMetricsEvt)
 	assert.NoError(t, err)
+	assert.Equal(t, model.GetEvaluation, gesMetricsEvt.APIID)
+	assert.Equal(t, p.tag, gesMetricsEvt.Labels["tag"])
+	assert.Equal(t, int32(1), gesMetricsEvt.SizeByte)
+	assert.Equal(t, model.SizeMetricsEventType, gesMetricsEvt.Type)
 }
 
 func TestPushTimeoutErrorMetricsEvent(t *testing.T) {
@@ -314,7 +350,7 @@ func newEvaluation(t *testing.T, featureID, variationID string) *model.Evaluatio
 	t.Helper()
 	return &model.Evaluation{
 		FeatureID:      featureID,
-		FeatureVersion: 0,
+		FeatureVersion: 2,
 		VariationID:    variationID,
 		Reason:         &model.Reason{Type: model.ReasonClient},
 	}

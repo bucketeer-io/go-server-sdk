@@ -17,6 +17,6 @@ func TestNewGoalEvent(t *testing.T) {
 	assert.Equal(t, id, e.User.ID)
 	assert.Equal(t, goalID, e.GoalID)
 	assert.Equal(t, 0.2, e.Value)
-	assert.Equal(t, e.SourceID, SourceIDGoServer)
+	assert.Equal(t, SourceIDGoServer, e.SourceID)
 	assert.Equal(t, version.SDKVersion, e.SDKVersion)
 }
