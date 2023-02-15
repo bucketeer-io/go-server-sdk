@@ -50,55 +50,51 @@ func TestRegisterEvents(t *testing.T) {
 		Type:      model.GoalEventType,
 	})
 	assert.NoError(t, err)
-	gesMetricsEvt, err := json.Marshal(&model.GetEvaluationSizeMetricsEvent{
+	sizeMetrics, err := json.Marshal(&model.SizeMetricsEvent{
+		APIID: model.GetEvaluation,
 		Labels: map[string]string{
 			"tag": tag,
 		},
-		Type: model.GetEvaluationSizeMetricsEventType,
+		Type: model.SizeMetricsEventType,
 	})
 	assert.NoError(t, err)
-	gmetricsEvent, err := json.Marshal(&model.MetricsEvent{
-		Timestamp: time.Now().Unix(),
-		Event:     gesMetricsEvt,
-		Type:      model.MetricsEventType,
+	sizeMetricsEvent, err := json.Marshal(model.NewMetricsEvent(sizeMetrics))
+	assert.NoError(t, err)
+	internalError, err := json.Marshal(&model.InternalSDKErrorMetricsEvent{
+		APIID:  model.GetEvaluation,
+		Labels: map[string]string{"tag": tag},
+		Type:   model.InternalSDKErrorMetricsEventType,
 	})
 	assert.NoError(t, err)
-	iecMetricsEvt, err := json.Marshal(&model.InternalErrorCountMetricsEvent{
-		Tag:  tag,
-		Type: model.InternalErrorCountMetricsEventType,
+	iemetricsEvent, err := json.Marshal(model.NewMetricsEvent(internalError))
+	assert.NoError(t, err)
+	timeoutError, err := json.Marshal(&model.TimeoutErrorMetricsEvent{
+		APIID:  model.GetEvaluation,
+		Labels: map[string]string{"tag": tag},
+		Type:   model.TimeoutErrorMetricsEventType,
 	})
 	assert.NoError(t, err)
-	imetricsEvent, err := json.Marshal(&model.MetricsEvent{
-		Timestamp: time.Now().Unix(),
-		Event:     iecMetricsEvt,
-		Type:      model.MetricsEventType,
-	})
+	temetricsEvent, err := json.Marshal(model.NewMetricsEvent(timeoutError))
 	assert.NoError(t, err)
-	tecMetricsEvent, err := json.Marshal(&model.TimeoutErrorCountMetricsEvent{
-		Tag:  tag,
-		Type: model.TimeoutErrorCountMetricsEventType,
-	})
-	assert.NoError(t, err)
-	tmetricsEvent, err := json.Marshal(&model.MetricsEvent{
-		Timestamp: time.Now().Unix(),
-		Event:     tecMetricsEvent,
-		Type:      model.MetricsEventType,
-	})
-	assert.NoError(t, err)
-	elmMetricsEvent, err := json.Marshal(&model.GetEvaluationLatencyMetricsEvent{
+	latency, err := json.Marshal(&model.LatencyMetricsEvent{
+		APIID:  model.GetEvaluation,
 		Labels: map[string]string{"tag": tag},
 		Duration: &model.Duration{
 			Type:  model.DurationType,
 			Value: "5s",
 		},
-		Type: model.GetEvaluationLatencyMetricsEventType,
+		Type: model.LatencyMetricsEventType,
 	})
 	assert.NoError(t, err)
-	emetricsEvent, err := json.Marshal(&model.MetricsEvent{
-		Timestamp: time.Now().Unix(),
-		Event:     elmMetricsEvent,
-		Type:      model.MetricsEventType,
-	})
+	lmetricsEvent, err := json.Marshal(model.NewMetricsEvent(latency))
+	assert.NoError(t, err)
+	badRequest, err := json.Marshal(model.NewBadRequestErrorMetricsEvent(tag, model.GetEvaluation))
+	assert.NoError(t, err)
+	brmetricsEvent, err := json.Marshal(model.NewMetricsEvent(badRequest))
+	assert.NoError(t, err)
+	internalServerError, err := json.Marshal(model.NewInternalServerErrorMetricsEvent(tag, model.GetEvaluation))
+	assert.NoError(t, err)
+	iesmetricsEvent, err := json.Marshal(model.NewMetricsEvent(internalServerError))
 	assert.NoError(t, err)
 	req := &model.RegisterEventsRequest{
 		Events: []*model.Event{
@@ -112,19 +108,27 @@ func TestRegisterEvents(t *testing.T) {
 			},
 			{
 				ID:    newUUID(t),
-				Event: gmetricsEvent,
+				Event: sizeMetricsEvent,
 			},
 			{
 				ID:    newUUID(t),
-				Event: imetricsEvent,
+				Event: iemetricsEvent,
 			},
 			{
 				ID:    newUUID(t),
-				Event: tmetricsEvent,
+				Event: temetricsEvent,
 			},
 			{
 				ID:    newUUID(t),
-				Event: emetricsEvent,
+				Event: lmetricsEvent,
+			},
+			{
+				ID:    newUUID(t),
+				Event: brmetricsEvent,
+			},
+			{
+				ID:    newUUID(t),
+				Event: iesmetricsEvent,
 			},
 		},
 	}

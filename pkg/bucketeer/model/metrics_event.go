@@ -29,10 +29,9 @@ func NewMetricsEvent(encoded json.RawMessage) *MetricsEvent {
 
 type metricsDetailEventType string
 
-//nolint:lll
+type APIID int
+
 const (
-	GetEvaluationLatencyMetricsEventType metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.GetEvaluationLatencyMetricsEvent"
-	GetEvaluationSizeMetricsEventType    metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.GetEvaluationSizeMetricsEvent"
-	TimeoutErrorCountMetricsEventType    metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.TimeoutErrorCountMetricsEvent"
-	InternalErrorCountMetricsEventType   metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.InternalErrorCountMetricsEvent"
+	GetEvaluation  APIID = 1
+	RegisterEvents APIID = 3
 )

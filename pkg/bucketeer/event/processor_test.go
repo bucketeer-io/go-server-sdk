@@ -3,7 +3,9 @@ package event
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -14,6 +16,7 @@ import (
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/model"
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
+	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/version"
 	mockapi "github.com/ca-dp/bucketeer-go-server-sdk/test/mock/api"
 )
 
@@ -36,9 +39,18 @@ func TestPushEvaluationEvent(t *testing.T) {
 	evaluation := newEvaluation(t, processorFeatureID, processorVariationID)
 	p.PushEvaluationEvent(context.Background(), user, evaluation)
 	evt := <-p.evtQueue.eventCh()
-	evalationEvt := &model.EvaluationEvent{}
-	err := json.Unmarshal(evt.Event, evalationEvt)
+	e := &model.EvaluationEvent{}
+	err := json.Unmarshal(evt.Event, e)
 	assert.NoError(t, err)
+	assert.Equal(t, p.tag, e.Tag)
+	assert.Equal(t, model.EvaluationEventType, e.Type)
+	assert.Equal(t, processorFeatureID, e.FeatureID)
+	assert.Equal(t, processorVariationID, e.VariationID)
+	assert.Equal(t, evaluation.FeatureVersion, e.FeatureVersion)
+	assert.Equal(t, processorUserID, e.User.ID)
+	assert.Equal(t, model.ReasonClient, e.Reason.Type)
+	assert.Equal(t, e.SourceID, model.SourceIDGoServer)
+	assert.Equal(t, version.SDKVersion, e.SDKVersion)
 }
 
 func TestPushDefaultEvaluationEvent(t *testing.T) {
@@ -47,9 +59,18 @@ func TestPushDefaultEvaluationEvent(t *testing.T) {
 	user := newUser(t, processorUserID)
 	p.PushDefaultEvaluationEvent(context.Background(), user, processorFeatureID)
 	evt := <-p.evtQueue.eventCh()
-	evalationEvt := &model.EvaluationEvent{}
-	err := json.Unmarshal(evt.Event, evalationEvt)
+	e := &model.EvaluationEvent{}
+	err := json.Unmarshal(evt.Event, e)
 	assert.NoError(t, err)
+	assert.Equal(t, p.tag, e.Tag)
+	assert.Equal(t, model.EvaluationEventType, e.Type)
+	assert.Equal(t, processorFeatureID, e.FeatureID)
+	assert.Equal(t, "", e.VariationID)
+	assert.Equal(t, int32(0), e.FeatureVersion)
+	assert.Equal(t, processorUserID, e.User.ID)
+	assert.Equal(t, model.ReasonClient, e.Reason.Type)
+	assert.Equal(t, e.SourceID, model.SourceIDGoServer)
+	assert.Equal(t, version.SDKVersion, e.SDKVersion)
 }
 
 func TestPushGoalEvent(t *testing.T) {
@@ -58,61 +79,215 @@ func TestPushGoalEvent(t *testing.T) {
 	user := newUser(t, processorUserID)
 	p.PushGoalEvent(context.Background(), user, processorGoalID, 1.1)
 	evt := <-p.evtQueue.eventCh()
-	goalEvt := &model.GoalEvent{}
-	err := json.Unmarshal(evt.Event, goalEvt)
+	e := &model.GoalEvent{}
+	err := json.Unmarshal(evt.Event, e)
 	assert.NoError(t, err)
+	assert.Equal(t, p.tag, e.Tag)
+	assert.Equal(t, model.GoalEventType, e.Type)
+	assert.Equal(t, processorUserID, e.User.ID)
+	assert.Equal(t, processorGoalID, e.GoalID)
+	assert.Equal(t, 1.1, e.Value)
+	assert.Equal(t, model.SourceIDGoServer, e.SourceID)
+	assert.Equal(t, version.SDKVersion, e.SDKVersion)
 }
 
-func TestPushGetEvaluationLatencyMetricsEvent(t *testing.T) {
+func TestPushLatencyMetricsEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.PushGetEvaluationLatencyMetricsEvent(context.Background(), time.Duration(1))
+	t1 := time.Date(2020, 12, 25, 0, 0, 0, 0, time.UTC)
+	t2 := time.Date(2020, 12, 26, 0, 0, 0, 0, time.UTC)
+	p.PushLatencyMetricsEvent(context.Background(), t2.Sub(t1), model.GetEvaluation)
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
-	gelMetricsEvt := &model.GetEvaluationLatencyMetricsEvent{}
+	gelMetricsEvt := &model.LatencyMetricsEvent{}
 	err = json.Unmarshal(metricsEvt.Event, gelMetricsEvt)
 	assert.NoError(t, err)
+	assert.Equal(t, model.GetEvaluation, gelMetricsEvt.APIID)
+	assert.Equal(t, p.tag, gelMetricsEvt.Labels["tag"])
+	assert.Equal(t, &model.Duration{Type: model.DurationType, Value: "86400000s"}, gelMetricsEvt.Duration)
+	assert.Equal(t, model.LatencyMetricsEventType, gelMetricsEvt.Type)
 }
 
-func TestPushGetEvaluationSizeMetricsEvent(t *testing.T) {
+func TestPushSizeMetricsEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.PushGetEvaluationSizeMetricsEvent(context.Background(), 1)
+	p.PushSizeMetricsEvent(context.Background(), 1, model.GetEvaluation)
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
-	gesMetricsEvt := &model.GetEvaluationSizeMetricsEvent{}
+	gesMetricsEvt := &model.SizeMetricsEvent{}
 	err = json.Unmarshal(metricsEvt.Event, gesMetricsEvt)
 	assert.NoError(t, err)
+	assert.Equal(t, model.GetEvaluation, gesMetricsEvt.APIID)
+	assert.Equal(t, p.tag, gesMetricsEvt.Labels["tag"])
+	assert.Equal(t, int32(1), gesMetricsEvt.SizeByte)
+	assert.Equal(t, model.SizeMetricsEventType, gesMetricsEvt.Type)
 }
 
-func TestPushTimeoutErrorCountMetricsEvent(t *testing.T) {
+func TestPushTimeoutErrorMetricsEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.PushTimeoutErrorCountMetricsEvent(context.Background())
+	p.pushTimeoutErrorMetricsEvent(context.Background(), model.GetEvaluation)
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
-	tecMetricsEvt := &model.TimeoutErrorCountMetricsEvent{}
+	tecMetricsEvt := &model.TimeoutErrorMetricsEvent{}
 	err = json.Unmarshal(metricsEvt.Event, tecMetricsEvt)
 	assert.NoError(t, err)
 }
 
-func TestPushInternalErrorCountMetricsEvent(t *testing.T) {
+func TestPushInternalSDKErrorMetricsEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.PushInternalErrorCountMetricsEvent(context.Background())
+	p.pushInternalSDKErrorMetricsEvent(context.Background(), model.GetEvaluation)
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
-	iecMetricsEvt := &model.InternalErrorCountMetricsEvent{}
+	iecMetricsEvt := &model.InternalSDKErrorMetricsEvent{}
 	err = json.Unmarshal(metricsEvt.Event, iecMetricsEvt)
 	assert.NoError(t, err)
+}
+
+func TestPushErrorStatusCodeMetricsEvent(t *testing.T) {
+	t.Parallel()
+	p := newProcessorForTestPushEvent(t, 10)
+	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusInternalServerError)
+	evt := <-p.evtQueue.eventCh()
+	metricsEvt := &model.MetricsEvent{}
+	err := json.Unmarshal(evt.Event, metricsEvt)
+	assert.NoError(t, err)
+	iseMetricsEvt := &model.InternalServerErrorMetricsEvent{}
+	err = json.Unmarshal(metricsEvt.Event, iseMetricsEvt)
+	assert.NoError(t, err)
+}
+
+func TestPushErrorEventWhenNetworkError(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc string
+		err  error
+	}{
+		{
+			desc: "connection refused",
+			err:  errors.New("Get \"http://localhost:9999\": dial tcp [::1]:9999: connect: connection refused"),
+		},
+		{
+			desc: "no route to host",
+			err:  errors.New("Get \"https://example.com\": dial tcp: lookup https://example.com: connect: no route to host"),
+		},
+	}
+	for _, pt := range patterns {
+		t.Run(pt.desc, func(t *testing.T) {
+			p := newProcessorForTestPushEvent(t, 10)
+			p.PushErrorEvent(context.Background(), pt.err, model.RegisterEvents)
+			evt := <-p.evtQueue.eventCh()
+			metricsEvt := &model.MetricsEvent{}
+			err := json.Unmarshal(evt.Event, metricsEvt)
+			assert.NoError(t, err)
+			actual := &model.NetworkErrorMetricsEvent{}
+			err = json.Unmarshal(metricsEvt.Event, actual)
+			assert.NoError(t, err)
+			assert.Equal(t, model.RegisterEvents, actual.APIID)
+			assert.Equal(t, p.tag, actual.Labels["tag"])
+			assert.Equal(t, model.NetworkErrorMetricsEventType, actual.Type)
+		})
+	}
+}
+
+func TestPushErrorEventWhenInternalSDKError(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc string
+		err  error
+	}{
+		{
+			desc: "Internal error",
+			err:  errors.New("Internal error"),
+		},
+	}
+	for _, pt := range patterns {
+		t.Run(pt.desc, func(t *testing.T) {
+			p := newProcessorForTestPushEvent(t, 10)
+			p.PushErrorEvent(context.Background(), pt.err, model.RegisterEvents)
+			evt := <-p.evtQueue.eventCh()
+			metricsEvt := &model.MetricsEvent{}
+			err := json.Unmarshal(evt.Event, metricsEvt)
+			assert.NoError(t, err)
+			actual := &model.InternalSDKErrorMetricsEvent{}
+			err = json.Unmarshal(metricsEvt.Event, actual)
+			assert.NoError(t, err)
+			assert.Equal(t, model.RegisterEvents, actual.APIID)
+			assert.Equal(t, p.tag, actual.Labels["tag"])
+			assert.Equal(t, model.InternalSDKErrorMetricsEventType, actual.Type)
+		})
+	}
+}
+
+func TestPushErrorEventWhenTimeoutErr(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc string
+		err  error
+	}{
+		{
+			desc: "StatusGatewayTimeout",
+			err:  api.NewErrStatus(http.StatusGatewayTimeout),
+		},
+		{
+			desc: "err deadline exceeded",
+			err:  os.ErrDeadlineExceeded,
+		},
+	}
+	for _, pt := range patterns {
+		t.Run(pt.desc, func(t *testing.T) {
+			p := newProcessorForTestPushEvent(t, 10)
+			p.PushErrorEvent(context.Background(), pt.err, model.RegisterEvents)
+			evt := <-p.evtQueue.eventCh()
+			metricsEvt := &model.MetricsEvent{}
+			err := json.Unmarshal(evt.Event, metricsEvt)
+			assert.NoError(t, err)
+			actual := &model.TimeoutErrorMetricsEvent{}
+			err = json.Unmarshal(metricsEvt.Event, actual)
+			assert.NoError(t, err)
+			assert.Equal(t, model.RegisterEvents, actual.APIID)
+			assert.Equal(t, p.tag, actual.Labels["tag"])
+			assert.Equal(t, model.TimeoutErrorMetricsEventType, actual.Type)
+		})
+	}
+}
+
+func TestPushErrorEventWhenOtherStatus(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc string
+		err  error
+	}{
+		{
+			desc: "InternalServerError",
+			err:  api.NewErrStatus(http.StatusInternalServerError),
+		},
+	}
+	for _, pt := range patterns {
+		t.Run(pt.desc, func(t *testing.T) {
+			p := newProcessorForTestPushEvent(t, 10)
+			p.PushErrorEvent(context.Background(), pt.err, model.RegisterEvents)
+			evt := <-p.evtQueue.eventCh()
+			metricsEvt := &model.MetricsEvent{}
+			err := json.Unmarshal(evt.Event, metricsEvt)
+			assert.NoError(t, err)
+			actual := &model.InternalServerErrorMetricsEvent{}
+			err = json.Unmarshal(metricsEvt.Event, actual)
+			assert.NoError(t, err)
+			assert.Equal(t, model.RegisterEvents, actual.APIID)
+			assert.Equal(t, p.tag, actual.Labels["tag"])
+			assert.Equal(t, model.InternalServerErrorMetricsEventType, actual.Type)
+		})
+	}
 }
 
 func TestPushEvent(t *testing.T) {
@@ -175,7 +350,7 @@ func newEvaluation(t *testing.T, featureID, variationID string) *model.Evaluatio
 	t.Helper()
 	return &model.Evaluation{
 		FeatureID:      featureID,
-		FeatureVersion: 0,
+		FeatureVersion: 2,
 		VariationID:    variationID,
 		Reason:         &model.Reason{Type: model.ReasonClient},
 	}
@@ -193,6 +368,7 @@ func TestFlushEvents(t *testing.T) {
 	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
+	ctx := context.TODO()
 	tests := []struct {
 		desc             string
 		setup            func(*processor, []*model.Event)
@@ -216,7 +392,7 @@ func TestFlushEvents(t *testing.T) {
 				)
 			},
 			events:           []*model.Event{{ID: "id-0"}, {ID: "id-1"}, {ID: "id-2"}},
-			expectedQueueLen: 3,
+			expectedQueueLen: 4,
 		},
 		{
 			desc: "faled to re-push all events when failed to register events if queue is closed",
@@ -283,7 +459,7 @@ func TestFlushEvents(t *testing.T) {
 			if tt.setup != nil {
 				tt.setup(p, tt.events)
 			}
-			p.flushEvents(tt.events)
+			p.flushEvents(ctx, tt.events)
 			assert.Len(t, p.evtQueue.eventCh(), tt.expectedQueueLen)
 		})
 	}
@@ -293,6 +469,7 @@ func TestClose(t *testing.T) {
 	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
+	ctx := context.TODO()
 	tests := []struct {
 		desc    string
 		setup   func(*processor)
@@ -308,7 +485,7 @@ func TestClose(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(p *processor) {
-				go p.startWorkers()
+				go p.startWorkers(ctx)
 			},
 			timeout: 1 * time.Minute,
 			isErr:   false,

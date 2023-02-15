@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/model"
 )
@@ -65,7 +66,9 @@ func (c *client) sendHTTPRequest(url string, body interface{}) ([]byte, error) {
 	}
 	req.Header.Add(authorizationKey, c.apiKey)
 	req.Header.Add("Content-Type", "application/json")
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: time.Second * 10,
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err

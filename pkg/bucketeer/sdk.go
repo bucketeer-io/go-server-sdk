@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
 	"strconv"
 	"time"
 	"unsafe"
@@ -107,7 +106,7 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		Loggers:         loggers,
 		Tag:             dopts.tag,
 	}
-	processor := event.NewProcessor(processorConf)
+	processor := event.NewProcessor(ctx, processorConf)
 	return &sdk{
 		tag:            dopts.tag,
 		apiClient:      client,
@@ -253,7 +252,7 @@ func (s *sdk) callGetEvaluationAPI(
 				featureID,
 				code,
 			)
-			s.eventProcessor.PushInternalErrorCountMetricsEvent(ctx)
+			s.eventProcessor.PushErrorEvent(ctx, err, model.GetEvaluation)
 			return
 		}
 
@@ -266,21 +265,11 @@ func (s *sdk) callGetEvaluationAPI(
 		user,
 	))
 	if err != nil {
-		gserr = err // set HTTP status error
-		code, ok := api.GetStatusCode(gserr)
-		if !ok {
-			s.eventProcessor.PushInternalErrorCountMetricsEvent(ctx)
-			return nil, fmt.Errorf("failed to get evaluation: %w", err)
-		}
-		if code == http.StatusGatewayTimeout {
-			s.eventProcessor.PushTimeoutErrorCountMetricsEvent(ctx)
-		} else {
-			s.eventProcessor.PushInternalErrorCountMetricsEvent(ctx)
-		}
+		s.eventProcessor.PushErrorEvent(ctx, err, model.GetEvaluation)
 		return nil, fmt.Errorf("failed to get evaluation: %w", err)
 	}
-	s.eventProcessor.PushGetEvaluationLatencyMetricsEvent(ctx, time.Since(reqStart))
-	s.eventProcessor.PushGetEvaluationSizeMetricsEvent(ctx, int(unsafe.Sizeof(res)))
+	s.eventProcessor.PushLatencyMetricsEvent(ctx, time.Since(reqStart), model.GetEvaluation)
+	s.eventProcessor.PushSizeMetricsEvent(ctx, int(unsafe.Sizeof(res)), model.GetEvaluation)
 	return res, nil
 }
 
