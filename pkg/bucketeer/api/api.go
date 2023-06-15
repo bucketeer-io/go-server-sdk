@@ -17,7 +17,7 @@ const (
 	authorizationKey = "authorization"
 )
 
-func (c *client) GetEvaluation(req *model.GetEvaluationRequest) (*model.GetEvaluationResponse, error) {
+func (c *client) GetEvaluation(req *model.GetEvaluationRequest) (*model.GetEvaluationResponse, int, error) {
 	url := fmt.Sprintf("https://%s%s",
 		c.host,
 		evaluationAPI,
@@ -27,13 +27,14 @@ func (c *client) GetEvaluation(req *model.GetEvaluationRequest) (*model.GetEvalu
 		req,
 	)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	var ger model.GetEvaluationResponse
 	if err := json.Unmarshal(resp, &ger); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return &ger, nil
+	fmt.Println(len(resp))
+	return &ger, len(resp), nil
 }
 
 func (c *client) RegisterEvents(req *model.RegisterEventsRequest) (*model.RegisterEventsResponse, error) {

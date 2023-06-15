@@ -17,7 +17,7 @@ func TestGetEvaluation(t *testing.T) {
 	t.Parallel()
 	client := newAPIClient(t)
 	user := user.NewUser(userID, nil)
-	res, err := client.GetEvaluation(&model.GetEvaluationRequest{Tag: tag, User: user, FeatureID: featureID})
+	res, _, err := client.GetEvaluation(&model.GetEvaluationRequest{Tag: tag, User: user, FeatureID: featureID})
 	assert.NoError(t, err)
 	assert.Equal(t, featureID, res.Evaluation.FeatureID)
 	assert.Equal(t, featureIDVariation2, res.Evaluation.VariationValue)
