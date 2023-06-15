@@ -22,7 +22,7 @@ jobs:
               {"type":"perf","section":"Performance Improvements","hidden":false},
               {"type":"revert","section":"Reverts","hidden":false}
             ]
-          release-type: simple
+          release-type: go
           package-name: bucketeer-go-server-sdk
           bump-minor-pre-major: true
           extra-files: |
