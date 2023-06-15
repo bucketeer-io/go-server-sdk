@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/http"
 	"testing"
-	"unsafe"
 
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -49,7 +48,7 @@ func TestBoolVariation(t *testing.T) {
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
-					err,
+					100, err,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
@@ -77,7 +76,7 @@ func TestBoolVariation(t *testing.T) {
 					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, "invalid")
-				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
@@ -85,7 +84,7 @@ func TestBoolVariation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
 					ctx,
-					int(unsafe.Sizeof(res)),
+					100,
 					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
@@ -109,7 +108,7 @@ func TestBoolVariation(t *testing.T) {
 					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, "true")
-				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
@@ -117,7 +116,7 @@ func TestBoolVariation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
 					ctx,
-					int(unsafe.Sizeof(res)),
+					100,
 					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
@@ -169,7 +168,7 @@ func TestIntVariation(t *testing.T) {
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
-					err,
+					100, err,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
@@ -197,7 +196,7 @@ func TestIntVariation(t *testing.T) {
 					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, "invalid")
-				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 10, nil)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
@@ -205,7 +204,7 @@ func TestIntVariation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
 					ctx,
-					int(unsafe.Sizeof(res)),
+					10,
 					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
@@ -229,7 +228,7 @@ func TestIntVariation(t *testing.T) {
 					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, "2")
-				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 20, nil)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
@@ -237,7 +236,7 @@ func TestIntVariation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
 					ctx,
-					int(unsafe.Sizeof(res)),
+					20,
 					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
@@ -289,6 +288,7 @@ func TestInt64Variation(t *testing.T) {
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
+					100,
 					err,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
@@ -317,7 +317,7 @@ func TestInt64Variation(t *testing.T) {
 					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, "invalid")
-				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 5, nil)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
@@ -325,7 +325,7 @@ func TestInt64Variation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
 					ctx,
-					int(unsafe.Sizeof(res)),
+					5,
 					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
@@ -349,7 +349,7 @@ func TestInt64Variation(t *testing.T) {
 					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, "2")
-				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 10, nil)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
@@ -357,7 +357,7 @@ func TestInt64Variation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
 					ctx,
-					int(unsafe.Sizeof(res)),
+					10,
 					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
@@ -409,7 +409,7 @@ func TestFloat64Variation(t *testing.T) {
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
-					err,
+					100, err,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
@@ -437,7 +437,7 @@ func TestFloat64Variation(t *testing.T) {
 					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, "invalid")
-				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
@@ -445,7 +445,7 @@ func TestFloat64Variation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
 					ctx,
-					int(unsafe.Sizeof(res)),
+					100,
 					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
@@ -469,7 +469,7 @@ func TestFloat64Variation(t *testing.T) {
 					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, "2.2")
-				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
@@ -477,7 +477,7 @@ func TestFloat64Variation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
 					ctx,
-					int(unsafe.Sizeof(res)),
+					100,
 					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
@@ -529,7 +529,7 @@ func TestStringVariation(t *testing.T) {
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
-					err,
+					100, err,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
@@ -557,7 +557,7 @@ func TestStringVariation(t *testing.T) {
 					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, "value")
-				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
@@ -565,7 +565,7 @@ func TestStringVariation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
 					ctx,
-					int(unsafe.Sizeof(res)),
+					100,
 					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
@@ -621,7 +621,7 @@ func TestJSONVariation(t *testing.T) {
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
-					err,
+					100, err,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					ctx,
@@ -649,7 +649,7 @@ func TestJSONVariation(t *testing.T) {
 					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, `invalid`)
-				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
@@ -657,7 +657,7 @@ func TestJSONVariation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
 					ctx,
-					int(unsafe.Sizeof(res)),
+					100,
 					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
@@ -681,7 +681,7 @@ func TestJSONVariation(t *testing.T) {
 					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, `{"str": "str2", "int": "int2"}`)
-				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
@@ -689,7 +689,7 @@ func TestJSONVariation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
 					ctx,
-					int(unsafe.Sizeof(res)),
+					100,
 					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
@@ -749,7 +749,7 @@ func TestGetEvaluation(t *testing.T) {
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
-					err,
+					100, err,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
 					ctx,
@@ -774,7 +774,7 @@ func TestGetEvaluation(t *testing.T) {
 				}
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					nil,
-					err,
+					100, err,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
 					ctx,
@@ -797,7 +797,7 @@ func TestGetEvaluation(t *testing.T) {
 					SourceID:  SourceIDGoServer,
 				}
 				var res *model.GetEvaluationResponse
-				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
@@ -805,7 +805,7 @@ func TestGetEvaluation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
 					ctx,
-					int(unsafe.Sizeof(res)),
+					100,
 					model.GetEvaluation,
 				)
 			},
@@ -825,7 +825,7 @@ func TestGetEvaluation(t *testing.T) {
 				}
 				res := newGetEvaluationResponse(t, featureID, "value")
 				res.Evaluation = nil
-				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
@@ -833,7 +833,7 @@ func TestGetEvaluation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
 					ctx,
-					int(unsafe.Sizeof(res)),
+					100,
 					model.GetEvaluation,
 				)
 			},
@@ -852,7 +852,7 @@ func TestGetEvaluation(t *testing.T) {
 					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, "invalid-feature-id", "value")
-				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
@@ -860,7 +860,7 @@ func TestGetEvaluation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
 					ctx,
-					int(unsafe.Sizeof(res)),
+					100,
 					model.GetEvaluation,
 				)
 			},
@@ -879,7 +879,7 @@ func TestGetEvaluation(t *testing.T) {
 					SourceID:  SourceIDGoServer,
 				}
 				res := newGetEvaluationResponse(t, featureID, "")
-				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, nil)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					ctx,
 					gomock.Any(), // duration
@@ -887,7 +887,7 @@ func TestGetEvaluation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
 					ctx,
-					int(unsafe.Sizeof(res)),
+					100,
 					model.GetEvaluation,
 				)
 			},
@@ -908,6 +908,7 @@ func TestGetEvaluation(t *testing.T) {
 				res := newGetEvaluationResponse(t, featureID, "value")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
 					res,
+					100,
 					nil,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
@@ -917,7 +918,7 @@ func TestGetEvaluation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
 					ctx,
-					int(unsafe.Sizeof(res)),
+					100,
 					model.GetEvaluation,
 				)
 			},
