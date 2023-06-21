@@ -82,23 +82,5 @@ func (c *client) sendHTTPRequest(url string, body interface{}) ([]byte, int, err
 	if err != nil {
 		return nil, 0, err
 	}
-	size, err := c.getBodySize(resp)
-	if err != nil {
-		return nil, 0, err
-	}
-	return data, size, nil
-}
-
-func (*client) getBodySize(resp *http.Response) (int, error) {
-	// Given keys are case insensitive in `func (Header) Get`.
-	// FYI: https://pkg.go.dev/net/http#Header.Get
-	header := resp.Header.Get("Content-Length")
-	if header == "" {
-		header = "0"
-	}
-	length, err := strconv.Atoi(header)
-	if err != nil {
-		return 0, err
-	}
-	return length, nil
+	return data, int(resp.ContentLength), nil
 }
