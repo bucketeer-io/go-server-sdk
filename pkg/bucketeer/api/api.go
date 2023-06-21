@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/model"
