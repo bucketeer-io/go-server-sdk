@@ -52,12 +52,13 @@ func (mr *MockClientMockRecorder) GetEvaluation(req interface{}) *gomock.Call {
 }
 
 // RegisterEvents mocks base method.
-func (m *MockClient) RegisterEvents(req *model.RegisterEventsRequest) (*model.RegisterEventsResponse, error) {
+func (m *MockClient) RegisterEvents(req *model.RegisterEventsRequest) (*model.RegisterEventsResponse, int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RegisterEvents", req)
 	ret0, _ := ret[0].(*model.RegisterEventsResponse)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // RegisterEvents indicates an expected call of RegisterEvents.

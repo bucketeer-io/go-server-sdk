@@ -388,6 +388,7 @@ func TestFlushEvents(t *testing.T) {
 			setup: func(p *processor, events []*model.Event) {
 				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&model.RegisterEventsRequest{Events: events}).Return(
 					nil,
+					0,
 					api.NewErrStatus(http.StatusInternalServerError),
 				)
 			},
@@ -400,6 +401,7 @@ func TestFlushEvents(t *testing.T) {
 				p.evtQueue.close()
 				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&model.RegisterEventsRequest{Events: events}).Return(
 					nil,
+					0,
 					api.NewErrStatus(http.StatusInternalServerError),
 				)
 			},
@@ -416,6 +418,7 @@ func TestFlushEvents(t *testing.T) {
 							"id-1": {Retriable: false, Message: "non retriable"},
 						},
 					},
+					0,
 					nil,
 				)
 			},
@@ -433,6 +436,7 @@ func TestFlushEvents(t *testing.T) {
 							"id-1": {Retriable: false, Message: "non retriable"},
 						},
 					},
+					0,
 					nil,
 				)
 			},
@@ -446,6 +450,7 @@ func TestFlushEvents(t *testing.T) {
 					&model.RegisterEventsResponse{
 						Errors: make(map[string]*model.RegisterEventsResponseError),
 					},
+					0,
 					nil,
 				)
 			},

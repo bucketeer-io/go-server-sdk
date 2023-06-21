@@ -6,7 +6,7 @@ import "github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/model"
 // Client is the client interface for the Bucketeer APIGateway service.
 type Client interface {
 	GetEvaluation(req *model.GetEvaluationRequest) (*model.GetEvaluationResponse, int, error)
-	RegisterEvents(req *model.RegisterEventsRequest) (*model.RegisterEventsResponse, error)
+	RegisterEvents(req *model.RegisterEventsRequest) (*model.RegisterEventsResponse, int, error)
 }
 
 type client struct {

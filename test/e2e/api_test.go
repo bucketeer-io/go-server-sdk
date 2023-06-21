@@ -132,7 +132,7 @@ func TestRegisterEvents(t *testing.T) {
 			},
 		},
 	}
-	res, err := client.RegisterEvents(req)
+	res, _, err := client.RegisterEvents(req)
 	assert.NoError(t, err)
 	assert.Len(t, res.Errors, 0)
 }
