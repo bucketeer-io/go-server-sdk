@@ -209,8 +209,7 @@ func (p *processor) PushGoalEvent(ctx context.Context, user *user.User, GoalID s
 }
 
 func (p *processor) PushLatencyMetricsEvent(ctx context.Context, duration time.Duration, api model.APIID) {
-	val := fmt.Sprintf("%ds", duration.Microseconds()/1000)
-	gelMetricsEvt := model.NewLatencyMetricsEvent(p.tag, val, api)
+	gelMetricsEvt := model.NewLatencyMetricsEvent(p.tag, duration.Seconds(), api)
 	encodedGELMetricsEvt, err := json.Marshal(gelMetricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: PushLatencyMetricsEvent failed (err: %v, tag: %s)", err, p.tag)

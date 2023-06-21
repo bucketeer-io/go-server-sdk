@@ -77,13 +77,10 @@ func TestRegisterEvents(t *testing.T) {
 	temetricsEvent, err := json.Marshal(model.NewMetricsEvent(timeoutError))
 	assert.NoError(t, err)
 	latency, err := json.Marshal(&model.LatencyMetricsEvent{
-		APIID:  model.GetEvaluation,
-		Labels: map[string]string{"tag": tag},
-		Duration: &model.Duration{
-			Type:  model.DurationType,
-			Value: "5s",
-		},
-		Type: model.LatencyMetricsEventType,
+		APIID:         model.GetEvaluation,
+		Labels:        map[string]string{"tag": tag},
+		LatencySecond: 0.1,
+		Type:          model.LatencyMetricsEventType,
 	})
 	assert.NoError(t, err)
 	lmetricsEvent, err := json.Marshal(model.NewMetricsEvent(latency))

@@ -106,7 +106,7 @@ func TestPushLatencyMetricsEvent(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, model.GetEvaluation, gelMetricsEvt.APIID)
 	assert.Equal(t, p.tag, gelMetricsEvt.Labels["tag"])
-	assert.Equal(t, &model.Duration{Type: model.DurationType, Value: "86400000s"}, gelMetricsEvt.Duration)
+	assert.Equal(t, t2.Sub(t1).Seconds(), gelMetricsEvt.LatencySecond)
 	assert.Equal(t, model.LatencyMetricsEventType, gelMetricsEvt.Type)
 }
 
