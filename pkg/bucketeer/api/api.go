@@ -33,7 +33,6 @@ func (c *client) GetEvaluation(req *model.GetEvaluationRequest) (*model.GetEvalu
 	if err := json.Unmarshal(resp, &ger); err != nil {
 		return nil, 0, err
 	}
-	fmt.Println(len(resp))
 	return &ger, len(resp), nil
 }
 
