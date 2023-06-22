@@ -26,5 +26,4 @@ jobs:
           package-name: bucketeer-go-server-sdk
           bump-minor-pre-major: true
           extra-files: |
-            pkg/bucketeer/version.go
-    
+            pkg/bucketeer/version/version.go    
