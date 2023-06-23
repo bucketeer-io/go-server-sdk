@@ -17,52 +17,52 @@ const (
 	authorizationKey = "authorization"
 )
 
-func (c *client) GetEvaluation(req *model.GetEvaluationRequest) (*model.GetEvaluationResponse, error) {
+func (c *client) GetEvaluation(req *model.GetEvaluationRequest) (*model.GetEvaluationResponse, int, error) {
 	url := fmt.Sprintf("https://%s%s",
 		c.host,
 		evaluationAPI,
 	)
-	resp, err := c.sendHTTPRequest(
+	resp, size, err := c.sendHTTPRequest(
 		url,
 		req,
 	)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	var ger model.GetEvaluationResponse
 	if err := json.Unmarshal(resp, &ger); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return &ger, nil
+	return &ger, size, nil
 }
 
-func (c *client) RegisterEvents(req *model.RegisterEventsRequest) (*model.RegisterEventsResponse, error) {
+func (c *client) RegisterEvents(req *model.RegisterEventsRequest) (*model.RegisterEventsResponse, int, error) {
 	url := fmt.Sprintf("https://%s%s",
 		c.host,
 		eventsAPI,
 	)
-	resp, err := c.sendHTTPRequest(
+	resp, size, err := c.sendHTTPRequest(
 		url,
 		req,
 	)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	var rer model.RegisterEventsResponse
 	if err := json.Unmarshal(resp, &rer); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return &rer, nil
+	return &rer, size, nil
 }
 
-func (c *client) sendHTTPRequest(url string, body interface{}) ([]byte, error) {
+func (c *client) sendHTTPRequest(url string, body interface{}) ([]byte, int, error) {
 	encoded, err := json.Marshal(body)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(encoded))
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	req.Header.Add(authorizationKey, c.apiKey)
 	req.Header.Add("Content-Type", "application/json")
@@ -71,15 +71,15 @@ func (c *client) sendHTTPRequest(url string, body interface{}) ([]byte, error) {
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return nil, NewErrStatus(resp.StatusCode)
+		return nil, 0, NewErrStatus(resp.StatusCode)
 	}
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
-	return data, nil
+	return data, int(resp.ContentLength), nil
 }

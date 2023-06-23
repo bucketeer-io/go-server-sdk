@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strconv"
 	"time"
-	"unsafe"
 
 	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
 
@@ -260,7 +259,7 @@ func (s *sdk) callGetEvaluationAPI(
 		measure(ctx, time.Since(reqStart))
 	}()
 
-	res, err := s.apiClient.GetEvaluation(model.NewGetEvaluationRequest(
+	res, size, err := s.apiClient.GetEvaluation(model.NewGetEvaluationRequest(
 		tag, featureID,
 		user,
 	))
@@ -269,7 +268,7 @@ func (s *sdk) callGetEvaluationAPI(
 		return nil, fmt.Errorf("failed to get evaluation: %w", err)
 	}
 	s.eventProcessor.PushLatencyMetricsEvent(ctx, time.Since(reqStart), model.GetEvaluation)
-	s.eventProcessor.PushSizeMetricsEvent(ctx, int(unsafe.Sizeof(res)), model.GetEvaluation)
+	s.eventProcessor.PushSizeMetricsEvent(ctx, size, model.GetEvaluation)
 	return res, nil
 }
 
