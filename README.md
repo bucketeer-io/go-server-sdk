@@ -88,7 +88,7 @@ make start TAG=<TAG> API_KEY=<API_KEY> HOST=<HOST> PORT=<PORT> \
     ENABLE_DEBUG_LOG=<ENABLE_DEBUG_LOG> FEATURE_ID=<FEATURE_ID> GOAL_ID=<GOAL_ID>
 
 # e.g.
-make start TAG="go-server" API_KEY="xxxxxxxx" HOST="api-media.bucketeer.jp" PORT="443" \
+make start TAG="go-server" API_KEY="xxxxxxxx" HOST="api.example.com" PORT="443" \
     ENABLE_DEBUG_LOG="false" FEATURE_ID="go-example-1" GOAL_ID="go-example-goal-1"
 ```
 
