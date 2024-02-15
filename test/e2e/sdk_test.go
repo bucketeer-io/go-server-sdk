@@ -13,6 +13,7 @@ import (
 )
 
 func TestStringVariation(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	sdk := newSDK(t, ctx)
@@ -52,6 +53,7 @@ func TestStringVariation(t *testing.T) {
 }
 
 func TestBoolVariation(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	sdk := newSDK(t, ctx)
@@ -83,6 +85,7 @@ func TestBoolVariation(t *testing.T) {
 }
 
 func TestIntVariation(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	sdk := newSDK(t, ctx)
@@ -114,6 +117,7 @@ func TestIntVariation(t *testing.T) {
 }
 
 func TestInt64Variation(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	sdk := newSDK(t, ctx)
@@ -145,6 +149,7 @@ func TestInt64Variation(t *testing.T) {
 }
 
 func TestFloat64Variation(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	sdk := newSDK(t, ctx)
@@ -176,6 +181,7 @@ func TestFloat64Variation(t *testing.T) {
 }
 
 func TestJSONVariation(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 	sdk := newSDK(t, ctx)
