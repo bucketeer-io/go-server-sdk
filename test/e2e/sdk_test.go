@@ -2,8 +2,6 @@ package e2e
 
 import (
 	"context"
-	"fmt"
-	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -14,207 +12,248 @@ import (
 
 func TestStringVariation(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	sdk := newSDK(t, ctx)
-	defer func() {
-		// Close
-		err := sdk.Close(ctx)
-		assert.NoError(t, err)
-	}()
-	var wg sync.WaitGroup
-	testVariationFunc := func(ctx context.Context, userID, featureID, expectedVariation string) {
-		defer wg.Done()
-		u := newUser(t, userID)
-		v := sdk.StringVariation(ctx, u, featureID, "default")
-		assert.Equal(t, expectedVariation, v, "userID: %s, featureID: %s", userID, featureID)
+
+	tests := []struct {
+		desc      string
+		user      *user.User
+		featureID string
+		expected  string
+	}{
+		{
+			desc:      "get Variation by Default Strategy",
+			user:      newUser(t, "user-1"),
+			featureID: featureIDString,
+			expected:  featureIDStringVariation1,
+		},
+		{
+			desc:      "get Variation by Targeting Strategy",
+			user:      newUser(t, targetUserID),
+			featureID: featureIDString,
+			expected:  featureIDStringTargetVariation,
+		},
 	}
 
-	// Get Variation by Default Strategy
-	for i := 0; i < 3; i++ {
-		wg.Add(1)
-		userID := fmt.Sprintf("user-%d", i)
-		go testVariationFunc(ctx, userID, featureIDString, featureIDStringVariation1)
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), timeout)
+			defer cancel()
+			sdk := newSDK(t, ctx)
+			defer func() {
+				// Close
+				err := sdk.Close(ctx)
+				assert.NoError(t, err)
+			}()
+
+			actual := sdk.StringVariation(ctx, tt.user, tt.featureID, "default")
+			assert.Equal(t, tt.expected, actual, "userID: %s, featureID: %s", tt.user.ID, tt.featureID)
+		})
 	}
-
-	// Get Variation by Targeting Users
-	wg.Add(1)
-	go testVariationFunc(ctx, targetUserID, featureIDString, featureIDStringTargetVariation)
-
-	// Track
-	wg.Add(1)
-	go func(ctx context.Context, userID, goalID string) {
-		defer wg.Done()
-		user := newUser(t, userID)
-		sdk.Track(ctx, user, goalID)
-	}(ctx, userID, goalID)
-
-	wg.Wait()
 }
 
 func TestBoolVariation(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	sdk := newSDK(t, ctx)
-	defer func() {
-		// Close
-		err := sdk.Close(ctx)
-		assert.NoError(t, err)
-	}()
-	var wg sync.WaitGroup
-	testVariationFunc := func(ctx context.Context, userID, featureID string, expectedVariation bool) {
-		defer wg.Done()
-		u := newUser(t, userID)
-		v := sdk.BoolVariation(ctx, u, featureID, false)
-		assert.Equal(t, expectedVariation, v, "userID: %s, featureID: %s", userID, featureID)
+
+	tests := []struct {
+		desc      string
+		user      *user.User
+		featureID string
+		expected  bool
+	}{
+		{
+			desc:      "get Variation by Default Strategy",
+			user:      newUser(t, "user-1"),
+			featureID: featureIDBoolean,
+			expected:  true,
+		},
+		{
+			desc:      "get Variation by Targeting Strategy",
+			user:      newUser(t, targetUserID),
+			featureID: featureIDBoolean,
+			expected:  featureIDBooleanTargetVariation,
+		},
 	}
 
-	// Get Variation by Default Strategy
-	for i := 0; i < 3; i++ {
-		wg.Add(1)
-		userID := fmt.Sprintf("user-%d", i)
-		go testVariationFunc(ctx, userID, featureIDBoolean, true)
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), timeout)
+			defer cancel()
+			sdk := newSDK(t, ctx)
+			defer func() {
+				// Close
+				err := sdk.Close(ctx)
+				assert.NoError(t, err)
+			}()
+
+			actual := sdk.BoolVariation(ctx, tt.user, tt.featureID, false)
+			assert.Equal(t, tt.expected, actual, "userID: %s, featureID: %s", tt.user.ID, tt.featureID)
+		})
 	}
-
-	// Get Variation by Targeting Users
-	wg.Add(1)
-	go testVariationFunc(ctx, targetUserID, featureIDBoolean, featureIDBooleanTargetVariation)
-
-	wg.Wait()
 }
 
 func TestIntVariation(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	sdk := newSDK(t, ctx)
-	defer func() {
-		// Close
-		err := sdk.Close(ctx)
-		assert.NoError(t, err)
-	}()
-	var wg sync.WaitGroup
-	testVariationFunc := func(ctx context.Context, userID, featureID string, expectedVariation int) {
-		defer wg.Done()
-		user := newUser(t, userID)
-		v := sdk.IntVariation(ctx, user, featureID, -1)
-		assert.Equal(t, expectedVariation, v, "userID: %s, featureID: %s", userID, featureID)
+
+	tests := []struct {
+		desc      string
+		user      *user.User
+		featureID string
+		expected  int
+	}{
+		{
+			desc:      "get Variation by Default Strategy",
+			user:      newUser(t, "user-1"),
+			featureID: featureIDInt,
+			expected:  featureIDIntVariation1,
+		},
+		{
+			desc:      "get Variation by Targeting Strategy",
+			user:      newUser(t, targetUserID),
+			featureID: featureIDInt,
+			expected:  featureIDIntTargetVariation,
+		},
 	}
 
-	// Get Variation by Default Strategy
-	for i := 0; i < 3; i++ {
-		wg.Add(1)
-		userID := fmt.Sprintf("user-%d", i)
-		go testVariationFunc(ctx, userID, featureIDInt, featureIDIntVariation1)
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), timeout)
+			defer cancel()
+			sdk := newSDK(t, ctx)
+			defer func() {
+				// Close
+				err := sdk.Close(ctx)
+				assert.NoError(t, err)
+			}()
+
+			actual := sdk.IntVariation(ctx, tt.user, tt.featureID, -1)
+			assert.Equal(t, tt.expected, actual, "userID: %s, featureID: %s", tt.user.ID, tt.featureID)
+		})
 	}
-
-	// Get Variation by Targeting Users
-	wg.Add(1)
-	go testVariationFunc(ctx, targetUserID, featureIDInt, featureIDIntTargetVariation)
-
-	wg.Wait()
 }
 
 func TestInt64Variation(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	sdk := newSDK(t, ctx)
-	defer func() {
-		// Close
-		err := sdk.Close(ctx)
-		assert.NoError(t, err)
-	}()
-	var wg sync.WaitGroup
-	testVariationFunc := func(ctx context.Context, userID, featureID string, expectedVariation int64) {
-		defer wg.Done()
-		user := newUser(t, userID)
-		v := sdk.Int64Variation(ctx, user, featureID, -1000000000)
-		assert.Equal(t, expectedVariation, v, "userID: %s, featureID: %s", userID, featureID)
+
+	tests := []struct {
+		desc      string
+		user      *user.User
+		featureID string
+		expected  int64
+	}{
+		{
+			desc:      "get Variation by Default Strategy",
+			user:      newUser(t, "user-1"),
+			featureID: featureIDInt64,
+			expected:  featureIDInt64Variation1,
+		},
+		{
+			desc:      "get Variation by Targeting Strategy",
+			user:      newUser(t, targetUserID),
+			featureID: featureIDInt64,
+			expected:  featureIDInt64TargetVariation,
+		},
 	}
 
-	// Get Variation by Default Strategy
-	for i := 0; i < 3; i++ {
-		wg.Add(1)
-		userID := fmt.Sprintf("user-%d", i)
-		go testVariationFunc(ctx, userID, featureIDInt64, featureIDInt64Variation1)
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), timeout)
+			defer cancel()
+			sdk := newSDK(t, ctx)
+			defer func() {
+				// Close
+				err := sdk.Close(ctx)
+				assert.NoError(t, err)
+			}()
+
+			actual := sdk.Int64Variation(ctx, tt.user, tt.featureID, -1000000000)
+			assert.Equal(t, tt.expected, actual, "userID: %s, featureID: %s", tt.user.ID, tt.featureID)
+		})
 	}
-
-	// Get Variation by Targeting Users
-	wg.Add(1)
-	go testVariationFunc(ctx, targetUserID, featureIDInt64, featureIDInt64TargetVariation)
-
-	wg.Wait()
 }
 
 func TestFloat64Variation(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	sdk := newSDK(t, ctx)
-	defer func() {
-		// Close
-		err := sdk.Close(ctx)
-		assert.NoError(t, err)
-	}()
-	var wg sync.WaitGroup
-	testVariationFunc := func(ctx context.Context, userID, featureID string, expectedVariation float64) {
-		defer wg.Done()
-		u := newUser(t, userID)
-		v := sdk.Float64Variation(ctx, u, featureID, -1.1)
-		assert.Equal(t, expectedVariation, v, "userID: %s, featureID: %s", userID, featureID)
+
+	tests := []struct {
+		desc      string
+		user      *user.User
+		featureID string
+		expected  float64
+	}{
+		{
+			desc:      "get Variation by Default Strategy",
+			user:      newUser(t, "user-1"),
+			featureID: featureIDFloat,
+			expected:  featureIDFloatVariation1,
+		},
+		{
+			desc:      "get Variation by Targeting Strategy",
+			user:      newUser(t, targetUserID),
+			featureID: featureIDFloat,
+			expected:  featureIDFloatTargetVariation,
+		},
 	}
 
-	// Get Variation by Default Strategy
-	for i := 0; i < 3; i++ {
-		wg.Add(1)
-		userID := fmt.Sprintf("user-%d", i)
-		go testVariationFunc(ctx, userID, featureIDFloat, featureIDFloatVariation1)
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), timeout)
+			defer cancel()
+			sdk := newSDK(t, ctx)
+			defer func() {
+				// Close
+				err := sdk.Close(ctx)
+				assert.NoError(t, err)
+			}()
+
+			actual := sdk.Float64Variation(ctx, tt.user, tt.featureID, -1.1)
+			assert.Equal(t, tt.expected, actual, "userID: %s, featureID: %s", tt.user.ID, tt.featureID)
+		})
 	}
-
-	// Get Variation by Targeting Users
-	wg.Add(1)
-	go testVariationFunc(ctx, targetUserID, featureIDFloat, featureIDFloatTargetVariation)
-
-	wg.Wait()
 }
 
 func TestJSONVariation(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	sdk := newSDK(t, ctx)
-	defer func() {
-		// Close
-		err := sdk.Close(ctx)
-		assert.NoError(t, err)
-	}()
-	var wg sync.WaitGroup
-	type DstStruct struct {
+
+	type TestJson struct {
 		Str string `json:"str"`
 		Int string `json:"int"`
 	}
-	testVariationFunc := func(ctx context.Context, userID, featureID string, expectedVariation interface{}) {
-		defer wg.Done()
-		u := newUser(t, userID)
-		v := &DstStruct{}
-		sdk.JSONVariation(ctx, u, featureID, v)
-		assert.Equal(t, expectedVariation, v, "userID: %s, featureID: %s", userID, featureID)
+
+	tests := []struct {
+		desc      string
+		user      *user.User
+		featureID string
+		expected  *TestJson
+	}{
+		{
+			desc:      "get Variation by Default Strategy",
+			user:      newUser(t, "user-1"),
+			featureID: featureIDJson,
+			expected:  &TestJson{Str: "str1", Int: "int1"},
+		},
+		{
+			desc:      "get Variation by Targeting Strategy",
+			user:      newUser(t, targetUserID),
+			featureID: featureIDJson,
+			expected:  &TestJson{Str: "str2", Int: "int2"},
+		},
 	}
 
-	// Get Variation by Default Strategy
-	for i := 0; i < 3; i++ {
-		wg.Add(1)
-		userID := fmt.Sprintf("user-%d", i)
-		go testVariationFunc(ctx, userID, featureIDJson, &DstStruct{Str: "str1", Int: "int1"})
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), timeout)
+			defer cancel()
+			sdk := newSDK(t, ctx)
+			defer func() {
+				// Close
+				err := sdk.Close(ctx)
+				assert.NoError(t, err)
+			}()
+
+			v := &TestJson{}
+			sdk.JSONVariation(ctx, tt.user, tt.featureID, v)
+			assert.Equal(t, tt.expected, v, "userID: %s, featureID: %s", tt.user.ID, tt.featureID)
+		})
 	}
-
-	// Get Variation by Targeting Users
-	wg.Add(1)
-	go testVariationFunc(ctx, targetUserID, featureIDJson, &DstStruct{Str: "str2", Int: "int2"})
-
-	wg.Wait()
 }
 
 func newSDK(t *testing.T, ctx context.Context) bucketeer.SDK {
