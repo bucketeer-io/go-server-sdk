@@ -12,12 +12,12 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/model"
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/version"
-	mockapi "github.com/ca-dp/bucketeer-go-server-sdk/test/mock/api"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/api"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/log"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/version"
+	mockapi "github.com/bucketeer-io/go-server-sdk/test/mock/api"
 )
 
 const (

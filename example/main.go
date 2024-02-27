@@ -10,9 +10,9 @@ import (
 	"os/signal"
 	"time"
 
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer"
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/uuid"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/uuid"
 )
 
 const (

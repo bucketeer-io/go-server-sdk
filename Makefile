@@ -1,7 +1,7 @@
 #############################
 # Variables
 #############################
-IMPORT_PATH_TO := github.com/ca-dp/bucketeer-go-server-sdk
+IMPORT_PATH_TO := github.com/bucketeer-io/go-server-sdk
 
 #############################
 # Go

@@ -11,8 +11,8 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 
-	model "github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/model"
-	user "github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
+	model "github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
+	user "github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"
 )
 
 // MockProcessor is a mock of Processor interface.

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/model"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 )
 
 type queue struct {

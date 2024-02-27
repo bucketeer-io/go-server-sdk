@@ -4,7 +4,7 @@ linters-settings:
   goimports:
     # put imports beginning with prefix after 3rd-party packages;
     # it's a comma-separated list of prefixes
-    local-prefixes: github.com/ca-dp/bucketeer-go-server-sdk
+    local-prefixes: github.com/bucketeer-io/go-server-sdk
 linters:
   disable-all: true
   enable:

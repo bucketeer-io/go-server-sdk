@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/model"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 )
 
 const (

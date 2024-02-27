@@ -7,10 +7,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/model"
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/uuid"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/api"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/uuid"
 )
 
 func TestGetEvaluation(t *testing.T) {

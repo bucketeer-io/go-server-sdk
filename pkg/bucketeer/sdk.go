@@ -8,15 +8,15 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"
 
 	// nolint:staticcheck
 	iotag "go.opencensus.io/tag"
 
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/event"
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/model"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/api"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/event"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/log"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 )
 
 // SDK is the Bucketeer SDK.
