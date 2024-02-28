@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/log"
 )
 
 func TestWithOptions(t *testing.T) {

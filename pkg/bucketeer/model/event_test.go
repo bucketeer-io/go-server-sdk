@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"
 )
 
 const (

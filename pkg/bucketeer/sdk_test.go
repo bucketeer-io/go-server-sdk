@@ -9,12 +9,12 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/api"
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/model"
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
-	mockapi "github.com/ca-dp/bucketeer-go-server-sdk/test/mock/api"
-	mockevent "github.com/ca-dp/bucketeer-go-server-sdk/test/mock/event"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/api"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/log"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"
+	mockapi "github.com/bucketeer-io/go-server-sdk/test/mock/api"
+	mockevent "github.com/bucketeer-io/go-server-sdk/test/mock/event"
 )
 
 const (

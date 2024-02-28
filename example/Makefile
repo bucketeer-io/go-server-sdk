@@ -8,7 +8,7 @@ deps:
 
 .PHONY: fmt
 fmt:
-	goimports -local github.com/ca-dp/bucketeer-go-server-sdk/example -w .
+	goimports -local github.com/bucketeer-io/go-server-sdk/example -w .
 
 .PHONY: lint
 lint:

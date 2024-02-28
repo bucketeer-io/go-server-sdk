@@ -3,7 +3,7 @@ package bucketeer
 import (
 	"time"
 
-	"github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/log"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/log"
 )
 
 // Option is the functional options type (Functional Options Pattern) to set sdk options.

@@ -9,7 +9,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 
-	model "github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/model"
+	model "github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 )
 
 // MockClient is a mock of Client interface.

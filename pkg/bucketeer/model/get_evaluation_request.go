@@ -1,6 +1,6 @@
 package model
 
-import "github.com/ca-dp/bucketeer-go-server-sdk/pkg/bucketeer/user"
+import "github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"
 
 type GetEvaluationRequest struct {
 	Tag       string       `json:"tag,omitempty"`
