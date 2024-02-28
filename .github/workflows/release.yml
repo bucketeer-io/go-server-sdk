@@ -26,4 +26,5 @@ jobs:
           package-name: bucketeer-go-server-sdk
           bump-minor-pre-major: true
           extra-files: |
-            pkg/bucketeer/version/version.go    
+            pkg/bucketeer/version/version.go
+          token: ${{ secrets.WORKFLOW_TOKEN }} # We need to set the PAT so the update changelog docs page workflow can be triggered
