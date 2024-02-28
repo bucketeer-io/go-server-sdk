@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.3.6](https://github.com/bucketeer-io/go-server-sdk/compare/v1.3.5...v1.3.6) (2024-02-28)
+
+
+### Miscellaneous
+
+* update repository path ([#110](https://github.com/bucketeer-io/go-server-sdk/issues/110)) ([cae2883](https://github.com/bucketeer-io/go-server-sdk/commit/cae2883aeeee7a0e1f8f8bcf892371faa3e5a3e0))
+
+
+### Build System
+
+* update to go 1.20 and its dependencies ([#111](https://github.com/bucketeer-io/go-server-sdk/issues/111)) ([bf0af68](https://github.com/bucketeer-io/go-server-sdk/commit/bf0af681fb8d5ae7494ee25c2a6e41ff285231ca))
+
 ## [1.3.5](https://github.com/bucketeer-io/go-server-sdk/compare/v1.3.4...v1.3.5) (2023-06-23)
 
 
