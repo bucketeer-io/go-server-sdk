@@ -153,7 +153,7 @@ func TestPushInternalSDKErrorMetricsEvent(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestPushErrorStatusCodeMetricsEvent(t *testing.T) {
+func TestPushErrorStatusInternalServerErrorMetricsEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusInternalServerError)
@@ -164,6 +164,83 @@ func TestPushErrorStatusCodeMetricsEvent(t *testing.T) {
 	iseMetricsEvt := &model.InternalServerErrorMetricsEvent{}
 	err = json.Unmarshal(metricsEvt.Event, iseMetricsEvt)
 	assert.NoError(t, err)
+	assert.Equal(t, model.GetEvaluation, iseMetricsEvt.APIID)
+	assert.Equal(t, model.InternalServerErrorMetricsEventType, iseMetricsEvt.Type)
+}
+
+func TestPushErrorStatusMethodNotAllowedMetricsEvent(t *testing.T) {
+	t.Parallel()
+	p := newProcessorForTestPushEvent(t, 10)
+	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusMethodNotAllowed)
+	evt := <-p.evtQueue.eventCh()
+	metricsEvt := &model.MetricsEvent{}
+	err := json.Unmarshal(evt.Event, metricsEvt)
+	assert.NoError(t, err)
+	iseMetricsEvt := &model.InternalSDKErrorMetricsEvent{}
+	err = json.Unmarshal(metricsEvt.Event, iseMetricsEvt)
+	assert.NoError(t, err)
+	assert.Equal(t, model.GetEvaluation, iseMetricsEvt.APIID)
+	assert.Equal(t, model.InternalSDKErrorMetricsEventType, iseMetricsEvt.Type)
+}
+
+func TestPushErrorStatusRequestTimeoutMetricsEvent(t *testing.T) {
+	t.Parallel()
+	p := newProcessorForTestPushEvent(t, 10)
+	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusRequestTimeout)
+	evt := <-p.evtQueue.eventCh()
+	metricsEvt := &model.MetricsEvent{}
+	err := json.Unmarshal(evt.Event, metricsEvt)
+	assert.NoError(t, err)
+	iseMetricsEvt := &model.TimeoutErrorMetricsEvent{}
+	err = json.Unmarshal(metricsEvt.Event, iseMetricsEvt)
+	assert.NoError(t, err)
+	assert.Equal(t, model.GetEvaluation, iseMetricsEvt.APIID)
+	assert.Equal(t, model.TimeoutErrorMetricsEventType, iseMetricsEvt.Type)
+}
+
+func TestPushErrorStatusRequestEntityTooLargeMetricsEvent(t *testing.T) {
+	t.Parallel()
+	p := newProcessorForTestPushEvent(t, 10)
+	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusRequestEntityTooLarge)
+	evt := <-p.evtQueue.eventCh()
+	metricsEvt := &model.MetricsEvent{}
+	err := json.Unmarshal(evt.Event, metricsEvt)
+	assert.NoError(t, err)
+	iseMetricsEvt := &model.PayloadTooLargeErrorMetricsEvent{}
+	err = json.Unmarshal(metricsEvt.Event, iseMetricsEvt)
+	assert.NoError(t, err)
+	assert.Equal(t, model.GetEvaluation, iseMetricsEvt.APIID)
+	assert.Equal(t, model.PayloadTooLargeErrorMetricsEventType, iseMetricsEvt.Type)
+}
+
+func TestPushErrorStatusBadGatewayMetricsEvent(t *testing.T) {
+	t.Parallel()
+	p := newProcessorForTestPushEvent(t, 10)
+	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusBadGateway)
+	evt := <-p.evtQueue.eventCh()
+	metricsEvt := &model.MetricsEvent{}
+	err := json.Unmarshal(evt.Event, metricsEvt)
+	assert.NoError(t, err)
+	iseMetricsEvt := &model.ServiceUnavailableErrorMetricsEvent{}
+	err = json.Unmarshal(metricsEvt.Event, iseMetricsEvt)
+	assert.NoError(t, err)
+	assert.Equal(t, model.GetEvaluation, iseMetricsEvt.APIID)
+	assert.Equal(t, model.ServiceUnavailableErrorMetricsEventType, iseMetricsEvt.Type)
+}
+
+func TestPushErrorRedirectionRequestErrorMetricsEvent(t *testing.T) {
+	t.Parallel()
+	p := newProcessorForTestPushEvent(t, 10)
+	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, 333)
+	evt := <-p.evtQueue.eventCh()
+	metricsEvt := &model.MetricsEvent{}
+	err := json.Unmarshal(evt.Event, metricsEvt)
+	assert.NoError(t, err)
+	iseMetricsEvt := &model.RedirectionRequestErrorMetricsEvent{}
+	err = json.Unmarshal(metricsEvt.Event, iseMetricsEvt)
+	assert.NoError(t, err)
+	assert.Equal(t, model.GetEvaluation, iseMetricsEvt.APIID)
+	assert.Equal(t, model.RedirectionRequestErrorMetricsEventType, iseMetricsEvt.Type)
 }
 
 func TestPushErrorEventWhenNetworkError(t *testing.T) {

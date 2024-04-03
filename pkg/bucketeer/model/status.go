@@ -11,6 +11,8 @@ const (
 	ClientClosedRequestErrorMetricsEventType errorStatusEventType = "type.googleapis.com/bucketeer.event.client.ClientClosedRequestErrorMetricsEvent"
 	InternalServerErrorMetricsEventType      errorStatusEventType = "type.googleapis.com/bucketeer.event.client.InternalServerErrorMetricsEvent"
 	ServiceUnavailableErrorMetricsEventType  errorStatusEventType = "type.googleapis.com/bucketeer.event.client.ServiceUnavailableErrorMetricsEvent"
+	PayloadTooLargeErrorMetricsEventType     errorStatusEventType = "type.googleapis.com/bucketeer.event.client.PayloadTooLargeExceptionEvent"
+	RedirectionRequestErrorMetricsEventType  errorStatusEventType = "type.googleapis.com/bucketeer.event.client.RedirectionRequestExceptionEvent"
 )
 
 // HTTP Mapping: 400 Bad Request
@@ -115,5 +117,33 @@ func NewServiceUnavailableErrorMetricsEvent(tag string, api APIID) *ServiceUnava
 		APIID:  api,
 		Labels: map[string]string{"tag": tag},
 		Type:   ServiceUnavailableErrorMetricsEventType,
+	}
+}
+
+type PayloadTooLargeErrorMetricsEvent struct {
+	APIID  APIID                `json:"apiId,omitempty"`
+	Labels map[string]string    `json:"labels,omitempty"`
+	Type   errorStatusEventType `json:"@type,omitempty"`
+}
+
+func NewPayloadTooLargeErrorMetricsEvent(tag string, api APIID) *PayloadTooLargeErrorMetricsEvent {
+	return &PayloadTooLargeErrorMetricsEvent{
+		APIID:  api,
+		Labels: map[string]string{"tag": tag},
+		Type:   PayloadTooLargeErrorMetricsEventType,
+	}
+}
+
+type RedirectionRequestErrorMetricsEvent struct {
+	APIID  APIID                `json:"apiId,omitempty"`
+	Labels map[string]string    `json:"labels,omitempty"`
+	Type   errorStatusEventType `json:"@type,omitempty"`
+}
+
+func NewRedirectionRequestErrorMetricsEvent(tag string, api APIID) *RedirectionRequestErrorMetricsEvent {
+	return &RedirectionRequestErrorMetricsEvent{
+		APIID:  api,
+		Labels: map[string]string{"tag": tag},
+		Type:   RedirectionRequestErrorMetricsEventType,
 	}
 }

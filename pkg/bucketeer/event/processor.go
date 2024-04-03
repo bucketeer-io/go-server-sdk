@@ -296,14 +296,26 @@ func (p *processor) pushErrorStatusCodeMetricsEvent(ctx context.Context, api mod
 		evt = model.NewForbiddenErrorMetricsEvent(p.tag, api)
 	case http.StatusNotFound:
 		evt = model.NewNotFoundErrorMetricsEvent(p.tag, api)
+	case http.StatusMethodNotAllowed:
+		evt = model.NewInternalSDKErrorMetricsEvent(p.tag, api)
+	case http.StatusRequestTimeout:
+		evt = model.NewTimeoutErrorMetricsEvent(p.tag, api)
+	case http.StatusRequestEntityTooLarge:
+		evt = model.NewPayloadTooLargeErrorMetricsEvent(p.tag, api)
 	case 499:
 		evt = model.NewClientClosedRequestErrorMetricsEvent(p.tag, api)
 	case http.StatusInternalServerError:
 		evt = model.NewInternalServerErrorMetricsEvent(p.tag, api)
-	case http.StatusServiceUnavailable:
+	case http.StatusServiceUnavailable, http.StatusBadGateway:
 		evt = model.NewServiceUnavailableErrorMetricsEvent(p.tag, api)
 	default:
-		evt = model.NewUnknownErrorMetricsEvent(p.tag, api)
+		// Update error metrics report
+		// https://github.com/bucketeer-io/bucketeer/issues/799
+		if 300 <= code && code < 400 {
+			evt = model.NewRedirectionRequestErrorMetricsEvent(p.tag, api)
+		} else {
+			evt = model.NewUnknownErrorMetricsEvent(p.tag, code, api)
+		}
 	}
 	encodedESCMetricsEvt, err := json.Marshal(evt)
 	if err != nil {
