@@ -19,6 +19,7 @@ const (
 	variationValue       = "value"
 	sizeByte       int32 = 1000
 	featureID            = "fid"
+	errorStatus          = 333
 )
 
 func TestNewEvent(t *testing.T) {
