@@ -153,7 +153,7 @@ func TestPushInternalSDKErrorMetricsEvent(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestPushErrorStatusInternalServerErrorMetricsEvent(t *testing.T) {
+func TestPushErrorStatusCodeMetricsEventInternalServerError(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusInternalServerError)
@@ -168,7 +168,7 @@ func TestPushErrorStatusInternalServerErrorMetricsEvent(t *testing.T) {
 	assert.Equal(t, model.InternalServerErrorMetricsEventType, iseMetricsEvt.Type)
 }
 
-func TestPushErrorStatusMethodNotAllowedMetricsEvent(t *testing.T) {
+func TestPushErrorStatusCodeMetricsEventMethodNotAllowed(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusMethodNotAllowed)
@@ -183,7 +183,7 @@ func TestPushErrorStatusMethodNotAllowedMetricsEvent(t *testing.T) {
 	assert.Equal(t, model.InternalSDKErrorMetricsEventType, iseMetricsEvt.Type)
 }
 
-func TestPushErrorStatusRequestTimeoutMetricsEvent(t *testing.T) {
+func TestPushErrorStatusCodeMetricsEventRequestTimeout(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusRequestTimeout)
@@ -198,7 +198,7 @@ func TestPushErrorStatusRequestTimeoutMetricsEvent(t *testing.T) {
 	assert.Equal(t, model.TimeoutErrorMetricsEventType, iseMetricsEvt.Type)
 }
 
-func TestPushErrorStatusRequestEntityTooLargeMetricsEvent(t *testing.T) {
+func TestPushErrorStatusCodeMetricsEventRequestEntityTooLarge(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusRequestEntityTooLarge)
@@ -213,7 +213,7 @@ func TestPushErrorStatusRequestEntityTooLargeMetricsEvent(t *testing.T) {
 	assert.Equal(t, model.PayloadTooLargeErrorMetricsEventType, iseMetricsEvt.Type)
 }
 
-func TestPushErrorStatusBadGatewayMetricsEvent(t *testing.T) {
+func TestPushErrorStatusCodeMetricsEventBadGateway(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusBadGateway)
@@ -228,7 +228,7 @@ func TestPushErrorStatusBadGatewayMetricsEvent(t *testing.T) {
 	assert.Equal(t, model.ServiceUnavailableErrorMetricsEventType, iseMetricsEvt.Type)
 }
 
-func TestPushErrorRedirectionRequestErrorMetricsEvent(t *testing.T) {
+func TestPushErrorStatusCodeMetricsEventRedirectionRequestError(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, 333)
