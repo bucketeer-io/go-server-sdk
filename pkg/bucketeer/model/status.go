@@ -1,5 +1,7 @@
 package model
 
+import "strconv"
+
 type errorStatusEventType string
 
 //nolint:lll
@@ -140,10 +142,10 @@ type RedirectionRequestErrorMetricsEvent struct {
 	Type   errorStatusEventType `json:"@type,omitempty"`
 }
 
-func NewRedirectionRequestErrorMetricsEvent(tag string, api APIID) *RedirectionRequestErrorMetricsEvent {
+func NewRedirectionRequestErrorMetricsEvent(tag string, api APIID, code int) *RedirectionRequestErrorMetricsEvent {
 	return &RedirectionRequestErrorMetricsEvent{
 		APIID:  api,
-		Labels: map[string]string{"tag": tag},
+		Labels: map[string]string{"tag": tag, "response_code": strconv.Itoa(code)},
 		Type:   RedirectionRequestErrorMetricsEventType,
 	}
 }

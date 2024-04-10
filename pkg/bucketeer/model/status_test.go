@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -72,8 +73,9 @@ func TestNewPayloadTooLargeErrorMetricsEvent(t *testing.T) {
 
 func TestNewRedirectionRequestErrorMetricsEvent(t *testing.T) {
 	t.Parallel()
-	e := NewRedirectionRequestErrorMetricsEvent(tag, GetEvaluation)
+	e := NewRedirectionRequestErrorMetricsEvent(tag, GetEvaluation, errorStatus)
 	assert.IsType(t, &RedirectionRequestErrorMetricsEvent{}, e)
 	assert.Equal(t, tag, e.Labels["tag"])
+	assert.Equal(t, fmt.Sprint(errorStatus), e.Labels["response_code"])
 	assert.Equal(t, RedirectionRequestErrorMetricsEventType, e.Type)
 }

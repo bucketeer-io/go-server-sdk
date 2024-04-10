@@ -143,7 +143,7 @@ func TestPushTimeoutErrorMetricsEvent(t *testing.T) {
 func TestPushInternalSDKErrorMetricsEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.pushInternalSDKErrorMetricsEvent(context.Background(), model.GetEvaluation)
+	p.pushInternalSDKErrorMetricsEvent(context.Background(), model.GetEvaluation, errors.New("error"))
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
@@ -151,12 +151,14 @@ func TestPushInternalSDKErrorMetricsEvent(t *testing.T) {
 	iecMetricsEvt := &model.InternalSDKErrorMetricsEvent{}
 	err = json.Unmarshal(metricsEvt.Event, iecMetricsEvt)
 	assert.NoError(t, err)
+	assert.Equal(t, model.GetEvaluation, iecMetricsEvt.APIID)
+	assert.Equal(t, model.InternalSDKErrorMetricsEventType, iecMetricsEvt.Type)
 }
 
 func TestPushErrorStatusCodeMetricsEventInternalServerError(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusInternalServerError)
+	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusInternalServerError, errors.New("InternalServerError"))
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
@@ -171,7 +173,7 @@ func TestPushErrorStatusCodeMetricsEventInternalServerError(t *testing.T) {
 func TestPushErrorStatusCodeMetricsEventMethodNotAllowed(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusMethodNotAllowed)
+	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusMethodNotAllowed, errors.New("MethodNotAllowed"))
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
@@ -186,7 +188,7 @@ func TestPushErrorStatusCodeMetricsEventMethodNotAllowed(t *testing.T) {
 func TestPushErrorStatusCodeMetricsEventRequestTimeout(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusRequestTimeout)
+	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusRequestTimeout, errors.New("StatusRequestTimeout"))
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
@@ -201,7 +203,7 @@ func TestPushErrorStatusCodeMetricsEventRequestTimeout(t *testing.T) {
 func TestPushErrorStatusCodeMetricsEventRequestEntityTooLarge(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusRequestEntityTooLarge)
+	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusRequestEntityTooLarge, errors.New("StatusRequestEntityTooLarge"))
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
@@ -216,7 +218,7 @@ func TestPushErrorStatusCodeMetricsEventRequestEntityTooLarge(t *testing.T) {
 func TestPushErrorStatusCodeMetricsEventBadGateway(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusBadGateway)
+	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusBadGateway, errors.New("StatusBadGateway"))
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
@@ -231,7 +233,7 @@ func TestPushErrorStatusCodeMetricsEventBadGateway(t *testing.T) {
 func TestPushErrorStatusCodeMetricsEventRedirectionRequestError(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, 333)
+	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, 333, errors.New("333 error"))
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
@@ -241,6 +243,21 @@ func TestPushErrorStatusCodeMetricsEventRedirectionRequestError(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, model.GetEvaluation, iseMetricsEvt.APIID)
 	assert.Equal(t, model.RedirectionRequestErrorMetricsEventType, iseMetricsEvt.Type)
+}
+
+func TestPushErrorStatusCodeMetricsEventUnknownError(t *testing.T) {
+	t.Parallel()
+	p := newProcessorForTestPushEvent(t, 10)
+	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, 999, errors.New("999 error"))
+	evt := <-p.evtQueue.eventCh()
+	metricsEvt := &model.MetricsEvent{}
+	err := json.Unmarshal(evt.Event, metricsEvt)
+	assert.NoError(t, err)
+	iseMetricsEvt := &model.UnknownErrorMetricsEvent{}
+	err = json.Unmarshal(metricsEvt.Event, iseMetricsEvt)
+	assert.NoError(t, err)
+	assert.Equal(t, model.GetEvaluation, iseMetricsEvt.APIID)
+	assert.Equal(t, model.UnknownErrorMetricsEventType, iseMetricsEvt.Type)
 }
 
 func TestPushErrorEventWhenNetworkError(t *testing.T) {

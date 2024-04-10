@@ -11,10 +11,10 @@ type UnknownErrorMetricsEvent struct {
 	Type   metricsDetailEventType `json:"@type,omitempty"`
 }
 
-func NewUnknownErrorMetricsEvent(tag string, code int, api APIID) *UnknownErrorMetricsEvent {
+func NewUnknownErrorMetricsEvent(tag string, code int, message string, api APIID) *UnknownErrorMetricsEvent {
 	return &UnknownErrorMetricsEvent{
 		APIID:  api,
-		Labels: map[string]string{"tag": tag, "response_code": strconv.Itoa(code)},
+		Labels: map[string]string{"tag": tag, "response_code": strconv.Itoa(code), "error_message": message},
 		Type:   UnknownErrorMetricsEventType,
 	}
 }
