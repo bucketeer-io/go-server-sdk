@@ -9,10 +9,10 @@ type InternalSDKErrorMetricsEvent struct {
 //nolint:lll
 const InternalSDKErrorMetricsEventType metricsDetailEventType = "type.googleapis.com/bucketeer.event.client.InternalSdkErrorMetricsEvent"
 
-func NewInternalSDKErrorMetricsEvent(tag string, api APIID) *InternalSDKErrorMetricsEvent {
+func NewInternalSDKErrorMetricsEvent(tag string, api APIID, message string) *InternalSDKErrorMetricsEvent {
 	return &InternalSDKErrorMetricsEvent{
 		APIID:  api,
-		Labels: map[string]string{"tag": tag},
+		Labels: map[string]string{"tag": tag, "error_message": message},
 		Type:   InternalSDKErrorMetricsEventType,
 	}
 }

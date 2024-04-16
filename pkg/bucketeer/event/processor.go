@@ -266,8 +266,8 @@ func (p *processor) pushTimeoutErrorMetricsEvent(ctx context.Context, api model.
 	}
 }
 
-func (p *processor) pushInternalSDKErrorMetricsEvent(ctx context.Context, api model.APIID) {
-	iecMetricsEvt := model.NewInternalSDKErrorMetricsEvent(p.tag, api)
+func (p *processor) pushInternalSDKErrorMetricsEvent(ctx context.Context, api model.APIID, err error) {
+	iecMetricsEvt := model.NewInternalSDKErrorMetricsEvent(p.tag, api, err.Error())
 	encodedIECMetricsEvt, err := json.Marshal(iecMetricsEvt)
 	if err != nil {
 		p.loggers.Errorf("bucketeer/event: pushInternalSDKErrorMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
@@ -285,25 +285,35 @@ func (p *processor) pushInternalSDKErrorMetricsEvent(ctx context.Context, api mo
 	}
 }
 
-func (p *processor) pushErrorStatusCodeMetricsEvent(ctx context.Context, api model.APIID, code int) {
+func (p *processor) pushErrorStatusCodeMetricsEvent(ctx context.Context, api model.APIID, code int, err error) {
 	var evt interface{}
-	switch code {
-	case http.StatusBadRequest:
+	switch {
+	// Update error metrics report
+	// https://github.com/bucketeer-io/bucketeer/issues/799
+	case 300 <= code && code < 400:
+		evt = model.NewRedirectionRequestErrorMetricsEvent(p.tag, api, code)
+	case code == http.StatusBadRequest:
 		evt = model.NewBadRequestErrorMetricsEvent(p.tag, api)
-	case http.StatusUnauthorized:
+	case code == http.StatusUnauthorized:
 		evt = model.NewUnauthorizedErrorMetricsEvent(p.tag, api)
-	case http.StatusForbidden:
+	case code == http.StatusForbidden:
 		evt = model.NewForbiddenErrorMetricsEvent(p.tag, api)
-	case http.StatusNotFound:
+	case code == http.StatusNotFound:
 		evt = model.NewNotFoundErrorMetricsEvent(p.tag, api)
-	case 499:
+	case code == http.StatusMethodNotAllowed:
+		evt = model.NewInternalSDKErrorMetricsEvent(p.tag, api, err.Error())
+	case code == http.StatusRequestTimeout:
+		evt = model.NewTimeoutErrorMetricsEvent(p.tag, api)
+	case code == http.StatusRequestEntityTooLarge:
+		evt = model.NewPayloadTooLargeErrorMetricsEvent(p.tag, api)
+	case code == 499:
 		evt = model.NewClientClosedRequestErrorMetricsEvent(p.tag, api)
-	case http.StatusInternalServerError:
+	case code == http.StatusInternalServerError:
 		evt = model.NewInternalServerErrorMetricsEvent(p.tag, api)
-	case http.StatusServiceUnavailable:
+	case code == http.StatusServiceUnavailable || code == http.StatusBadGateway:
 		evt = model.NewServiceUnavailableErrorMetricsEvent(p.tag, api)
 	default:
-		evt = model.NewUnknownErrorMetricsEvent(p.tag, api)
+		evt = model.NewUnknownErrorMetricsEvent(p.tag, code, err.Error(), api)
 	}
 	encodedESCMetricsEvt, err := json.Marshal(evt)
 	if err != nil {
@@ -445,13 +455,13 @@ func (p *processor) PushErrorEvent(ctx context.Context, err error, apiID model.A
 		case os.IsTimeout(err):
 			p.pushTimeoutErrorMetricsEvent(ctx, apiID)
 		default:
-			p.pushInternalSDKErrorMetricsEvent(ctx, apiID)
+			p.pushInternalSDKErrorMetricsEvent(ctx, apiID, err)
 		}
 		return
 	}
 	if code == http.StatusGatewayTimeout {
 		p.pushTimeoutErrorMetricsEvent(ctx, apiID)
 	} else {
-		p.pushErrorStatusCodeMetricsEvent(ctx, apiID, code)
+		p.pushErrorStatusCodeMetricsEvent(ctx, apiID, code, err)
 	}
 }
