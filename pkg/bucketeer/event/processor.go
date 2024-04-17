@@ -414,7 +414,7 @@ func (p *processor) flushEvents(ctx context.Context, events []*model.Event) {
 	if len(events) == 0 {
 		return
 	}
-	res, _, err := p.apiClient.RegisterEvents(&model.RegisterEventsRequest{Events: events})
+	res, _, err := p.apiClient.RegisterEvents(model.NewRegisterEventsRequest(events))
 	if err != nil {
 		p.loggers.Debugf("bucketeer/event: failed to register events: %v", err)
 		// Re-push all events to the event queue.

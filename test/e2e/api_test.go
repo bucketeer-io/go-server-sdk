@@ -17,7 +17,7 @@ func TestGetEvaluation(t *testing.T) {
 	t.Parallel()
 	client := newAPIClient(t)
 	user := user.NewUser(userID, nil)
-	res, _, err := client.GetEvaluation(&model.GetEvaluationRequest{Tag: tag, User: user, FeatureID: featureID})
+	res, _, err := client.GetEvaluation(model.NewGetEvaluationRequest(tag, featureID, user))
 	assert.NoError(t, err)
 	assert.Equal(t, featureID, res.Evaluation.FeatureID)
 	assert.Equal(t, featureIDVariation2, res.Evaluation.VariationValue)
@@ -93,8 +93,8 @@ func TestRegisterEvents(t *testing.T) {
 	assert.NoError(t, err)
 	iesmetricsEvent, err := json.Marshal(model.NewMetricsEvent(internalServerError))
 	assert.NoError(t, err)
-	req := &model.RegisterEventsRequest{
-		Events: []*model.Event{
+	req := model.NewRegisterEventsRequest(
+		[]*model.Event{
 			{
 				ID:    newUUID(t),
 				Event: evaluationEvent,
@@ -128,7 +128,7 @@ func TestRegisterEvents(t *testing.T) {
 				Event: iesmetricsEvent,
 			},
 		},
-	}
+	)
 	res, _, err := client.RegisterEvents(req)
 	assert.NoError(t, err)
 	assert.Len(t, res.Errors, 0)

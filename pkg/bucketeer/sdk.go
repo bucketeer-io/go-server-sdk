@@ -79,8 +79,6 @@ type sdk struct {
 	loggers        *log.Loggers
 }
 
-const SourceIDGoServer = 5
-
 // NewSDK creates a new Bucketeer SDK.
 func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 	dopts := defaultOptions
