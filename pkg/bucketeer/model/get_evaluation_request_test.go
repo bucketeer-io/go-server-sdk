@@ -3,6 +3,7 @@ package model
 import (
 	"testing"
 
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/version"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,4 +15,5 @@ func TestNewGetEvaluationRequest(t *testing.T) {
 	assert.Equal(t, SourceIDGoServer, e.SourceID)
 	assert.Equal(t, featureID, e.FeatureID)
 	assert.Equal(t, id, e.User.ID)
+	assert.Equal(t, version.SDKVersion, e.SDKVersion)
 }
