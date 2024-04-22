@@ -472,7 +472,7 @@ func TestFlushEvents(t *testing.T) {
 		{
 			desc: "do nothing when events length is 0",
 			setup: func(p *processor, events []*model.Event) {
-				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&model.RegisterEventsRequest{Events: events}).Times(0)
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(model.NewRegisterEventsRequest(events)).Times(0)
 			},
 			events:           make([]*model.Event, 0, 10),
 			expectedQueueLen: 0,
@@ -480,7 +480,7 @@ func TestFlushEvents(t *testing.T) {
 		{
 			desc: "re-push all events when failed to register events",
 			setup: func(p *processor, events []*model.Event) {
-				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&model.RegisterEventsRequest{Events: events}).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(model.NewRegisterEventsRequest(events)).Return(
 					nil,
 					0,
 					api.NewErrStatus(http.StatusInternalServerError),
@@ -493,7 +493,7 @@ func TestFlushEvents(t *testing.T) {
 			desc: "faled to re-push all events when failed to register events if queue is closed",
 			setup: func(p *processor, events []*model.Event) {
 				p.evtQueue.close()
-				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&model.RegisterEventsRequest{Events: events}).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(model.NewRegisterEventsRequest(events)).Return(
 					nil,
 					0,
 					api.NewErrStatus(http.StatusInternalServerError),
@@ -505,7 +505,7 @@ func TestFlushEvents(t *testing.T) {
 		{
 			desc: "re-push events when register events res contains retriable errors",
 			setup: func(p *processor, events []*model.Event) {
-				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&model.RegisterEventsRequest{Events: events}).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(model.NewRegisterEventsRequest(events)).Return(
 					&model.RegisterEventsResponse{
 						Errors: map[string]*model.RegisterEventsResponseError{
 							"id-0": {Retriable: true, Message: "retriable"},
@@ -523,7 +523,7 @@ func TestFlushEvents(t *testing.T) {
 			desc: "faled to re-push events when register events res contains retriable errors if queue is closed",
 			setup: func(p *processor, events []*model.Event) {
 				p.evtQueue.close()
-				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&model.RegisterEventsRequest{Events: events}).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(model.NewRegisterEventsRequest(events)).Return(
 					&model.RegisterEventsResponse{
 						Errors: map[string]*model.RegisterEventsResponseError{
 							"id-0": {Retriable: true, Message: "retriable"},
@@ -540,7 +540,7 @@ func TestFlushEvents(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(p *processor, events []*model.Event) {
-				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(&model.RegisterEventsRequest{Events: events}).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(model.NewRegisterEventsRequest(events)).Return(
 					&model.RegisterEventsResponse{
 						Errors: make(map[string]*model.RegisterEventsResponseError),
 					},
