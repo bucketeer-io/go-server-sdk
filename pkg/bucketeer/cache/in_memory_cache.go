@@ -29,22 +29,28 @@ type entry struct {
 	expiration time.Time
 }
 
-type InMemoryCache struct {
+type inMemoryCache struct {
 	entries          sync.Map
 	evictionInterval time.Duration
 	doneCh           chan struct{}
 }
 
-type InMemoryCacheOption func(*InMemoryCache)
+type InMemoryCache interface {
+	Get(key interface{}) (interface{}, error)
+	Put(key, value interface{}, expiration time.Duration) error
+	Destroy()
+}
+
+type InMemoryCacheOption func(*inMemoryCache)
 
 func WithEvictionInterval(evictionInterval time.Duration) InMemoryCacheOption {
-	return func(c *InMemoryCache) {
+	return func(c *inMemoryCache) {
 		c.evictionInterval = evictionInterval
 	}
 }
 
-func NewInMemoryCache(opts ...InMemoryCacheOption) *InMemoryCache {
-	c := &InMemoryCache{
+func NewInMemoryCache(opts ...InMemoryCacheOption) InMemoryCache {
+	c := &inMemoryCache{
 		evictionInterval: defaultEvictionInterval,
 		doneCh:           make(chan struct{}),
 	}
@@ -57,7 +63,7 @@ func NewInMemoryCache(opts ...InMemoryCacheOption) *InMemoryCache {
 	return c
 }
 
-func (c *InMemoryCache) startEvicter(evictionInterval time.Duration) {
+func (c *inMemoryCache) startEvicter(evictionInterval time.Duration) {
 	ticker := time.NewTicker(evictionInterval)
 	defer ticker.Stop()
 	for {
@@ -70,7 +76,7 @@ func (c *InMemoryCache) startEvicter(evictionInterval time.Duration) {
 	}
 }
 
-func (c *InMemoryCache) evictExpired(t time.Time) {
+func (c *inMemoryCache) evictExpired(t time.Time) {
 	c.entries.Range(func(key, value interface{}) bool {
 		if e, ok := value.(*entry); ok && e.expiration.Before(t) {
 			c.entries.Delete(key)
@@ -79,7 +85,7 @@ func (c *InMemoryCache) evictExpired(t time.Time) {
 	})
 }
 
-func (c *InMemoryCache) Get(key interface{}) (interface{}, error) {
+func (c *inMemoryCache) Get(key interface{}) (interface{}, error) {
 	value, ok := c.entries.Load(key)
 	if !ok {
 		return nil, ErrNotFound
@@ -91,7 +97,7 @@ func (c *InMemoryCache) Get(key interface{}) (interface{}, error) {
 	return e.value, nil
 }
 
-func (c *InMemoryCache) Put(key, value interface{}, expiration time.Duration) error {
+func (c *inMemoryCache) Put(key, value interface{}, expiration time.Duration) error {
 	c.entries.Store(key, &entry{
 		value:      value,
 		expiration: time.Now().Add(expiration),
@@ -99,7 +105,7 @@ func (c *InMemoryCache) Put(key, value interface{}, expiration time.Duration) er
 	return nil
 }
 
-func (c *InMemoryCache) Destroy() {
+func (c *inMemoryCache) Destroy() {
 	close(c.doneCh)
 	c.entries.Range(func(key, value interface{}) bool {
 		c.entries.Delete(key)
