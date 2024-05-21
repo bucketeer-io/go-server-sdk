@@ -7,6 +7,7 @@ package api
 import (
 	reflect "reflect"
 
+	gateway "github.com/bucketeer-io/bucketeer/proto/gateway"
 	gomock "github.com/golang/mock/gomock"
 
 	model "github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
@@ -49,6 +50,38 @@ func (m *MockClient) GetEvaluation(req *model.GetEvaluationRequest) (*model.GetE
 func (mr *MockClientMockRecorder) GetEvaluation(req interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEvaluation", reflect.TypeOf((*MockClient)(nil).GetEvaluation), req)
+}
+
+// GetFeatureFlags mocks base method.
+func (m *MockClient) GetFeatureFlags(req *model.GetFeatureFlagsRequest) (*gateway.GetFeatureFlagsResponse, int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFeatureFlags", req)
+	ret0, _ := ret[0].(*gateway.GetFeatureFlagsResponse)
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetFeatureFlags indicates an expected call of GetFeatureFlags.
+func (mr *MockClientMockRecorder) GetFeatureFlags(req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureFlags", reflect.TypeOf((*MockClient)(nil).GetFeatureFlags), req)
+}
+
+// GetSegmentUsers mocks base method.
+func (m *MockClient) GetSegmentUsers(req *model.GetSegmentUsersRequest) (*gateway.GetSegmentUsersResponse, int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSegmentUsers", req)
+	ret0, _ := ret[0].(*gateway.GetSegmentUsersResponse)
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetSegmentUsers indicates an expected call of GetSegmentUsers.
+func (mr *MockClientMockRecorder) GetSegmentUsers(req interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSegmentUsers", reflect.TypeOf((*MockClient)(nil).GetSegmentUsers), req)
 }
 
 // RegisterEvents mocks base method.
