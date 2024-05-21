@@ -2,7 +2,7 @@
 package log
 
 import (
-	"io/ioutil"
+	"io"
 	stdlog "log"
 	"os"
 )
@@ -27,7 +27,7 @@ var (
 	flags = stdlog.LstdFlags
 
 	defaultDebugLogger = stdlog.New(os.Stdout, "[DEBUG] ", flags)
-	discardDebugLogger = stdlog.New(ioutil.Discard, "[DEBUG] ", flags)
+	discardDebugLogger = stdlog.New(io.Discard, "[DEBUG] ", flags)
 
 	// DefaultErrorLogger is a default logger for Bucketeer SDK error logs.
 	// For example, DefaultErrorLogger outputs,
@@ -39,7 +39,7 @@ var (
 	// DiscardErrorLogger discards all Bucketeer SDK error logs.
 	//
 	// DiscardErrorLoger implements BaseLogger interface.
-	DiscardErrorLogger = stdlog.New(ioutil.Discard, "[ERROR] ", flags)
+	DiscardErrorLogger = stdlog.New(io.Discard, "[ERROR] ", flags)
 )
 
 // Loggers is a logging compornent used in the Bucketeer SDK.

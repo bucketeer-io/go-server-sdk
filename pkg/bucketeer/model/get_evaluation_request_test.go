@@ -3,8 +3,9 @@ package model
 import (
 	"testing"
 
-	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/version"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/version"
 )
 
 func TestNewGetEvaluationRequest(t *testing.T) {
