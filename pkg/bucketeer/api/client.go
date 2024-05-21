@@ -1,11 +1,17 @@
 //go:generate mockgen -source=$GOFILE -package=$GOPACKAGE -destination=../../../test/mock/$GOPACKAGE/$GOFILE
 package api
 
-import "github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
+import (
+	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
+
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
+)
 
 // Client is the client interface for the Bucketeer APIGateway service.
 type Client interface {
 	GetEvaluation(req *model.GetEvaluationRequest) (*model.GetEvaluationResponse, int, error)
+	GetFeatureFlags(req *model.GetFeatureFlagsRequest) (*gwproto.GetFeatureFlagsResponse, int, error)
+	GetSegmentUsers(req *model.GetSegmentUsersRequest) (*gwproto.GetSegmentUsersResponse, int, error)
 	RegisterEvents(req *model.RegisterEventsRequest) (*model.RegisterEventsResponse, int, error)
 }
 
