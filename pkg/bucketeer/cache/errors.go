@@ -12,35 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//go:generate mockgen -source=$GOFILE -package=mock -destination=./mock/$GOFILE
 package cache
 
-import (
-	"time"
+import "errors"
+
+var (
+	ErrFailedToMarshalProto   = errors.New("cache: failed to marshal proto message")
+	ErrProtoMessageNil        = errors.New("cache: proto message is nil")
+	ErrFailedToUnmarshalProto = errors.New("cache: failed to unmarshal proto message")
+	ErrInvalidType            = errors.New("cache: invalid type")
+	ErrNotFound               = errors.New("cache: not found")
 )
-
-type Cache interface {
-	Getter
-	Putter
-	Deleter
-}
-
-type Getter interface {
-	Get(key interface{}) (interface{}, error)
-}
-
-type Putter interface {
-	Put(key interface{}, value interface{}, expiration time.Duration) error
-}
-
-type Deleter interface {
-	Delete(key string) error
-}
-
-func Bytes(value interface{}) ([]byte, error) {
-	b, ok := value.([]byte)
-	if !ok {
-		return nil, ErrInvalidType
-	}
-	return b, nil
-}
