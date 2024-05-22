@@ -44,7 +44,8 @@ const (
 )
 
 var (
-	apiKey = flag.String("api-key", "", "API key for the Bucketeer service")
-	host   = flag.String("host", "", "Host name of the Bucketeer service, e.g. api-dev.bucketeer.jp")
-	port   = flag.Int("port", 443, "Port number of the Bucketeer service, e.g. 443")
+	apiKey       = flag.String("api-key", "", "API key for the Bucketeer service")
+	apiKeyServer = flag.String("api-key-server", "", "API key for Server SDK")
+	host         = flag.String("host", "", "Host name of the Bucketeer service, e.g. api-dev.bucketeer.jp")
+	port         = flag.Int("port", 443, "Port number of the Bucketeer service, e.g. 443")
 )

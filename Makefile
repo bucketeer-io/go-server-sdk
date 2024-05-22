@@ -37,7 +37,7 @@ build:
 
 .PHONY: test
 test:
-	go test -race ./pkg/...
+	go test -v -race ./pkg/...
 
 .PHONY: coverage
 coverage:
@@ -45,5 +45,5 @@ coverage:
 
 .PHONY: e2e
 e2e:
-	go test -race ./test/e2e/... \
-		-args -api-key=${API_KEY} -host=${HOST} -port=${PORT}
+	go test -v -race ./test/e2e/... \
+		-args -api-key=${API_KEY} -api-key-server=${API_KEY_SERVER} -host=${HOST} -port=${PORT}
