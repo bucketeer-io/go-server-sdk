@@ -7,6 +7,7 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/stretchr/testify v1.8.4
 	go.opencensus.io v0.24.0
+	go.uber.org/mock v0.4.0
 	google.golang.org/protobuf v1.34.1
 )
 

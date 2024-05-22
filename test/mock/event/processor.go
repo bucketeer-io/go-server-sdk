@@ -9,7 +9,7 @@ import (
 	reflect "reflect"
 	time "time"
 
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 
 	model "github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 	user "github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"

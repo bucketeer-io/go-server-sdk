@@ -8,7 +8,7 @@ import (
 	reflect "reflect"
 
 	feature "github.com/bucketeer-io/bucketeer/proto/feature"
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockFeaturesCache is a mock of FeaturesCache interface.

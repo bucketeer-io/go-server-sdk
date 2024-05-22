@@ -7,7 +7,7 @@ package log
 import (
 	reflect "reflect"
 
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockBaseLogger is a mock of BaseLogger interface.

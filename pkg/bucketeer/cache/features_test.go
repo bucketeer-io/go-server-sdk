@@ -19,9 +19,9 @@ import (
 	"testing"
 
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/mock/gomock"
 	"google.golang.org/protobuf/proto"
 
 	cachemock "github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/cache/mock"
