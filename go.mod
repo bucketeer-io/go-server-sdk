@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/bucketeer-io/bucketeer/proto v0.0.0-20240520044049-69f55ef9a09f
 	github.com/golang/mock v1.6.0
+	github.com/golang/protobuf v1.5.4
 	github.com/stretchr/testify v1.8.4
 	go.opencensus.io v0.24.0
 	google.golang.org/protobuf v1.34.1
