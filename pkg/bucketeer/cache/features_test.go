@@ -20,9 +20,9 @@ import (
 
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	"github.com/golang/mock/gomock"
-	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/proto"
 
 	cachemock "github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/cache/mock"
 )
