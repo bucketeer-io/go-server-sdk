@@ -17,6 +17,7 @@ package cache
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	"github.com/stretchr/testify/assert"
@@ -27,7 +28,7 @@ import (
 	cachemock "github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/cache/mock"
 )
 
-func TestGetFeatures(t *testing.T) {
+func TestGetFeatureFlag(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
@@ -35,7 +36,7 @@ func TestGetFeatures(t *testing.T) {
 	features := createFeatures(t, 1)
 	id := features[0].Id
 	dataFeatures := marshalMessage(t, features[0])
-	key := fmt.Sprintf("%s:%s", featureFlagsPrefix, id)
+	key := fmt.Sprintf("%s:%s", featureFlagPrefix, id)
 
 	patterns := []struct {
 		desc        string
@@ -80,21 +81,21 @@ func TestGetFeatures(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			fc := newFeaturesCache(t, mockController)
 			p.setup(fc)
-			features, err := fc.Get(id)
+			features, err := fc.GetFeatureFlag(id)
 			assert.True(t, proto.Equal(p.expected, features))
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
 }
 
-func TestPutFeatures(t *testing.T) {
+func TestPutFeaturesFlag(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
 	features := createFeatures(t, 1)
 	dataFeatures := marshalMessage(t, features[0])
-	key := fmt.Sprintf("%s:%s", featureFlagsPrefix, features[0].Id)
+	key := fmt.Sprintf("%s:%s", featureFlagPrefix, features[0].Id)
 
 	patterns := []struct {
 		desc     string
@@ -111,7 +112,7 @@ func TestPutFeatures(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(fc *featuresCache) {
-				fc.cache.(*cachemock.MockCache).EXPECT().Put(key, dataFeatures, featureFlagsTTL).Return(nil)
+				fc.cache.(*cachemock.MockCache).EXPECT().Put(key, dataFeatures, featureFlagsCacheTTL).Return(nil)
 			},
 			input:    features[0],
 			expected: nil,
@@ -123,7 +124,172 @@ func TestPutFeatures(t *testing.T) {
 			if p.setup != nil {
 				p.setup(fc)
 			}
-			err := fc.Put(p.input)
+			err := fc.PutFeatureFlag(p.input)
+			assert.Equal(t, p.expected, err)
+		})
+	}
+}
+
+func TestGetFeatureFlagsID(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	id := "feature-flags-id"
+	key := fmt.Sprintf("%s:%s", featureFlagsPrefix, featureFlagsIDKey)
+	patterns := []struct {
+		desc        string
+		setup       func(*featuresCache)
+		expected    string
+		expectedErr error
+	}{
+		{
+			desc: "error: not found",
+			setup: func(fc *featuresCache) {
+				fc.cache.(*cachemock.MockCache).EXPECT().Get(key).Return(nil, ErrNotFound)
+			},
+			expected:    "",
+			expectedErr: ErrNotFound,
+		},
+		{
+			desc: "error: invalid type",
+			setup: func(fc *featuresCache) {
+				fc.cache.(*cachemock.MockCache).EXPECT().Get(key).Return(1, nil)
+			},
+			expected:    "",
+			expectedErr: ErrInvalidType,
+		},
+		{
+			desc: "success",
+			setup: func(fc *featuresCache) {
+				fc.cache.(*cachemock.MockCache).EXPECT().Get(key).Return(id, nil)
+			},
+			expected:    id,
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			fc := newFeaturesCache(t, mockController)
+			p.setup(fc)
+			id, err := fc.GetFeatureFlagsID()
+			assert.Equal(t, p.expected, id)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestPutFeatureFlagsID(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	id := "feature-flags-id"
+	key := fmt.Sprintf("%s:%s", featureFlagsPrefix, featureFlagsIDKey)
+
+	patterns := []struct {
+		desc     string
+		setup    func(*featuresCache)
+		input    string
+		expected error
+	}{
+		{
+			desc: "success",
+			setup: func(fc *featuresCache) {
+				fc.cache.(*cachemock.MockCache).EXPECT().Put(key, id, featureFlagsCacheTTL).Return(nil)
+			},
+			input:    id,
+			expected: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			fc := newFeaturesCache(t, mockController)
+			p.setup(fc)
+			err := fc.PutFeatureFlagsID(p.input)
+			assert.Equal(t, p.expected, err)
+		})
+	}
+}
+
+func TestGetRequestedAt(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	timestamp := time.Now().Unix()
+	key := fmt.Sprintf("%s:%s", featureFlagsPrefix, requestedAtKey)
+
+	patterns := []struct {
+		desc        string
+		setup       func(*featuresCache)
+		expected    int64
+		expectedErr error
+	}{
+		{
+			desc: "error: not found",
+			setup: func(fc *featuresCache) {
+				fc.cache.(*cachemock.MockCache).EXPECT().Get(key).Return(nil, ErrNotFound)
+			},
+			expected:    0,
+			expectedErr: ErrNotFound,
+		},
+		{
+			desc: "error: invalid type",
+			setup: func(fc *featuresCache) {
+				fc.cache.(*cachemock.MockCache).EXPECT().Get(key).Return(1, nil)
+			},
+			expected:    0,
+			expectedErr: ErrInvalidType,
+		},
+		{
+			desc: "success",
+			setup: func(fc *featuresCache) {
+				fc.cache.(*cachemock.MockCache).EXPECT().Get(key).Return(timestamp, nil)
+			},
+			expected:    timestamp,
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			fc := newFeaturesCache(t, mockController)
+			p.setup(fc)
+			timestamp, err := fc.GetRequestedAt()
+			assert.Equal(t, p.expected, timestamp)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestPutRequestedAt(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	timestamp := time.Now().Unix()
+	key := fmt.Sprintf("%s:%s", featureFlagsPrefix, requestedAtKey)
+
+	patterns := []struct {
+		desc     string
+		setup    func(*featuresCache)
+		input    int64
+		expected error
+	}{
+		{
+			desc: "success",
+			setup: func(fc *featuresCache) {
+				fc.cache.(*cachemock.MockCache).EXPECT().Put(key, timestamp, featureFlagsCacheTTL).Return(nil)
+			},
+			input:    timestamp,
+			expected: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			fc := newFeaturesCache(t, mockController)
+			p.setup(fc)
+			err := fc.PutRequestedAt(p.input)
 			assert.Equal(t, p.expected, err)
 		})
 	}

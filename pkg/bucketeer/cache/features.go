@@ -24,13 +24,35 @@ import (
 )
 
 const (
-	featureFlagsPrefix = "bucketeer_feature_flags"
-	featureFlagsTTL    = time.Duration(0)
+	featureFlagsIDKey    = "id"
+	featureFlagPrefix    = "bucketeer_feature_flag"
+	featureFlagsPrefix   = "bucketeer_feature_flags"
+	featureFlagsCacheTTL = time.Duration(0)
+	requestedAtKey       = "requested_at"
 )
 
 type FeaturesCache interface {
-	Get(id string) (*ftproto.Feature, error)
-	Put(feature *ftproto.Feature) error
+	// Get the feature flag by ID
+	GetFeatureFlag(id string) (*ftproto.Feature, error)
+
+	// Save a feature flag
+	PutFeatureFlag(feature *ftproto.Feature) error
+
+	// Get the feature flags ID.
+	// This ID represents a combination of all the features
+	// saved in the cache. If the cache changes, the ID will change, too.
+	// This ID is used when requesting the latest cache from the server.
+	GetFeatureFlagsID() (string, error)
+
+	// Save the feature flags ID
+	PutFeatureFlagsID(id string) error
+
+	// Get the last request timestamp returned from the server
+	// This timestamp is used when requesting the latest cache from the server.
+	GetRequestedAt() (int64, error)
+
+	// Save the last request timestamp
+	PutRequestedAt(timestamp int64) error
 }
 
 type featuresCache struct {
@@ -41,8 +63,8 @@ func NewFeaturesCache(c Cache) FeaturesCache {
 	return &featuresCache{cache: c}
 }
 
-func (c *featuresCache) Get(id string) (*ftproto.Feature, error) {
-	key := c.newKey(id)
+func (c *featuresCache) GetFeatureFlag(id string) (*ftproto.Feature, error) {
+	key := fmt.Sprintf("%s:%s", featureFlagPrefix, id)
 	value, err := c.cache.Get(key)
 	if err != nil {
 		return nil, err
@@ -59,7 +81,7 @@ func (c *featuresCache) Get(id string) (*ftproto.Feature, error) {
 	return feature, nil
 }
 
-func (c *featuresCache) Put(feature *ftproto.Feature) error {
+func (c *featuresCache) PutFeatureFlag(feature *ftproto.Feature) error {
 	buffer, err := proto.Marshal(feature)
 	if err != nil {
 		return ErrFailedToMarshalProto
@@ -67,10 +89,42 @@ func (c *featuresCache) Put(feature *ftproto.Feature) error {
 	if buffer == nil {
 		return ErrProtoMessageNil
 	}
-	key := c.newKey(feature.Id)
-	return c.cache.Put(key, buffer, featureFlagsTTL)
+	key := fmt.Sprintf("%s:%s", featureFlagPrefix, feature.Id)
+	return c.cache.Put(key, buffer, featureFlagsCacheTTL)
 }
 
-func (c *featuresCache) newKey(id string) string {
-	return fmt.Sprintf("%s:%s", featureFlagsPrefix, id)
+func (c *featuresCache) GetFeatureFlagsID() (string, error) {
+	key := fmt.Sprintf("%s:%s", featureFlagsPrefix, featureFlagsIDKey)
+	value, err := c.cache.Get(key)
+	if err != nil {
+		return "", err
+	}
+	v, err := String(value)
+	if err != nil {
+		return "", ErrInvalidType
+	}
+	return v, nil
+}
+
+func (c *featuresCache) PutFeatureFlagsID(id string) error {
+	key := fmt.Sprintf("%s:%s", featureFlagsPrefix, featureFlagsIDKey)
+	return c.cache.Put(key, id, featureFlagsCacheTTL)
+}
+
+func (c *featuresCache) GetRequestedAt() (int64, error) {
+	key := fmt.Sprintf("%s:%s", featureFlagsPrefix, requestedAtKey)
+	value, err := c.cache.Get(key)
+	if err != nil {
+		return 0, err
+	}
+	v, err := Int64(value)
+	if err != nil {
+		return 0, ErrInvalidType
+	}
+	return v, nil
+}
+
+func (c *featuresCache) PutRequestedAt(timestamp int64) error {
+	key := fmt.Sprintf("%s:%s", featureFlagsPrefix, requestedAtKey)
+	return c.cache.Put(key, timestamp, featureFlagsCacheTTL)
 }

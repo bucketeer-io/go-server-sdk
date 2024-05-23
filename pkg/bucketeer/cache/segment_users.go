@@ -24,13 +24,24 @@ import (
 )
 
 const (
-	segmentUsersFlagsKind = "bucketeer_segment_users"
-	segmentUsersFlagsTTL  = time.Duration(0)
+	segmentUsersFlagsPrefix   = "bucketeer_segment_users"
+	segmentUsersFlagsTTL      = time.Duration(0)
+	segmentUserRequestedAtKey = "requested_at"
 )
 
 type SegmentUsersCache interface {
-	Get(segmentID string) (*ftproto.SegmentUsers, error)
-	Put(segmentUsers *ftproto.SegmentUsers) error
+	// Get the segment users by segment ID
+	GetSegmentUsers(segmentID string) (*ftproto.SegmentUsers, error)
+
+	// Save the segment users by segment ID
+	PutSegmentUsers(segmentUsers *ftproto.SegmentUsers) error
+
+	// Get the last request timestamp returned from the server
+	// This timestamp is used when requesting the latest cache from the server.
+	GetRequestedAt() (int64, error)
+
+	// Save the last request timestamp
+	PutRequestedAt(timestamp int64) error
 }
 
 type segmentUsersCache struct {
@@ -41,8 +52,8 @@ func NewSegmentUsersCache(c Cache) SegmentUsersCache {
 	return &segmentUsersCache{cache: c}
 }
 
-func (c *segmentUsersCache) Get(segmentID string) (*ftproto.SegmentUsers, error) {
-	key := c.newKey(segmentID)
+func (c *segmentUsersCache) GetSegmentUsers(segmentID string) (*ftproto.SegmentUsers, error) {
+	key := fmt.Sprintf("%s:%s", segmentUsersFlagsPrefix, segmentID)
 	value, err := c.cache.Get(key)
 	if err != nil {
 		return nil, err
@@ -59,7 +70,7 @@ func (c *segmentUsersCache) Get(segmentID string) (*ftproto.SegmentUsers, error)
 	return segmentUsers, nil
 }
 
-func (c *segmentUsersCache) Put(segmentUsers *ftproto.SegmentUsers) error {
+func (c *segmentUsersCache) PutSegmentUsers(segmentUsers *ftproto.SegmentUsers) error {
 	buffer, err := proto.Marshal(segmentUsers)
 	if err != nil {
 		return ErrFailedToMarshalProto
@@ -67,10 +78,24 @@ func (c *segmentUsersCache) Put(segmentUsers *ftproto.SegmentUsers) error {
 	if buffer == nil {
 		return ErrProtoMessageNil
 	}
-	key := c.newKey(segmentUsers.SegmentId)
+	key := fmt.Sprintf("%s:%s", segmentUsersFlagsPrefix, segmentUsers.SegmentId)
 	return c.cache.Put(key, buffer, segmentUsersFlagsTTL)
 }
 
-func (c *segmentUsersCache) newKey(segmentID string) string {
-	return fmt.Sprintf("%s:%s", segmentUsersFlagsKind, segmentID)
+func (c *segmentUsersCache) GetRequestedAt() (int64, error) {
+	key := fmt.Sprintf("%s:%s", segmentUsersFlagsPrefix, segmentUserRequestedAtKey)
+	value, err := c.cache.Get(key)
+	if err != nil {
+		return 0, err
+	}
+	v, err := Int64(value)
+	if err != nil {
+		return 0, ErrInvalidType
+	}
+	return v, nil
+}
+
+func (c *segmentUsersCache) PutRequestedAt(timestamp int64) error {
+	key := fmt.Sprintf("%s:%s", segmentUsersFlagsPrefix, segmentUserRequestedAtKey)
+	return c.cache.Put(key, timestamp, featureFlagsCacheTTL)
 }

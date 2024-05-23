@@ -44,3 +44,19 @@ func Bytes(value interface{}) ([]byte, error) {
 	}
 	return b, nil
 }
+
+func String(value interface{}) (string, error) {
+	s, ok := value.(string)
+	if !ok {
+		return "", ErrInvalidType
+	}
+	return s, nil
+}
+
+func Int64(value interface{}) (int64, error) {
+	i, ok := value.(int64)
+	if !ok {
+		return 0, ErrInvalidType
+	}
+	return i, nil
+}

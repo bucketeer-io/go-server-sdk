@@ -17,6 +17,7 @@ package cache
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	"github.com/stretchr/testify/assert"
@@ -37,7 +38,7 @@ func TestGetSegmentUsers(t *testing.T) {
 
 	segmentUsers := createSegmentUsers(t)
 	dataSegmentUsers := marshalMessage(t, segmentUsers)
-	key := fmt.Sprintf("%s:%s", segmentUsersFlagsKind, segmentID)
+	key := fmt.Sprintf("%s:%s", segmentUsersFlagsPrefix, segmentID)
 
 	patterns := []struct {
 		desc        string
@@ -82,7 +83,7 @@ func TestGetSegmentUsers(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			suc := newSegmentUsersCache(t, mockController)
 			p.setup(suc)
-			segmentUsers, err := suc.Get(segmentID)
+			segmentUsers, err := suc.GetSegmentUsers(segmentID)
 			assert.True(t, proto.Equal(p.expected, segmentUsers))
 			assert.Equal(t, p.expectedErr, err)
 		})
@@ -96,7 +97,7 @@ func TestPutSegmentUsers(t *testing.T) {
 
 	segmentUsers := createSegmentUsers(t)
 	dataSegmentUsers := marshalMessage(t, segmentUsers)
-	key := fmt.Sprintf("%s:%s", segmentUsersFlagsKind, segmentID)
+	key := fmt.Sprintf("%s:%s", segmentUsersFlagsPrefix, segmentID)
 
 	patterns := []struct {
 		desc     string
@@ -125,7 +126,90 @@ func TestPutSegmentUsers(t *testing.T) {
 			if p.setup != nil {
 				p.setup(suc)
 			}
-			err := suc.Put(p.input)
+			err := suc.PutSegmentUsers(p.input)
+			assert.Equal(t, p.expected, err)
+		})
+	}
+}
+
+func TestGetSegmentUsersRequestedAt(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	timestamp := time.Now().Unix()
+	key := fmt.Sprintf("%s:%s", segmentUsersFlagsPrefix, segmentUserRequestedAtKey)
+
+	patterns := []struct {
+		desc        string
+		setup       func(*segmentUsersCache)
+		expected    int64
+		expectedErr error
+	}{
+		{
+			desc: "error: not found",
+			setup: func(suc *segmentUsersCache) {
+				suc.cache.(*cachemock.MockCache).EXPECT().Get(key).Return(nil, ErrNotFound)
+			},
+			expected:    0,
+			expectedErr: ErrNotFound,
+		},
+		{
+			desc: "error: invalid type",
+			setup: func(suc *segmentUsersCache) {
+				suc.cache.(*cachemock.MockCache).EXPECT().Get(key).Return(1, nil)
+			},
+			expected:    0,
+			expectedErr: ErrInvalidType,
+		},
+		{
+			desc: "success",
+			setup: func(suc *segmentUsersCache) {
+				suc.cache.(*cachemock.MockCache).EXPECT().Get(key).Return(timestamp, nil)
+			},
+			expected:    timestamp,
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			suc := newSegmentUsersCache(t, mockController)
+			p.setup(suc)
+			timestamp, err := suc.GetRequestedAt()
+			assert.Equal(t, p.expected, timestamp)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
+func TestPutSegmentUsersRequestedAt(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	timestamp := time.Now().Unix()
+	key := fmt.Sprintf("%s:%s", segmentUsersFlagsPrefix, segmentUserRequestedAtKey)
+
+	patterns := []struct {
+		desc     string
+		setup    func(*segmentUsersCache)
+		input    int64
+		expected error
+	}{
+		{
+			desc: "success",
+			setup: func(suc *segmentUsersCache) {
+				suc.cache.(*cachemock.MockCache).EXPECT().Put(key, timestamp, segmentUsersFlagsTTL).Return(nil)
+			},
+			input:    timestamp,
+			expected: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			suc := newSegmentUsersCache(t, mockController)
+			p.setup(suc)
+			err := suc.PutRequestedAt(p.input)
 			assert.Equal(t, p.expected, err)
 		})
 	}
