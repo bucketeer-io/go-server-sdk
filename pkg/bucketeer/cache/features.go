@@ -24,13 +24,13 @@ import (
 )
 
 const (
-	featureFlagsKind = "bucketeer_feature_flags"
-	featureFlagsTTL  = time.Duration(0)
+	featureFlagsPrefix = "bucketeer_feature_flags"
+	featureFlagsTTL    = time.Duration(0)
 )
 
 type FeaturesCache interface {
-	Get(tag string) (*ftproto.Features, error)
-	Put(tag string, features *ftproto.Features) error
+	Get(id string) (*ftproto.Feature, error)
+	Put(feature *ftproto.Feature) error
 }
 
 type featuresCache struct {
@@ -41,8 +41,8 @@ func NewFeaturesCache(c Cache) FeaturesCache {
 	return &featuresCache{cache: c}
 }
 
-func (c *featuresCache) Get(tag string) (*ftproto.Features, error) {
-	key := c.newKey(tag)
+func (c *featuresCache) Get(id string) (*ftproto.Feature, error) {
+	key := c.newKey(id)
 	value, err := c.cache.Get(key)
 	if err != nil {
 		return nil, err
@@ -51,29 +51,26 @@ func (c *featuresCache) Get(tag string) (*ftproto.Features, error) {
 	if err != nil {
 		return nil, ErrInvalidType
 	}
-	features := &ftproto.Features{}
-	err = proto.Unmarshal(buffer, features)
+	feature := &ftproto.Feature{}
+	err = proto.Unmarshal(buffer, feature)
 	if err != nil {
 		return nil, ErrFailedToUnmarshalProto
 	}
-	return features, nil
+	return feature, nil
 }
 
-func (c *featuresCache) Put(tag string, features *ftproto.Features) error {
-	buffer, err := proto.Marshal(features)
+func (c *featuresCache) Put(feature *ftproto.Feature) error {
+	buffer, err := proto.Marshal(feature)
 	if err != nil {
 		return ErrFailedToMarshalProto
 	}
 	if buffer == nil {
 		return ErrProtoMessageNil
 	}
-	key := c.newKey(tag)
+	key := c.newKey(feature.Id)
 	return c.cache.Put(key, buffer, featureFlagsTTL)
 }
 
-func (c *featuresCache) newKey(tag string) string {
-	if tag == "" {
-		tag = "no_tag"
-	}
-	return fmt.Sprintf("%s:%s", featureFlagsKind, tag)
+func (c *featuresCache) newKey(id string) string {
+	return fmt.Sprintf("%s:%s", featureFlagsPrefix, id)
 }

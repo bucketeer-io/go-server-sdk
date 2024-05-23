@@ -27,23 +27,20 @@ import (
 	cachemock "github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/cache/mock"
 )
 
-const (
-	tag = "bucketeer-tag"
-)
-
 func TestGetFeatures(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	features := createFeatures(t)
-	dataFeatures := marshalMessage(t, features)
-	key := fmt.Sprintf("%s:%s", featureFlagsKind, tag)
+	features := createFeatures(t, 1)
+	id := features[0].Id
+	dataFeatures := marshalMessage(t, features[0])
+	key := fmt.Sprintf("%s:%s", featureFlagsPrefix, id)
 
 	patterns := []struct {
 		desc        string
 		setup       func(*featuresCache)
-		expected    *ftproto.Features
+		expected    *ftproto.Feature
 		expectedErr error
 	}{
 		{
@@ -75,7 +72,7 @@ func TestGetFeatures(t *testing.T) {
 			setup: func(fc *featuresCache) {
 				fc.cache.(*cachemock.MockCache).EXPECT().Get(key).Return(dataFeatures, nil)
 			},
-			expected:    features,
+			expected:    features[0],
 			expectedErr: nil,
 		},
 	}
@@ -83,7 +80,7 @@ func TestGetFeatures(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			fc := newFeaturesCache(t, mockController)
 			p.setup(fc)
-			features, err := fc.Get(tag)
+			features, err := fc.Get(id)
 			assert.True(t, proto.Equal(p.expected, features))
 			assert.Equal(t, p.expectedErr, err)
 		})
@@ -95,14 +92,14 @@ func TestPutFeatures(t *testing.T) {
 	mockController := gomock.NewController(t)
 	defer mockController.Finish()
 
-	features := createFeatures(t)
-	dataFeatures := marshalMessage(t, features)
-	key := fmt.Sprintf("%s:%s", featureFlagsKind, tag)
+	features := createFeatures(t, 1)
+	dataFeatures := marshalMessage(t, features[0])
+	key := fmt.Sprintf("%s:%s", featureFlagsPrefix, features[0].Id)
 
 	patterns := []struct {
 		desc     string
 		setup    func(*featuresCache)
-		input    *ftproto.Features
+		input    *ftproto.Feature
 		expected error
 	}{
 		{
@@ -116,7 +113,7 @@ func TestPutFeatures(t *testing.T) {
 			setup: func(fc *featuresCache) {
 				fc.cache.(*cachemock.MockCache).EXPECT().Put(key, dataFeatures, featureFlagsTTL).Return(nil)
 			},
-			input:    features,
+			input:    features[0],
 			expected: nil,
 		},
 	}
@@ -126,26 +123,23 @@ func TestPutFeatures(t *testing.T) {
 			if p.setup != nil {
 				p.setup(fc)
 			}
-			err := fc.Put(tag, p.input)
+			err := fc.Put(p.input)
 			assert.Equal(t, p.expected, err)
 		})
 	}
 }
 
-func createFeatures(t *testing.T) *ftproto.Features {
+func createFeatures(t *testing.T, size int) []*ftproto.Feature {
 	t.Helper()
 	f := []*ftproto.Feature{}
-	for i := 0; i < 5; i++ {
+	for i := 0; i < size; i++ {
 		feature := &ftproto.Feature{
 			Id:   fmt.Sprintf("feature-id-%d", i),
 			Name: fmt.Sprintf("feature-name-%d", i),
 		}
 		f = append(f, feature)
 	}
-	return &ftproto.Features{
-		Id:       "feature-flags-id",
-		Features: f,
-	}
+	return f
 }
 
 func marshalMessage(t *testing.T, pb proto.Message) interface{} {
