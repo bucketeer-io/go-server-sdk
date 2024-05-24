@@ -34,31 +34,89 @@ func (m *MockFeaturesCache) EXPECT() *MockFeaturesCacheMockRecorder {
 	return m.recorder
 }
 
-// Get mocks base method.
-func (m *MockFeaturesCache) Get(tag string) (*feature.Features, error) {
+// GetFeatureFlag mocks base method.
+func (m *MockFeaturesCache) GetFeatureFlag(id string) (*feature.Feature, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", tag)
-	ret0, _ := ret[0].(*feature.Features)
+	ret := m.ctrl.Call(m, "GetFeatureFlag", id)
+	ret0, _ := ret[0].(*feature.Feature)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Get indicates an expected call of Get.
-func (mr *MockFeaturesCacheMockRecorder) Get(tag interface{}) *gomock.Call {
+// GetFeatureFlag indicates an expected call of GetFeatureFlag.
+func (mr *MockFeaturesCacheMockRecorder) GetFeatureFlag(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockFeaturesCache)(nil).Get), tag)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureFlag", reflect.TypeOf((*MockFeaturesCache)(nil).GetFeatureFlag), id)
 }
 
-// Put mocks base method.
-func (m *MockFeaturesCache) Put(tag string, features *feature.Features) error {
+// GetFeatureFlagsID mocks base method.
+func (m *MockFeaturesCache) GetFeatureFlagsID() (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Put", tag, features)
+	ret := m.ctrl.Call(m, "GetFeatureFlagsID")
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFeatureFlagsID indicates an expected call of GetFeatureFlagsID.
+func (mr *MockFeaturesCacheMockRecorder) GetFeatureFlagsID() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureFlagsID", reflect.TypeOf((*MockFeaturesCache)(nil).GetFeatureFlagsID))
+}
+
+// GetRequestedAt mocks base method.
+func (m *MockFeaturesCache) GetRequestedAt() (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRequestedAt")
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetRequestedAt indicates an expected call of GetRequestedAt.
+func (mr *MockFeaturesCacheMockRecorder) GetRequestedAt() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRequestedAt", reflect.TypeOf((*MockFeaturesCache)(nil).GetRequestedAt))
+}
+
+// PutFeatureFlag mocks base method.
+func (m *MockFeaturesCache) PutFeatureFlag(feature *feature.Feature) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PutFeatureFlag", feature)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// Put indicates an expected call of Put.
-func (mr *MockFeaturesCacheMockRecorder) Put(tag, features interface{}) *gomock.Call {
+// PutFeatureFlag indicates an expected call of PutFeatureFlag.
+func (mr *MockFeaturesCacheMockRecorder) PutFeatureFlag(feature interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockFeaturesCache)(nil).Put), tag, features)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutFeatureFlag", reflect.TypeOf((*MockFeaturesCache)(nil).PutFeatureFlag), feature)
+}
+
+// PutFeatureFlagsID mocks base method.
+func (m *MockFeaturesCache) PutFeatureFlagsID(id string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PutFeatureFlagsID", id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PutFeatureFlagsID indicates an expected call of PutFeatureFlagsID.
+func (mr *MockFeaturesCacheMockRecorder) PutFeatureFlagsID(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutFeatureFlagsID", reflect.TypeOf((*MockFeaturesCache)(nil).PutFeatureFlagsID), id)
+}
+
+// PutRequestedAt mocks base method.
+func (m *MockFeaturesCache) PutRequestedAt(timestamp int64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PutRequestedAt", timestamp)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PutRequestedAt indicates an expected call of PutRequestedAt.
+func (mr *MockFeaturesCacheMockRecorder) PutRequestedAt(timestamp interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutRequestedAt", reflect.TypeOf((*MockFeaturesCache)(nil).PutRequestedAt), timestamp)
 }

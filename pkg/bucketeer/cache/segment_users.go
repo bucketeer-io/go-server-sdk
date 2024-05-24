@@ -17,6 +17,7 @@ package cache
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -26,7 +27,7 @@ import (
 const (
 	segmentUsersFlagsPrefix   = "bucketeer_segment_users"
 	segmentUsersFlagsTTL      = time.Duration(0)
-	segmentUserRequestedAtKey = "requested_at"
+	segmentUserRequestedAtKey = "bucketeer_segment_users_requested_at"
 )
 
 type SegmentUsersCache interface {
@@ -42,6 +43,11 @@ type SegmentUsersCache interface {
 
 	// Save the last request timestamp
 	PutRequestedAt(timestamp int64) error
+
+	// Get all the segment IDs found in the cache.
+	// This IDs are used when requesting the latest cache from the server.
+	// It allows the server to compare and detect what segment was deleted.
+	GetSegmentIDs() ([]string, error)
 }
 
 type segmentUsersCache struct {
@@ -83,8 +89,7 @@ func (c *segmentUsersCache) PutSegmentUsers(segmentUsers *ftproto.SegmentUsers) 
 }
 
 func (c *segmentUsersCache) GetRequestedAt() (int64, error) {
-	key := fmt.Sprintf("%s:%s", segmentUsersFlagsPrefix, segmentUserRequestedAtKey)
-	value, err := c.cache.Get(key)
+	value, err := c.cache.Get(segmentUserRequestedAtKey)
 	if err != nil {
 		return 0, err
 	}
@@ -96,6 +101,20 @@ func (c *segmentUsersCache) GetRequestedAt() (int64, error) {
 }
 
 func (c *segmentUsersCache) PutRequestedAt(timestamp int64) error {
-	key := fmt.Sprintf("%s:%s", segmentUsersFlagsPrefix, segmentUserRequestedAtKey)
-	return c.cache.Put(key, timestamp, featureFlagsCacheTTL)
+	return c.cache.Put(segmentUserRequestedAtKey, timestamp, featureFlagsCacheTTL)
+}
+
+func (c *segmentUsersCache) GetSegmentIDs() ([]string, error) {
+	prefix := fmt.Sprintf("%s:", segmentUsersFlagsPrefix)
+	// Scan all keys by prefix
+	ids, err := c.cache.Scan(prefix)
+	if err != nil {
+		return nil, err
+	}
+	// Remove the prefix from the key
+	removedPrefixIDs := make([]string, 0, len(ids))
+	for _, id := range ids {
+		removedPrefixIDs = append(removedPrefixIDs, strings.TrimPrefix(id, prefix))
+	}
+	return removedPrefixIDs, nil
 }

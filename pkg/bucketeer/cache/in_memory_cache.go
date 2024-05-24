@@ -16,6 +16,7 @@
 package cache
 
 import (
+	"strings"
 	"sync"
 	"time"
 )
@@ -38,6 +39,8 @@ type inMemoryCache struct {
 type InMemoryCache interface {
 	Get(key interface{}) (interface{}, error)
 	Put(key, value interface{}, expiration time.Duration) error
+	Scan(keyPrefix string) ([]string, error)
+	Delete(key interface{})
 	Destroy()
 }
 
@@ -103,6 +106,26 @@ func (c *inMemoryCache) Put(key, value interface{}, expiration time.Duration) er
 		expiration: time.Now().Add(expiration),
 	})
 	return nil
+}
+
+func (c *inMemoryCache) Scan(keyPrefix string) ([]string, error) {
+	keys := make([]string, 0)
+	c.entries.Range(func(key, value interface{}) bool {
+		k, ok := key.(string)
+		if !ok {
+			// Ignore if the key is not a string
+			return true
+		}
+		if strings.HasPrefix(k, keyPrefix) {
+			keys = append(keys, k)
+		}
+		return true
+	})
+	return keys, nil
+}
+
+func (c *inMemoryCache) Delete(key interface{}) {
+	c.entries.Delete(key)
 }
 
 func (c *inMemoryCache) Destroy() {

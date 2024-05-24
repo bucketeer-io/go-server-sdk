@@ -23,6 +23,7 @@ type Cache interface {
 	Getter
 	Putter
 	Deleter
+	Scanner
 }
 
 type Getter interface {
@@ -34,7 +35,11 @@ type Putter interface {
 }
 
 type Deleter interface {
-	Delete(key string) error
+	Delete(key interface{})
+}
+
+type Scanner interface {
+	Scan(keyPrefix string) ([]string, error)
 }
 
 func Bytes(value interface{}) ([]byte, error) {

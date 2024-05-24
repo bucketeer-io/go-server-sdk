@@ -34,6 +34,18 @@ func (m *MockInMemoryCache) EXPECT() *MockInMemoryCacheMockRecorder {
 	return m.recorder
 }
 
+// Delete mocks base method.
+func (m *MockInMemoryCache) Delete(key interface{}) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Delete", key)
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockInMemoryCacheMockRecorder) Delete(key interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockInMemoryCache)(nil).Delete), key)
+}
+
 // Destroy mocks base method.
 func (m *MockInMemoryCache) Destroy() {
 	m.ctrl.T.Helper()
@@ -73,4 +85,19 @@ func (m *MockInMemoryCache) Put(key, value interface{}, expiration time.Duration
 func (mr *MockInMemoryCacheMockRecorder) Put(key, value, expiration interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockInMemoryCache)(nil).Put), key, value, expiration)
+}
+
+// Scan mocks base method.
+func (m *MockInMemoryCache) Scan(keyPrefix string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Scan", keyPrefix)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Scan indicates an expected call of Scan.
+func (mr *MockInMemoryCacheMockRecorder) Scan(keyPrefix interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Scan", reflect.TypeOf((*MockInMemoryCache)(nil).Scan), keyPrefix)
 }

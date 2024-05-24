@@ -35,11 +35,9 @@ func (m *MockCache) EXPECT() *MockCacheMockRecorder {
 }
 
 // Delete mocks base method.
-func (m *MockCache) Delete(key string) error {
+func (m *MockCache) Delete(key interface{}) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", key)
-	ret0, _ := ret[0].(error)
-	return ret0
+	m.ctrl.Call(m, "Delete", key)
 }
 
 // Delete indicates an expected call of Delete.
@@ -75,6 +73,21 @@ func (m *MockCache) Put(key, value interface{}, expiration time.Duration) error 
 func (mr *MockCacheMockRecorder) Put(key, value, expiration interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockCache)(nil).Put), key, value, expiration)
+}
+
+// Scan mocks base method.
+func (m *MockCache) Scan(keyPrefix string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Scan", keyPrefix)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Scan indicates an expected call of Scan.
+func (mr *MockCacheMockRecorder) Scan(keyPrefix interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Scan", reflect.TypeOf((*MockCache)(nil).Scan), keyPrefix)
 }
 
 // MockGetter is a mock of Getter interface.
@@ -176,15 +189,51 @@ func (m *MockDeleter) EXPECT() *MockDeleterMockRecorder {
 }
 
 // Delete mocks base method.
-func (m *MockDeleter) Delete(key string) error {
+func (m *MockDeleter) Delete(key interface{}) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", key)
-	ret0, _ := ret[0].(error)
-	return ret0
+	m.ctrl.Call(m, "Delete", key)
 }
 
 // Delete indicates an expected call of Delete.
 func (mr *MockDeleterMockRecorder) Delete(key interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockDeleter)(nil).Delete), key)
+}
+
+// MockScanner is a mock of Scanner interface.
+type MockScanner struct {
+	ctrl     *gomock.Controller
+	recorder *MockScannerMockRecorder
+}
+
+// MockScannerMockRecorder is the mock recorder for MockScanner.
+type MockScannerMockRecorder struct {
+	mock *MockScanner
+}
+
+// NewMockScanner creates a new mock instance.
+func NewMockScanner(ctrl *gomock.Controller) *MockScanner {
+	mock := &MockScanner{ctrl: ctrl}
+	mock.recorder = &MockScannerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockScanner) EXPECT() *MockScannerMockRecorder {
+	return m.recorder
+}
+
+// Scan mocks base method.
+func (m *MockScanner) Scan(keyPrefix string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Scan", keyPrefix)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Scan indicates an expected call of Scan.
+func (mr *MockScannerMockRecorder) Scan(keyPrefix interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Scan", reflect.TypeOf((*MockScanner)(nil).Scan), keyPrefix)
 }
