@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/api"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/log"

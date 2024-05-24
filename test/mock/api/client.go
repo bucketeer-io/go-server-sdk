@@ -8,7 +8,7 @@ import (
 	reflect "reflect"
 
 	gateway "github.com/bucketeer-io/bucketeer/proto/gateway"
-	gomock "github.com/golang/mock/gomock"
+	gomock "go.uber.org/mock/gomock"
 
 	model "github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 )

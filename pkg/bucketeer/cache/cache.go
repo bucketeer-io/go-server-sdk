@@ -16,19 +16,14 @@
 package cache
 
 import (
-	"errors"
 	"time"
-)
-
-var (
-	ErrNotFound    = errors.New("cache: not found")
-	ErrInvalidType = errors.New("cache: invalid type")
 )
 
 type Cache interface {
 	Getter
 	Putter
 	Deleter
+	Scanner
 }
 
 type Getter interface {
@@ -40,5 +35,33 @@ type Putter interface {
 }
 
 type Deleter interface {
-	Delete(key string) error
+	Delete(key interface{})
+}
+
+type Scanner interface {
+	Scan(keyPrefix string) ([]string, error)
+}
+
+func Bytes(value interface{}) ([]byte, error) {
+	b, ok := value.([]byte)
+	if !ok {
+		return nil, ErrInvalidType
+	}
+	return b, nil
+}
+
+func String(value interface{}) (string, error) {
+	s, ok := value.(string)
+	if !ok {
+		return "", ErrInvalidType
+	}
+	return s, nil
+}
+
+func Int64(value interface{}) (int64, error) {
+	i, ok := value.(int64)
+	if !ok {
+		return 0, ErrInvalidType
+	}
+	return i, nil
 }
