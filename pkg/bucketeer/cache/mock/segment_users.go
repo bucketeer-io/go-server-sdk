@@ -34,75 +34,31 @@ func (m *MockSegmentUsersCache) EXPECT() *MockSegmentUsersCacheMockRecorder {
 	return m.recorder
 }
 
-// GetRequestedAt mocks base method.
-func (m *MockSegmentUsersCache) GetRequestedAt() (int64, error) {
+// Get mocks base method.
+func (m *MockSegmentUsersCache) Get(segmentID string) (*feature.SegmentUsers, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetRequestedAt")
-	ret0, _ := ret[0].(int64)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetRequestedAt indicates an expected call of GetRequestedAt.
-func (mr *MockSegmentUsersCacheMockRecorder) GetRequestedAt() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRequestedAt", reflect.TypeOf((*MockSegmentUsersCache)(nil).GetRequestedAt))
-}
-
-// GetSegmentIDs mocks base method.
-func (m *MockSegmentUsersCache) GetSegmentIDs() ([]string, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSegmentIDs")
-	ret0, _ := ret[0].([]string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// GetSegmentIDs indicates an expected call of GetSegmentIDs.
-func (mr *MockSegmentUsersCacheMockRecorder) GetSegmentIDs() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSegmentIDs", reflect.TypeOf((*MockSegmentUsersCache)(nil).GetSegmentIDs))
-}
-
-// GetSegmentUsers mocks base method.
-func (m *MockSegmentUsersCache) GetSegmentUsers(segmentID string) (*feature.SegmentUsers, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSegmentUsers", segmentID)
+	ret := m.ctrl.Call(m, "Get", segmentID)
 	ret0, _ := ret[0].(*feature.SegmentUsers)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetSegmentUsers indicates an expected call of GetSegmentUsers.
-func (mr *MockSegmentUsersCacheMockRecorder) GetSegmentUsers(segmentID interface{}) *gomock.Call {
+// Get indicates an expected call of Get.
+func (mr *MockSegmentUsersCacheMockRecorder) Get(segmentID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSegmentUsers", reflect.TypeOf((*MockSegmentUsersCache)(nil).GetSegmentUsers), segmentID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockSegmentUsersCache)(nil).Get), segmentID)
 }
 
-// PutRequestedAt mocks base method.
-func (m *MockSegmentUsersCache) PutRequestedAt(timestamp int64) error {
+// Put mocks base method.
+func (m *MockSegmentUsersCache) Put(segmentUsers *feature.SegmentUsers) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PutRequestedAt", timestamp)
+	ret := m.ctrl.Call(m, "Put", segmentUsers)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// PutRequestedAt indicates an expected call of PutRequestedAt.
-func (mr *MockSegmentUsersCacheMockRecorder) PutRequestedAt(timestamp interface{}) *gomock.Call {
+// Put indicates an expected call of Put.
+func (mr *MockSegmentUsersCacheMockRecorder) Put(segmentUsers interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutRequestedAt", reflect.TypeOf((*MockSegmentUsersCache)(nil).PutRequestedAt), timestamp)
-}
-
-// PutSegmentUsers mocks base method.
-func (m *MockSegmentUsersCache) PutSegmentUsers(segmentUsers *feature.SegmentUsers) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PutSegmentUsers", segmentUsers)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// PutSegmentUsers indicates an expected call of PutSegmentUsers.
-func (mr *MockSegmentUsersCacheMockRecorder) PutSegmentUsers(segmentUsers interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PutSegmentUsers", reflect.TypeOf((*MockSegmentUsersCache)(nil).PutSegmentUsers), segmentUsers)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Put", reflect.TypeOf((*MockSegmentUsersCache)(nil).Put), segmentUsers)
 }

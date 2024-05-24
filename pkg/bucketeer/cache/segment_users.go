@@ -17,7 +17,6 @@ package cache
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -25,29 +24,16 @@ import (
 )
 
 const (
-	segmentUsersFlagsPrefix   = "bucketeer_segment_users"
-	segmentUsersFlagsTTL      = time.Duration(0)
-	segmentUserRequestedAtKey = "bucketeer_segment_users_requested_at"
+	segmentUsersFlagsPrefix = "bucketeer_segment_users"
+	segmentUsersFlagsTTL    = time.Duration(0)
 )
 
 type SegmentUsersCache interface {
 	// Get the segment users by segment ID
-	GetSegmentUsers(segmentID string) (*ftproto.SegmentUsers, error)
+	Get(segmentID string) (*ftproto.SegmentUsers, error)
 
 	// Save the segment users by segment ID
-	PutSegmentUsers(segmentUsers *ftproto.SegmentUsers) error
-
-	// Get the last request timestamp returned from the server
-	// This timestamp is used when requesting the latest cache from the server.
-	GetRequestedAt() (int64, error)
-
-	// Save the last request timestamp
-	PutRequestedAt(timestamp int64) error
-
-	// Get all the segment IDs found in the cache.
-	// This IDs are used when requesting the latest cache from the server.
-	// It allows the server to compare and detect what segment was deleted.
-	GetSegmentIDs() ([]string, error)
+	Put(segmentUsers *ftproto.SegmentUsers) error
 }
 
 type segmentUsersCache struct {
@@ -58,7 +44,7 @@ func NewSegmentUsersCache(c Cache) SegmentUsersCache {
 	return &segmentUsersCache{cache: c}
 }
 
-func (c *segmentUsersCache) GetSegmentUsers(segmentID string) (*ftproto.SegmentUsers, error) {
+func (c *segmentUsersCache) Get(segmentID string) (*ftproto.SegmentUsers, error) {
 	key := fmt.Sprintf("%s:%s", segmentUsersFlagsPrefix, segmentID)
 	value, err := c.cache.Get(key)
 	if err != nil {
@@ -76,7 +62,7 @@ func (c *segmentUsersCache) GetSegmentUsers(segmentID string) (*ftproto.SegmentU
 	return segmentUsers, nil
 }
 
-func (c *segmentUsersCache) PutSegmentUsers(segmentUsers *ftproto.SegmentUsers) error {
+func (c *segmentUsersCache) Put(segmentUsers *ftproto.SegmentUsers) error {
 	buffer, err := proto.Marshal(segmentUsers)
 	if err != nil {
 		return ErrFailedToMarshalProto
@@ -86,35 +72,4 @@ func (c *segmentUsersCache) PutSegmentUsers(segmentUsers *ftproto.SegmentUsers) 
 	}
 	key := fmt.Sprintf("%s:%s", segmentUsersFlagsPrefix, segmentUsers.SegmentId)
 	return c.cache.Put(key, buffer, segmentUsersFlagsTTL)
-}
-
-func (c *segmentUsersCache) GetRequestedAt() (int64, error) {
-	value, err := c.cache.Get(segmentUserRequestedAtKey)
-	if err != nil {
-		return 0, err
-	}
-	v, err := Int64(value)
-	if err != nil {
-		return 0, ErrInvalidType
-	}
-	return v, nil
-}
-
-func (c *segmentUsersCache) PutRequestedAt(timestamp int64) error {
-	return c.cache.Put(segmentUserRequestedAtKey, timestamp, featureFlagsCacheTTL)
-}
-
-func (c *segmentUsersCache) GetSegmentIDs() ([]string, error) {
-	prefix := fmt.Sprintf("%s:", segmentUsersFlagsPrefix)
-	// Scan all keys by prefix
-	ids, err := c.cache.Scan(prefix)
-	if err != nil {
-		return nil, err
-	}
-	// Remove the prefix from the key
-	removedPrefixIDs := make([]string, 0, len(ids))
-	for _, id := range ids {
-		removedPrefixIDs = append(removedPrefixIDs, strings.TrimPrefix(id, prefix))
-	}
-	return removedPrefixIDs, nil
 }

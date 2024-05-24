@@ -17,7 +17,6 @@ package cache
 import (
 	"fmt"
 	"testing"
-	"time"
 
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	"github.com/stretchr/testify/assert"
@@ -81,7 +80,7 @@ func TestGetFeatureFlag(t *testing.T) {
 		t.Run(p.desc, func(t *testing.T) {
 			fc := newFeaturesCache(t, mockController)
 			p.setup(fc)
-			features, err := fc.GetFeatureFlag(id)
+			features, err := fc.Get(id)
 			assert.True(t, proto.Equal(p.expected, features))
 			assert.Equal(t, p.expectedErr, err)
 		})
@@ -124,172 +123,7 @@ func TestPutFeaturesFlag(t *testing.T) {
 			if p.setup != nil {
 				p.setup(fc)
 			}
-			err := fc.PutFeatureFlag(p.input)
-			assert.Equal(t, p.expected, err)
-		})
-	}
-}
-
-func TestGetFeatureFlagsID(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	id := "feature-flags-id"
-	key := fmt.Sprintf("%s:%s", featureFlagsPrefix, featureFlagsIDKey)
-	patterns := []struct {
-		desc        string
-		setup       func(*featuresCache)
-		expected    string
-		expectedErr error
-	}{
-		{
-			desc: "error: not found",
-			setup: func(fc *featuresCache) {
-				fc.cache.(*cachemock.MockCache).EXPECT().Get(key).Return(nil, ErrNotFound)
-			},
-			expected:    "",
-			expectedErr: ErrNotFound,
-		},
-		{
-			desc: "error: invalid type",
-			setup: func(fc *featuresCache) {
-				fc.cache.(*cachemock.MockCache).EXPECT().Get(key).Return(1, nil)
-			},
-			expected:    "",
-			expectedErr: ErrInvalidType,
-		},
-		{
-			desc: "success",
-			setup: func(fc *featuresCache) {
-				fc.cache.(*cachemock.MockCache).EXPECT().Get(key).Return(id, nil)
-			},
-			expected:    id,
-			expectedErr: nil,
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			fc := newFeaturesCache(t, mockController)
-			p.setup(fc)
-			id, err := fc.GetFeatureFlagsID()
-			assert.Equal(t, p.expected, id)
-			assert.Equal(t, p.expectedErr, err)
-		})
-	}
-}
-
-func TestPutFeatureFlagsID(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	id := "feature-flags-id"
-	key := fmt.Sprintf("%s:%s", featureFlagsPrefix, featureFlagsIDKey)
-
-	patterns := []struct {
-		desc     string
-		setup    func(*featuresCache)
-		input    string
-		expected error
-	}{
-		{
-			desc: "success",
-			setup: func(fc *featuresCache) {
-				fc.cache.(*cachemock.MockCache).EXPECT().Put(key, id, featureFlagsCacheTTL).Return(nil)
-			},
-			input:    id,
-			expected: nil,
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			fc := newFeaturesCache(t, mockController)
-			p.setup(fc)
-			err := fc.PutFeatureFlagsID(p.input)
-			assert.Equal(t, p.expected, err)
-		})
-	}
-}
-
-func TestGetRequestedAt(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	timestamp := time.Now().Unix()
-	key := fmt.Sprintf("%s:%s", featureFlagsPrefix, requestedAtKey)
-
-	patterns := []struct {
-		desc        string
-		setup       func(*featuresCache)
-		expected    int64
-		expectedErr error
-	}{
-		{
-			desc: "error: not found",
-			setup: func(fc *featuresCache) {
-				fc.cache.(*cachemock.MockCache).EXPECT().Get(key).Return(nil, ErrNotFound)
-			},
-			expected:    0,
-			expectedErr: ErrNotFound,
-		},
-		{
-			desc: "error: invalid type",
-			setup: func(fc *featuresCache) {
-				fc.cache.(*cachemock.MockCache).EXPECT().Get(key).Return(1, nil)
-			},
-			expected:    0,
-			expectedErr: ErrInvalidType,
-		},
-		{
-			desc: "success",
-			setup: func(fc *featuresCache) {
-				fc.cache.(*cachemock.MockCache).EXPECT().Get(key).Return(timestamp, nil)
-			},
-			expected:    timestamp,
-			expectedErr: nil,
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			fc := newFeaturesCache(t, mockController)
-			p.setup(fc)
-			timestamp, err := fc.GetRequestedAt()
-			assert.Equal(t, p.expected, timestamp)
-			assert.Equal(t, p.expectedErr, err)
-		})
-	}
-}
-
-func TestPutRequestedAt(t *testing.T) {
-	t.Parallel()
-	mockController := gomock.NewController(t)
-	defer mockController.Finish()
-
-	timestamp := time.Now().Unix()
-	key := fmt.Sprintf("%s:%s", featureFlagsPrefix, requestedAtKey)
-
-	patterns := []struct {
-		desc     string
-		setup    func(*featuresCache)
-		input    int64
-		expected error
-	}{
-		{
-			desc: "success",
-			setup: func(fc *featuresCache) {
-				fc.cache.(*cachemock.MockCache).EXPECT().Put(key, timestamp, featureFlagsCacheTTL).Return(nil)
-			},
-			input:    timestamp,
-			expected: nil,
-		},
-	}
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			fc := newFeaturesCache(t, mockController)
-			p.setup(fc)
-			err := fc.PutRequestedAt(p.input)
+			err := fc.Put(p.input)
 			assert.Equal(t, p.expected, err)
 		})
 	}
