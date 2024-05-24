@@ -34,6 +34,12 @@ type FeaturesCache interface {
 
 	// Save a feature flag
 	Put(feature *ftproto.Feature) error
+
+	// Delete a feature flag
+	Delete(id string)
+
+	// Delete all the feature flags
+	DeleteAll() error
 }
 
 type featuresCache struct {
@@ -72,4 +78,20 @@ func (c *featuresCache) Put(feature *ftproto.Feature) error {
 	}
 	key := fmt.Sprintf("%s:%s", featureFlagPrefix, feature.Id)
 	return c.cache.Put(key, buffer, featureFlagsCacheTTL)
+}
+
+func (c *featuresCache) Delete(id string) {
+	c.cache.Delete(id)
+}
+
+func (c *featuresCache) DeleteAll() error {
+	keyPrefix := fmt.Sprintf("%s:", featureFlagPrefix)
+	keys, err := c.cache.Scan(keyPrefix)
+	if err != nil {
+		return err
+	}
+	for _, key := range keys {
+		c.cache.Delete(key)
+	}
+	return nil
 }
