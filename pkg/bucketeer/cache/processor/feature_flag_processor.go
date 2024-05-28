@@ -2,9 +2,6 @@
 package processor
 
 import (
-	"context"
-	"fmt"
-	"sync"
 	"time"
 
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -20,11 +17,11 @@ import (
 // In the background, the Processor polls the latest feature flags from the server,
 // and updates them in the local cache.
 type FeatureFlagProcessor interface {
-	// Get all the feature flags by tag
-	GetFeatureFlag(id string) (*ftproto.Feature, error)
+	// Run the processor to poll the latest cache from the server
+	Run()
 
 	// Close tears down all Processor activities, after ensuring that all events have been delivered.
-	Close(ctx context.Context) error
+	Close()
 }
 
 type processor struct {
@@ -32,10 +29,9 @@ type processor struct {
 	featureFlagsCache cache.FeaturesCache
 	pollingInterval   time.Duration
 	apiClient         api.Client
-	loggers           *log.Loggers
-	closeCh           chan struct{}
-	workerWG          sync.WaitGroup
 	tag               string
+	closeCh           chan struct{}
+	loggers           *log.Loggers
 }
 
 // ProcessorConfig is the config for Processor.
@@ -63,47 +59,37 @@ const (
 	featureFlagsRequestedAtKey = "bucketeer_feature_flags_requested_at"
 )
 
-func NewFeatureFlagProcessor(ctx context.Context, conf *FeatureFlagProcessorConfig) FeatureFlagProcessor {
+func NewFeatureFlagProcessor(conf *FeatureFlagProcessorConfig) FeatureFlagProcessor {
 	p := &processor{
 		cache:             conf.Cache,
 		featureFlagsCache: cache.NewFeaturesCache(conf.Cache),
 		pollingInterval:   conf.PollingInterval,
 		apiClient:         conf.APIClient,
-		loggers:           conf.Loggers,
-		closeCh:           make(chan struct{}),
 		tag:               conf.Tag,
+		closeCh:           make(chan struct{}),
+		loggers:           conf.Loggers,
 	}
-	go p.startWorker(ctx)
 	return p
 }
 
-func (p *processor) GetFeatureFlag(id string) (*ftproto.Feature, error) {
-	return p.featureFlagsCache.Get(id)
+func (p *processor) Run() {
+	go p.runProcessLoop()
 }
 
-func (p *processor) Close(ctx context.Context) error {
-	select {
-	case <-p.closeCh:
-		return nil
-	case <-ctx.Done():
-		return fmt.Errorf("bucketeer/cache: ctx is canceled: %v", ctx.Err())
-	}
+func (p *processor) Close() {
+	p.closeCh <- struct{}{}
 }
 
-func (p *processor) startWorker(ctx context.Context) {
-	p.workerWG.Add(1)
-	go p.runWorkerProcessLoop(ctx)
-	p.workerWG.Wait()
-	close(p.closeCh)
-}
-
-func (p *processor) runWorkerProcessLoop(ctx context.Context) {
+func (p *processor) runProcessLoop() {
 	defer func() {
-		p.loggers.Debug("bucketeer/cache: runWorkerProcessLoop done")
-		p.workerWG.Done()
+		p.loggers.Debug("bucketeer/cache: runProcessLoop done")
 	}()
 	ticker := time.NewTicker(p.pollingInterval)
 	defer ticker.Stop()
+	// Update the cache once when starts polling
+	if err := p.updateCache(); err != nil {
+		p.loggers.Errorf("bucketeer/cache: failed to update feature flags cache. Error: %v", err)
+	}
 	for {
 		select {
 		case <-ticker.C:
@@ -111,7 +97,7 @@ func (p *processor) runWorkerProcessLoop(ctx context.Context) {
 				p.loggers.Errorf("bucketeer/cache: failed to update feature flags cache. Error: %v", err)
 				continue
 			}
-		case <-ctx.Done():
+		case <-p.closeCh:
 			return
 		}
 	}
@@ -120,11 +106,17 @@ func (p *processor) runWorkerProcessLoop(ctx context.Context) {
 func (p *processor) updateCache() error {
 	ftsID, err := p.getFeatureFlagsID()
 	if err != nil {
-		return err
+		if err != cache.ErrNotFound {
+			return err
+		}
+		p.loggers.Debug("bucketeer/cache: updateCache featureFlagsID not found")
 	}
 	requestedAt, err := p.getFeatureFlagsRequestedAt()
 	if err != nil {
-		return err
+		if err != cache.ErrNotFound {
+			return err
+		}
+		p.loggers.Debug("bucketeer/cache: updateCache requestedAt not found")
 	}
 	req := model.NewGetFeatureFlagsRequest(
 		p.tag,
@@ -132,10 +124,11 @@ func (p *processor) updateCache() error {
 		requestedAt,
 	)
 	// Get the latest cache from the server
-	resp, _, err := p.apiClient.GetFeatureFlags(req)
+	resp, size, err := p.apiClient.GetFeatureFlags(req)
 	if err != nil {
 		return err
 	}
+	p.loggers.Debugf("bucketeer/cache: GetFeatureFlags response: %v, size: %d", resp, size)
 	// Delete all the local cache and save the new one
 	if resp.ForceUpdate {
 		return p.deleteAllAndSaveLocalCache(resp.FeatureFlagsId, resp.RequestedAt, resp.Features)
@@ -149,6 +142,8 @@ func (p *processor) updateCache() error {
 	)
 }
 
+// This will delete all the flags in the cache,
+// and save the new one return from the server.
 func (p *processor) deleteAllAndSaveLocalCache(
 	featureFlagsID string,
 	requestedAt int64,
@@ -175,6 +170,7 @@ func (p *processor) deleteAllAndSaveLocalCache(
 	return nil
 }
 
+// This will update the target flags, and delete the archived flags from the cache
 func (p *processor) updateLocalCache(
 	featureFlagsID string,
 	requestedAt int64,
