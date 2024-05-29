@@ -2,6 +2,7 @@
 package processor
 
 import (
+	"errors"
 	"time"
 
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -106,14 +107,14 @@ func (p *processor) runProcessLoop() {
 func (p *processor) updateCache() error {
 	ftsID, err := p.getFeatureFlagsID()
 	if err != nil {
-		if err != cache.ErrNotFound {
+		if !errors.Is(err, cache.ErrNotFound) {
 			return err
 		}
 		p.loggers.Debug("bucketeer/cache: updateCache featureFlagsID not found")
 	}
 	requestedAt, err := p.getFeatureFlagsRequestedAt()
 	if err != nil {
-		if err != cache.ErrNotFound {
+		if !errors.Is(err, cache.ErrNotFound) {
 			return err
 		}
 		p.loggers.Debug("bucketeer/cache: updateCache requestedAt not found")
