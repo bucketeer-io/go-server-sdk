@@ -34,6 +34,32 @@ func (m *MockFeaturesCache) EXPECT() *MockFeaturesCacheMockRecorder {
 	return m.recorder
 }
 
+// Delete mocks base method.
+func (m *MockFeaturesCache) Delete(id string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Delete", id)
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockFeaturesCacheMockRecorder) Delete(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockFeaturesCache)(nil).Delete), id)
+}
+
+// DeleteAll mocks base method.
+func (m *MockFeaturesCache) DeleteAll() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteAll")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteAll indicates an expected call of DeleteAll.
+func (mr *MockFeaturesCacheMockRecorder) DeleteAll() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAll", reflect.TypeOf((*MockFeaturesCache)(nil).DeleteAll))
+}
+
 // Get mocks base method.
 func (m *MockFeaturesCache) Get(id string) (*feature.Feature, error) {
 	m.ctrl.T.Helper()

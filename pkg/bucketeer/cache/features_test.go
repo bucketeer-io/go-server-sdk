@@ -15,6 +15,7 @@
 package cache
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -125,6 +126,45 @@ func TestPutFeaturesFlag(t *testing.T) {
 			}
 			err := fc.Put(p.input)
 			assert.Equal(t, p.expected, err)
+		})
+	}
+}
+
+// This function also tests the `Delete` interface
+func TestDeleteAll(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	ftIDs := []string{"id-1", "id-2"}
+	keyPrefix := fmt.Sprintf("%s:", featureFlagPrefix)
+	patterns := []struct {
+		desc     string
+		setup    func(*featuresCache)
+		expected error
+	}{
+		{
+			desc: "error: internal error",
+			setup: func(fc *featuresCache) {
+				fc.cache.(*cachemock.MockCache).EXPECT().Scan(keyPrefix).Return(nil, errors.New("internal error"))
+			},
+			expected: errors.New("internal error"),
+		},
+		{
+			desc: "success",
+			setup: func(fc *featuresCache) {
+				fc.cache.(*cachemock.MockCache).EXPECT().Scan(keyPrefix).Return(ftIDs, nil)
+				fc.cache.(*cachemock.MockCache).EXPECT().Delete(ftIDs[0])
+				fc.cache.(*cachemock.MockCache).EXPECT().Delete(ftIDs[1])
+			},
+			expected: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			fc := newFeaturesCache(t, mockController)
+			p.setup(fc)
+			assert.Equal(t, p.expected, fc.DeleteAll())
 		})
 	}
 }
