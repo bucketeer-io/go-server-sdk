@@ -126,7 +126,7 @@ func (p *segmentUserProcessor) updateCache() error {
 	if resp.ForceUpdate {
 		return p.deleteAllAndSaveLocalCache(resp.RequestedAt, resp.SegmentUsers)
 	}
-	// Update only the updated flags
+	// Update only the updated segment users
 	return p.updateLocalCache(
 		resp.RequestedAt,
 		resp.SegmentUsers,
@@ -134,17 +134,17 @@ func (p *segmentUserProcessor) updateCache() error {
 	)
 }
 
-// This will delete all the flags in the cache,
+// This will delete all the segment users in the cache,
 // and save the new one return from the server.
 func (p *segmentUserProcessor) deleteAllAndSaveLocalCache(
 	requestedAt int64,
 	segments []*ftproto.SegmentUsers,
 ) error {
-	// Delete all the old flags
+	// Delete all the old segment users
 	if err := p.segmentUsersCache.DeleteAll(); err != nil {
 		return err
 	}
-	// Save the new flags
+	// Save the new segment users
 	for _, s := range segments {
 		if err := p.segmentUsersCache.Put(s); err != nil {
 			return err
@@ -157,19 +157,19 @@ func (p *segmentUserProcessor) deleteAllAndSaveLocalCache(
 	return nil
 }
 
-// This will update the target flags, and delete the archived flags from the cache
+// This will update the updated and deleted segment users from the cache
 func (p *segmentUserProcessor) updateLocalCache(
 	requestedAt int64,
 	segments []*ftproto.SegmentUsers,
 	deletedSegmentIDs []string,
 ) error {
-	// Update the updated flags
+	// Update the updated segment users
 	for _, s := range segments {
 		if err := p.segmentUsersCache.Put(s); err != nil {
 			return err
 		}
 	}
-	// Delete the archived flags
+	// Delete the archived segment users
 	for _, sID := range deletedSegmentIDs {
 		p.segmentUsersCache.Delete(sID)
 	}
