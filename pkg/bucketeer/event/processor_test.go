@@ -37,7 +37,7 @@ func TestPushEvaluationEvent(t *testing.T) {
 	p := newProcessorForTestPushEvent(t, 10)
 	user := newUser(t, processorUserID)
 	evaluation := newEvaluation(t, processorFeatureID, processorVariationID)
-	p.PushEvaluationEvent(context.Background(), user, evaluation)
+	p.PushEvaluationEvent(user, evaluation)
 	evt := <-p.evtQueue.eventCh()
 	e := &model.EvaluationEvent{}
 	err := json.Unmarshal(evt.Event, e)
@@ -57,7 +57,7 @@ func TestPushDefaultEvaluationEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	user := newUser(t, processorUserID)
-	p.PushDefaultEvaluationEvent(context.Background(), user, processorFeatureID)
+	p.PushDefaultEvaluationEvent(user, processorFeatureID)
 	evt := <-p.evtQueue.eventCh()
 	e := &model.EvaluationEvent{}
 	err := json.Unmarshal(evt.Event, e)
@@ -77,7 +77,7 @@ func TestPushGoalEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	user := newUser(t, processorUserID)
-	p.PushGoalEvent(context.Background(), user, processorGoalID, 1.1)
+	p.PushGoalEvent(user, processorGoalID, 1.1)
 	evt := <-p.evtQueue.eventCh()
 	e := &model.GoalEvent{}
 	err := json.Unmarshal(evt.Event, e)
@@ -96,7 +96,7 @@ func TestPushLatencyMetricsEvent(t *testing.T) {
 	p := newProcessorForTestPushEvent(t, 10)
 	t1 := time.Date(2020, 12, 25, 0, 0, 0, 0, time.UTC)
 	t2 := time.Date(2020, 12, 26, 0, 0, 0, 0, time.UTC)
-	p.PushLatencyMetricsEvent(context.Background(), t2.Sub(t1), model.GetEvaluation)
+	p.PushLatencyMetricsEvent(t2.Sub(t1), model.GetEvaluation)
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
@@ -113,7 +113,7 @@ func TestPushLatencyMetricsEvent(t *testing.T) {
 func TestPushSizeMetricsEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.PushSizeMetricsEvent(context.Background(), 1, model.GetEvaluation)
+	p.PushSizeMetricsEvent(1, model.GetEvaluation)
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
@@ -130,7 +130,7 @@ func TestPushSizeMetricsEvent(t *testing.T) {
 func TestPushTimeoutErrorMetricsEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.pushTimeoutErrorMetricsEvent(context.Background(), model.GetEvaluation)
+	p.pushTimeoutErrorMetricsEvent(model.GetEvaluation)
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
@@ -143,7 +143,7 @@ func TestPushTimeoutErrorMetricsEvent(t *testing.T) {
 func TestPushInternalSDKErrorMetricsEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.pushInternalSDKErrorMetricsEvent(context.Background(), model.GetEvaluation, errors.New("error"))
+	p.pushInternalSDKErrorMetricsEvent(model.GetEvaluation, errors.New("error"))
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
@@ -158,7 +158,7 @@ func TestPushInternalSDKErrorMetricsEvent(t *testing.T) {
 func TestPushErrorStatusCodeMetricsEventInternalServerError(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusInternalServerError, errors.New("InternalServerError"))
+	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, http.StatusInternalServerError, errors.New("InternalServerError"))
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
@@ -173,7 +173,7 @@ func TestPushErrorStatusCodeMetricsEventInternalServerError(t *testing.T) {
 func TestPushErrorStatusCodeMetricsEventMethodNotAllowed(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusMethodNotAllowed, errors.New("MethodNotAllowed"))
+	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, http.StatusMethodNotAllowed, errors.New("MethodNotAllowed"))
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
@@ -188,7 +188,7 @@ func TestPushErrorStatusCodeMetricsEventMethodNotAllowed(t *testing.T) {
 func TestPushErrorStatusCodeMetricsEventRequestTimeout(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusRequestTimeout, errors.New("StatusRequestTimeout"))
+	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, http.StatusRequestTimeout, errors.New("StatusRequestTimeout"))
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
@@ -203,7 +203,7 @@ func TestPushErrorStatusCodeMetricsEventRequestTimeout(t *testing.T) {
 func TestPushErrorStatusCodeMetricsEventRequestEntityTooLarge(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusRequestEntityTooLarge, errors.New("StatusRequestEntityTooLarge"))
+	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, http.StatusRequestEntityTooLarge, errors.New("StatusRequestEntityTooLarge"))
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
@@ -218,7 +218,7 @@ func TestPushErrorStatusCodeMetricsEventRequestEntityTooLarge(t *testing.T) {
 func TestPushErrorStatusCodeMetricsEventBadGateway(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, http.StatusBadGateway, errors.New("StatusBadGateway"))
+	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, http.StatusBadGateway, errors.New("StatusBadGateway"))
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
@@ -233,7 +233,7 @@ func TestPushErrorStatusCodeMetricsEventBadGateway(t *testing.T) {
 func TestPushErrorStatusCodeMetricsEventRedirectionRequestError(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, 333, errors.New("333 error"))
+	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, 333, errors.New("333 error"))
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
@@ -248,7 +248,7 @@ func TestPushErrorStatusCodeMetricsEventRedirectionRequestError(t *testing.T) {
 func TestPushErrorStatusCodeMetricsEventUnknownError(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
-	p.pushErrorStatusCodeMetricsEvent(context.Background(), model.GetEvaluation, 999, errors.New("999 error"))
+	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, 999, errors.New("999 error"))
 	evt := <-p.evtQueue.eventCh()
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
@@ -278,7 +278,7 @@ func TestPushErrorEventWhenNetworkError(t *testing.T) {
 	for _, pt := range patterns {
 		t.Run(pt.desc, func(t *testing.T) {
 			p := newProcessorForTestPushEvent(t, 10)
-			p.PushErrorEvent(context.Background(), pt.err, model.RegisterEvents)
+			p.PushErrorEvent(pt.err, model.RegisterEvents)
 			evt := <-p.evtQueue.eventCh()
 			metricsEvt := &model.MetricsEvent{}
 			err := json.Unmarshal(evt.Event, metricsEvt)
@@ -307,7 +307,7 @@ func TestPushErrorEventWhenInternalSDKError(t *testing.T) {
 	for _, pt := range patterns {
 		t.Run(pt.desc, func(t *testing.T) {
 			p := newProcessorForTestPushEvent(t, 10)
-			p.PushErrorEvent(context.Background(), pt.err, model.RegisterEvents)
+			p.PushErrorEvent(pt.err, model.RegisterEvents)
 			evt := <-p.evtQueue.eventCh()
 			metricsEvt := &model.MetricsEvent{}
 			err := json.Unmarshal(evt.Event, metricsEvt)
@@ -340,7 +340,7 @@ func TestPushErrorEventWhenTimeoutErr(t *testing.T) {
 	for _, pt := range patterns {
 		t.Run(pt.desc, func(t *testing.T) {
 			p := newProcessorForTestPushEvent(t, 10)
-			p.PushErrorEvent(context.Background(), pt.err, model.RegisterEvents)
+			p.PushErrorEvent(pt.err, model.RegisterEvents)
 			evt := <-p.evtQueue.eventCh()
 			metricsEvt := &model.MetricsEvent{}
 			err := json.Unmarshal(evt.Event, metricsEvt)
@@ -369,7 +369,7 @@ func TestPushErrorEventWhenOtherStatus(t *testing.T) {
 	for _, pt := range patterns {
 		t.Run(pt.desc, func(t *testing.T) {
 			p := newProcessorForTestPushEvent(t, 10)
-			p.PushErrorEvent(context.Background(), pt.err, model.RegisterEvents)
+			p.PushErrorEvent(pt.err, model.RegisterEvents)
 			evt := <-p.evtQueue.eventCh()
 			metricsEvt := &model.MetricsEvent{}
 			err := json.Unmarshal(evt.Event, metricsEvt)
