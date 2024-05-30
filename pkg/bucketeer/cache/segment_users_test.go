@@ -15,6 +15,7 @@
 package cache
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 
@@ -34,7 +35,7 @@ func TestGetSegmentUsers(t *testing.T) {
 	segmentID := "segment-id"
 	segmentUsers := createSegmentUsers(t, segmentID, 3)
 	dataSegmentUsers := marshalMessage(t, segmentUsers)
-	key := fmt.Sprintf("%s:%s", segmentUsersFlagsPrefix, segmentID)
+	key := fmt.Sprintf("%s:%s", segmentUsersPrefix, segmentID)
 
 	patterns := []struct {
 		desc        string
@@ -86,6 +87,86 @@ func TestGetSegmentUsers(t *testing.T) {
 	}
 }
 
+func TestGetSegmentIDs(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	segmentID := "segment-id"
+	segmentUsers := createSegmentUsers(t, segmentID, 3)
+	dataSegmentUsers := marshalMessage(t, segmentUsers)
+	key := fmt.Sprintf("%s:%s", segmentUsersPrefix, segmentID)
+	keyPrefix := fmt.Sprintf("%s:", segmentUsersPrefix)
+	internalErr := errors.New("internal error")
+	patterns := []struct {
+		desc        string
+		setup       func(*segmentUsersCache)
+		expected    []string
+		expectedErr error
+	}{
+		{
+			desc: "error: scan internal error",
+			setup: func(suc *segmentUsersCache) {
+				suc.cache.(*cachemock.MockCache).EXPECT().Scan(keyPrefix).Return(nil, internalErr)
+			},
+			expected:    nil,
+			expectedErr: internalErr,
+		},
+		{
+			desc: "error: scan not found",
+			setup: func(suc *segmentUsersCache) {
+				suc.cache.(*cachemock.MockCache).EXPECT().Scan(keyPrefix).Return(nil, ErrNotFound)
+			},
+			expected:    nil,
+			expectedErr: ErrNotFound,
+		},
+		{
+			desc: "error: get internal error",
+			setup: func(suc *segmentUsersCache) {
+				suc.cache.(*cachemock.MockCache).EXPECT().Scan(keyPrefix).Return([]string{key}, nil)
+				suc.cache.(*cachemock.MockCache).EXPECT().Get(key).Return(nil, internalErr)
+			},
+			expected:    nil,
+			expectedErr: internalErr,
+		},
+		{
+			desc: "error: get not found",
+			setup: func(suc *segmentUsersCache) {
+				suc.cache.(*cachemock.MockCache).EXPECT().Scan(keyPrefix).Return([]string{key}, nil)
+				suc.cache.(*cachemock.MockCache).EXPECT().Get(key).Return(nil, ErrNotFound)
+			},
+			expected:    nil,
+			expectedErr: ErrNotFound,
+		},
+		{
+			desc: "success: empty result",
+			setup: func(suc *segmentUsersCache) {
+				suc.cache.(*cachemock.MockCache).EXPECT().Scan(keyPrefix).Return(make([]string, 0), nil)
+			},
+			expected:    make([]string, 0),
+			expectedErr: nil,
+		},
+		{
+			desc: "success",
+			setup: func(suc *segmentUsersCache) {
+				suc.cache.(*cachemock.MockCache).EXPECT().Scan(keyPrefix).Return([]string{key}, nil)
+				suc.cache.(*cachemock.MockCache).EXPECT().Get(key).Return(dataSegmentUsers, nil)
+			},
+			expected:    []string{segmentUsers.SegmentId},
+			expectedErr: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			suc := newMockSegmentUsersCache(t, mockController)
+			p.setup(suc)
+			segmentUsers, err := suc.GetSegmentIDs()
+			assert.Equal(t, p.expected, segmentUsers)
+			assert.Equal(t, p.expectedErr, err)
+		})
+	}
+}
+
 func TestPutSegmentUsers(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)
@@ -94,7 +175,7 @@ func TestPutSegmentUsers(t *testing.T) {
 	segmentID := "segment-id"
 	segmentUsers := createSegmentUsers(t, segmentID, 3)
 	dataSegmentUsers := marshalMessage(t, segmentUsers)
-	key := fmt.Sprintf("%s:%s", segmentUsersFlagsPrefix, segmentID)
+	key := fmt.Sprintf("%s:%s", segmentUsersPrefix, segmentID)
 
 	patterns := []struct {
 		desc     string
@@ -111,7 +192,7 @@ func TestPutSegmentUsers(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(suc *segmentUsersCache) {
-				suc.cache.(*cachemock.MockCache).EXPECT().Put(key, dataSegmentUsers, segmentUsersFlagsTTL).Return(nil)
+				suc.cache.(*cachemock.MockCache).EXPECT().Put(key, dataSegmentUsers, segmentUsersTTL).Return(nil)
 			},
 			input:    segmentUsers,
 			expected: nil,
@@ -125,6 +206,45 @@ func TestPutSegmentUsers(t *testing.T) {
 			}
 			err := suc.Put(p.input)
 			assert.Equal(t, p.expected, err)
+		})
+	}
+}
+
+// This function also tests the `Delete` interface
+func TestSegmentUsersDeleteAll(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	segIDs := []string{"id-1", "id-2"}
+	keyPrefix := fmt.Sprintf("%s:", segmentUsersPrefix)
+	patterns := []struct {
+		desc     string
+		setup    func(*segmentUsersCache)
+		expected error
+	}{
+		{
+			desc: "error: internal error",
+			setup: func(suc *segmentUsersCache) {
+				suc.cache.(*cachemock.MockCache).EXPECT().Scan(keyPrefix).Return(nil, errors.New("internal error"))
+			},
+			expected: errors.New("internal error"),
+		},
+		{
+			desc: "success",
+			setup: func(suc *segmentUsersCache) {
+				suc.cache.(*cachemock.MockCache).EXPECT().Scan(keyPrefix).Return(segIDs, nil)
+				suc.cache.(*cachemock.MockCache).EXPECT().Delete(segIDs[0])
+				suc.cache.(*cachemock.MockCache).EXPECT().Delete(segIDs[1])
+			},
+			expected: nil,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			suc := newMockSegmentUsersCache(t, mockController)
+			p.setup(suc)
+			assert.Equal(t, p.expected, suc.DeleteAll())
 		})
 	}
 }

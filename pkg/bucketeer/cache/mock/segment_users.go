@@ -34,6 +34,32 @@ func (m *MockSegmentUsersCache) EXPECT() *MockSegmentUsersCacheMockRecorder {
 	return m.recorder
 }
 
+// Delete mocks base method.
+func (m *MockSegmentUsersCache) Delete(id string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Delete", id)
+}
+
+// Delete indicates an expected call of Delete.
+func (mr *MockSegmentUsersCacheMockRecorder) Delete(id interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockSegmentUsersCache)(nil).Delete), id)
+}
+
+// DeleteAll mocks base method.
+func (m *MockSegmentUsersCache) DeleteAll() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteAll")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteAll indicates an expected call of DeleteAll.
+func (mr *MockSegmentUsersCacheMockRecorder) DeleteAll() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAll", reflect.TypeOf((*MockSegmentUsersCache)(nil).DeleteAll))
+}
+
 // Get mocks base method.
 func (m *MockSegmentUsersCache) Get(segmentID string) (*feature.SegmentUsers, error) {
 	m.ctrl.T.Helper()
@@ -47,6 +73,21 @@ func (m *MockSegmentUsersCache) Get(segmentID string) (*feature.SegmentUsers, er
 func (mr *MockSegmentUsersCacheMockRecorder) Get(segmentID interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockSegmentUsersCache)(nil).Get), segmentID)
+}
+
+// GetSegmentIDs mocks base method.
+func (m *MockSegmentUsersCache) GetSegmentIDs() ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSegmentIDs")
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetSegmentIDs indicates an expected call of GetSegmentIDs.
+func (mr *MockSegmentUsersCacheMockRecorder) GetSegmentIDs() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSegmentIDs", reflect.TypeOf((*MockSegmentUsersCache)(nil).GetSegmentIDs))
 }
 
 // Put mocks base method.
