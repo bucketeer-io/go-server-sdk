@@ -88,6 +88,20 @@ func (mr *MockProcessorMockRecorder) PushEvaluationEvent(ctx, user, evaluation i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushEvaluationEvent", reflect.TypeOf((*MockProcessor)(nil).PushEvaluationEvent), ctx, user, evaluation)
 }
 
+// PushEvent mocks base method.
+func (m *MockProcessor) PushEvent(encoded []byte) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PushEvent", encoded)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// PushEvent indicates an expected call of PushEvent.
+func (mr *MockProcessorMockRecorder) PushEvent(encoded interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushEvent", reflect.TypeOf((*MockProcessor)(nil).PushEvent), encoded)
+}
+
 // PushGoalEvent mocks base method.
 func (m *MockProcessor) PushGoalEvent(ctx context.Context, user *user.User, GoalID string, value float64) {
 	m.ctrl.T.Helper()

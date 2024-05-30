@@ -408,7 +408,7 @@ func TestPushEvent(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			p := newProcessorForTestPushEvent(t, tt.eventQueueCapacity)
-			err := p.pushEvent(tt.encodedEvt)
+			err := p.PushEvent(tt.encodedEvt)
 			if tt.isErr {
 				assert.Error(t, err)
 			} else {
