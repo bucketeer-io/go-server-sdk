@@ -48,6 +48,9 @@ type Processor interface {
 
 	// PushErrorEvent pushes the error event to the queue.
 	PushErrorEvent(ctx context.Context, err error, api model.APIID)
+
+	// PushEvent pushes events to the queue.
+	PushEvent(encoded []byte) error
 }
 
 type processor struct {
@@ -142,7 +145,7 @@ func (p *processor) PushEvaluationEvent(
 		)
 		return
 	}
-	if err := p.pushEvent(encodedEvaluationEvt); err != nil {
+	if err := p.PushEvent(encodedEvaluationEvt); err != nil {
 		p.loggers.Errorf(
 			"bucketeer/event: PushEvaluationEvent failed (err: %v, UserID: %s, featureID: %s)",
 			err,
@@ -172,7 +175,7 @@ func (p *processor) PushDefaultEvaluationEvent(ctx context.Context, user *user.U
 		)
 		return
 	}
-	if err := p.pushEvent(encodedEvaluationEvt); err != nil {
+	if err := p.PushEvent(encodedEvaluationEvt); err != nil {
 		p.loggers.Errorf(
 			"bucketeer/event: PushDefaultEvaluationEvent failed (err: %v, UserID: %s, featureID: %s)",
 			err,
@@ -196,7 +199,7 @@ func (p *processor) PushGoalEvent(ctx context.Context, user *user.User, GoalID s
 		)
 		return
 	}
-	if err := p.pushEvent(encodedGoalEvt); err != nil {
+	if err := p.PushEvent(encodedGoalEvt); err != nil {
 		p.loggers.Errorf(
 			"bucketeer/event: PushGoalEvent failed (err: %v, UserID: %s, GoalID: %s, value: %g)",
 			err,
@@ -221,7 +224,7 @@ func (p *processor) PushLatencyMetricsEvent(ctx context.Context, duration time.D
 		p.loggers.Errorf("bucketeer/event: PushLatencyMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
-	if err := p.pushEvent(encodedMetricsEvt); err != nil {
+	if err := p.PushEvent(encodedMetricsEvt); err != nil {
 		p.loggers.Errorf("bucketeer/event: PushLatencyMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
@@ -240,7 +243,7 @@ func (p *processor) PushSizeMetricsEvent(ctx context.Context, sizeByte int, api 
 		p.loggers.Errorf("bucketeer/event: PushSizeMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
-	if err := p.pushEvent(encodedMetricsEvt); err != nil {
+	if err := p.PushEvent(encodedMetricsEvt); err != nil {
 		p.loggers.Errorf("bucketeer/event: PushSizeMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
@@ -260,7 +263,7 @@ func (p *processor) pushTimeoutErrorMetricsEvent(ctx context.Context, api model.
 		p.loggers.Errorf("bucketeer/event: pushTimeoutErrorMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
-	if err := p.pushEvent(encodedMetricsEvt); err != nil {
+	if err := p.PushEvent(encodedMetricsEvt); err != nil {
 		p.loggers.Errorf("bucketeer/event: pushTimeoutErrorMetricsEvent failed (err: %v, tag: %s)", err, p.tag)
 		return
 	}
@@ -279,7 +282,7 @@ func (p *processor) pushInternalSDKErrorMetricsEvent(ctx context.Context, api mo
 		p.loggers.Errorf("bucketeer/event: pushInternalSDKErrorMetricsEvent failed (err: %v, tag: %s", err, p.tag)
 		return
 	}
-	if err := p.pushEvent(encodedMetricsEvt); err != nil {
+	if err := p.PushEvent(encodedMetricsEvt); err != nil {
 		p.loggers.Errorf("bucketeer/event: pushInternalSDKErrorMetricsEvent failed (err: %v, tag: %s", err, p.tag)
 		return
 	}
@@ -326,7 +329,7 @@ func (p *processor) pushErrorStatusCodeMetricsEvent(ctx context.Context, api mod
 		p.loggers.Errorf("bucketeer/event: pushErrorStatusCodeMetricsEvent failed (err: %v, tag: %s", err, p.tag)
 		return
 	}
-	if err := p.pushEvent(encodedMetricsEvt); err != nil {
+	if err := p.PushEvent(encodedMetricsEvt); err != nil {
 		p.loggers.Errorf("bucketeer/event: pushErrorStatusCodeMetricsEvent failed (err: %v, tag: %s", err, p.tag)
 		return
 	}
@@ -345,13 +348,13 @@ func (p *processor) PushNetworkErrorMetricsEvent(ctx context.Context, api model.
 		p.loggers.Errorf("bucketeer/event: PushNetworkErrorMetricsEvent failed (err: %v, tag: %s", err, p.tag)
 		return
 	}
-	if err := p.pushEvent(encodedMetricsEvt); err != nil {
+	if err := p.PushEvent(encodedMetricsEvt); err != nil {
 		p.loggers.Errorf("bucketeer/event: PushNetworkErrorMetricsEvent failed (err: %v, tag: %s", err, p.tag)
 		return
 	}
 }
 
-func (p *processor) pushEvent(encoded []byte) error {
+func (p *processor) PushEvent(encoded []byte) error {
 	id, err := uuid.NewV4()
 	if err != nil {
 		return fmt.Errorf("failed to model.New uuid v4: %w", err)
