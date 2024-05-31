@@ -29,25 +29,25 @@ import (
 // every time the specified time elapses or the specified capacity is exceeded.
 type Processor interface {
 	// PushEvaluationEvent pushes the evaluation event to the queue.
-	PushEvaluationEvent(ctx context.Context, user *user.User, evaluation *model.Evaluation)
+	PushEvaluationEvent(user *user.User, evaluation *model.Evaluation)
 
 	// PushDefaultEvaluationEvent pushes the default evaluation event to the queue.
-	PushDefaultEvaluationEvent(ctx context.Context, user *user.User, featureID string)
+	PushDefaultEvaluationEvent(user *user.User, featureID string)
 
 	// PushGoalEvent pushes the goal event to the queue.
-	PushGoalEvent(ctx context.Context, user *user.User, GoalID string, value float64)
+	PushGoalEvent(user *user.User, GoalID string, value float64)
 
 	// PushLatencyMetricsEvent pushes the get evaluation latency metrics event to the queue.
-	PushLatencyMetricsEvent(ctx context.Context, duration time.Duration, api model.APIID)
+	PushLatencyMetricsEvent(duration time.Duration, api model.APIID)
 
 	// PushSizeMetricsEvent pushes the get evaluation size metrics event to the queue.
-	PushSizeMetricsEvent(ctx context.Context, sizeByte int, api model.APIID)
+	PushSizeMetricsEvent(sizeByte int, api model.APIID)
 
 	// Close tears down all Processor activities, after ensuring that all events have been delivered.
 	Close(ctx context.Context) error
 
 	// PushErrorEvent pushes the error event to the queue.
-	PushErrorEvent(ctx context.Context, err error, api model.APIID)
+	PushErrorEvent(err error, api model.APIID)
 
 	// PushEvent pushes events to the queue.
 	PushEvent(encoded []byte) error
@@ -123,7 +123,6 @@ func NewProcessor(ctx context.Context, conf *ProcessorConfig) Processor {
 }
 
 func (p *processor) PushEvaluationEvent(
-	ctx context.Context,
 	user *user.User,
 	evaluation *model.Evaluation,
 ) {
@@ -156,7 +155,7 @@ func (p *processor) PushEvaluationEvent(
 	}
 }
 
-func (p *processor) PushDefaultEvaluationEvent(ctx context.Context, user *user.User, featureID string) {
+func (p *processor) PushDefaultEvaluationEvent(user *user.User, featureID string) {
 	evaluationEvt := model.NewEvaluationEvent(
 		p.tag,
 		featureID,
@@ -186,7 +185,7 @@ func (p *processor) PushDefaultEvaluationEvent(ctx context.Context, user *user.U
 	}
 }
 
-func (p *processor) PushGoalEvent(ctx context.Context, user *user.User, GoalID string, value float64) {
+func (p *processor) PushGoalEvent(user *user.User, GoalID string, value float64) {
 	goalEvt := model.NewGoalEvent(p.tag, GoalID, value, user)
 	encodedGoalEvt, err := json.Marshal(goalEvt)
 	if err != nil {
@@ -211,7 +210,7 @@ func (p *processor) PushGoalEvent(ctx context.Context, user *user.User, GoalID s
 	}
 }
 
-func (p *processor) PushLatencyMetricsEvent(ctx context.Context, duration time.Duration, api model.APIID) {
+func (p *processor) PushLatencyMetricsEvent(duration time.Duration, api model.APIID) {
 	gelMetricsEvt := model.NewLatencyMetricsEvent(p.tag, duration.Seconds(), api)
 	encodedGELMetricsEvt, err := json.Marshal(gelMetricsEvt)
 	if err != nil {
@@ -230,7 +229,7 @@ func (p *processor) PushLatencyMetricsEvent(ctx context.Context, duration time.D
 	}
 }
 
-func (p *processor) PushSizeMetricsEvent(ctx context.Context, sizeByte int, api model.APIID) {
+func (p *processor) PushSizeMetricsEvent(sizeByte int, api model.APIID) {
 	gesMetricsEvt := model.NewSizeMetricsEvent(p.tag, int32(sizeByte), api)
 	encodedGESMetricsEvt, err := json.Marshal(gesMetricsEvt)
 	if err != nil {
@@ -249,7 +248,7 @@ func (p *processor) PushSizeMetricsEvent(ctx context.Context, sizeByte int, api 
 	}
 }
 
-func (p *processor) pushTimeoutErrorMetricsEvent(ctx context.Context, api model.APIID) {
+func (p *processor) pushTimeoutErrorMetricsEvent(api model.APIID) {
 	tecMetricsEvt := model.NewTimeoutErrorMetricsEvent(p.tag, api)
 
 	encodedTECMetricsEvt, err := json.Marshal(tecMetricsEvt)
@@ -269,7 +268,7 @@ func (p *processor) pushTimeoutErrorMetricsEvent(ctx context.Context, api model.
 	}
 }
 
-func (p *processor) pushInternalSDKErrorMetricsEvent(ctx context.Context, api model.APIID, err error) {
+func (p *processor) pushInternalSDKErrorMetricsEvent(api model.APIID, err error) {
 	iecMetricsEvt := model.NewInternalSDKErrorMetricsEvent(p.tag, api, err.Error())
 	encodedIECMetricsEvt, err := json.Marshal(iecMetricsEvt)
 	if err != nil {
@@ -288,7 +287,7 @@ func (p *processor) pushInternalSDKErrorMetricsEvent(ctx context.Context, api mo
 	}
 }
 
-func (p *processor) pushErrorStatusCodeMetricsEvent(ctx context.Context, api model.APIID, code int, err error) {
+func (p *processor) pushErrorStatusCodeMetricsEvent(api model.APIID, code int, err error) {
 	var evt interface{}
 	switch {
 	// Update error metrics report
@@ -335,7 +334,7 @@ func (p *processor) pushErrorStatusCodeMetricsEvent(ctx context.Context, api mod
 	}
 }
 
-func (p *processor) PushNetworkErrorMetricsEvent(ctx context.Context, api model.APIID) {
+func (p *processor) PushNetworkErrorMetricsEvent(api model.APIID) {
 	neMetricsEvt := model.NewNetworkErrorMetricsEvent(p.tag, api)
 	encodedNEMetricsEvt, err := json.Marshal(neMetricsEvt)
 	if err != nil {
@@ -426,7 +425,7 @@ func (p *processor) flushEvents(ctx context.Context, events []*model.Event) {
 				p.loggers.Errorf("bucketeer/event: failed to re-push event: %v", err)
 			}
 		}
-		p.PushErrorEvent(ctx, err, model.RegisterEvents)
+		p.PushErrorEvent(err, model.RegisterEvents)
 		return
 	}
 	if len(res.Errors) > 0 {
@@ -448,23 +447,23 @@ func (p *processor) flushEvents(ctx context.Context, events []*model.Event) {
 	}
 }
 
-func (p *processor) PushErrorEvent(ctx context.Context, err error, apiID model.APIID) {
+func (p *processor) PushErrorEvent(err error, apiID model.APIID) {
 	code, ok := api.GetStatusCode(err)
 	if !ok {
 		switch {
 		case strings.Contains(err.Error(), syscall.EHOSTUNREACH.Error()) ||
 			strings.Contains(err.Error(), syscall.ECONNREFUSED.Error()):
-			p.PushNetworkErrorMetricsEvent(ctx, apiID)
+			p.PushNetworkErrorMetricsEvent(apiID)
 		case os.IsTimeout(err):
-			p.pushTimeoutErrorMetricsEvent(ctx, apiID)
+			p.pushTimeoutErrorMetricsEvent(apiID)
 		default:
-			p.pushInternalSDKErrorMetricsEvent(ctx, apiID, err)
+			p.pushInternalSDKErrorMetricsEvent(apiID, err)
 		}
 		return
 	}
 	if code == http.StatusGatewayTimeout {
-		p.pushTimeoutErrorMetricsEvent(ctx, apiID)
+		p.pushTimeoutErrorMetricsEvent(apiID)
 	} else {
-		p.pushErrorStatusCodeMetricsEvent(ctx, apiID, code, err)
+		p.pushErrorStatusCodeMetricsEvent(apiID, code, err)
 	}
 }
