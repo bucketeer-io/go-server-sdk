@@ -5,7 +5,7 @@ go 1.21
 toolchain go1.21.10
 
 require (
-	github.com/bucketeer-io/bucketeer v0.4.3
+	github.com/bucketeer-io/bucketeer v0.4.4
 	github.com/stretchr/testify v1.9.0
 	go.opencensus.io v0.24.0
 	go.uber.org/mock v0.4.0
