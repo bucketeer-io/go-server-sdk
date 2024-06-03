@@ -29,6 +29,7 @@ import (
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/log"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 	mockapi "github.com/bucketeer-io/go-server-sdk/test/mock/api"
+	mockevt "github.com/bucketeer-io/go-server-sdk/test/mock/event"
 )
 
 func TestSegmentUsersPollingInterval(t *testing.T) {
@@ -50,18 +51,21 @@ func TestSegmentUsersPollingInterval(t *testing.T) {
 
 	p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(gomock.Any()).Return(
 		&gwproto.GetSegmentUsersResponse{},
-		1,
+		10,
 		nil,
 	).Times(maxTimes)
 
-	p.Run()
+	p.MockProcessor.EXPECT().PushLatencyMetricsEvent(gomock.Any(), model.GetSegmentUsers).Times(maxTimes)
+	p.MockProcessor.EXPECT().PushSizeMetricsEvent(10, model.GetSegmentUsers).Times(maxTimes)
+
+	p.segmentUserProcessor.Run()
 	time.Sleep(10 * time.Second)
-	p.Close()
+	p.segmentUserProcessor.Close()
 
 	// Run it again after closing
 	p.Run()
 	time.Sleep(10 * time.Second)
-	p.Close()
+	p.segmentUserProcessor.Close()
 }
 
 func TestSegmentUsersUpdateCache(t *testing.T) {
@@ -86,13 +90,13 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 
 	patterns := []struct {
 		desc         string
-		setup        func(*segmentUserProcessor)
+		setup        func(*testSegmentUserProcessor)
 		pollInterval time.Duration
 		expected     error
 	}{
 		{
 			desc: "err: failed while getting segment IDs",
-			setup: func(p *segmentUserProcessor) {
+			setup: func(p *testSegmentUserProcessor) {
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().GetSegmentIDs().Return(nil, internalErr)
 			},
 
@@ -100,7 +104,7 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 		},
 		{
 			desc: "err: failed while getting requestedAt",
-			setup: func(p *segmentUserProcessor) {
+			setup: func(p *testSegmentUserProcessor) {
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().GetSegmentIDs().Return(make([]string, 0), nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Get(segmentUsersRequestedAtKey).Return(int64(0), internalErr)
 			},
@@ -108,7 +112,7 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 		},
 		{
 			desc: "err: failed while requesting cache from the server",
-			setup: func(p *segmentUserProcessor) {
+			setup: func(p *testSegmentUserProcessor) {
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().GetSegmentIDs().Return(make([]string, 0), nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Get(segmentUsersRequestedAtKey).Return(int64(10), nil)
 
@@ -118,12 +122,14 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 					0,
 					internalErr,
 				)
+
+				p.MockProcessor.EXPECT().PushErrorEvent(internalErr, model.GetSegmentUsers)
 			},
 			expected: internalErr,
 		},
 		{
 			desc: "err: failed while putting requestedAt, and the forceUpdate is true",
-			setup: func(p *segmentUserProcessor) {
+			setup: func(p *testSegmentUserProcessor) {
 				// Call in the segment users cache
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().GetSegmentIDs().
 					Return([]string{"segment-id"}, nil)
@@ -143,6 +149,9 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 					nil,
 				)
 
+				p.MockProcessor.EXPECT().PushLatencyMetricsEvent(gomock.Any(), model.GetSegmentUsers)
+				p.MockProcessor.EXPECT().PushSizeMetricsEvent(1, model.GetSegmentUsers)
+
 				// Call in the segment users cache
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().DeleteAll().Return(nil)
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().Put(singleSegmentUser).Return(nil)
@@ -155,7 +164,7 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 		},
 		{
 			desc: "err: failed while putting requestedAt, and force update is false",
-			setup: func(p *segmentUserProcessor) {
+			setup: func(p *testSegmentUserProcessor) {
 				// Call in the segment users cache
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().GetSegmentIDs().
 					Return([]string{"segment-id"}, nil)
@@ -175,6 +184,9 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 					nil,
 				)
 
+				p.MockProcessor.EXPECT().PushLatencyMetricsEvent(gomock.Any(), model.GetSegmentUsers)
+				p.MockProcessor.EXPECT().PushSizeMetricsEvent(1, model.GetSegmentUsers)
+
 				// Call in the segment users cache
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().Put(singleSegmentUser).Return(nil)
 
@@ -186,7 +198,7 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 		},
 		{
 			desc: "success: get segment IDs not found",
-			setup: func(p *segmentUserProcessor) {
+			setup: func(p *testSegmentUserProcessor) {
 				// Call in the segment users cache
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().GetSegmentIDs().Return(make([]string, 0), cache.ErrNotFound)
 
@@ -205,6 +217,9 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 					nil,
 				)
 
+				p.MockProcessor.EXPECT().PushLatencyMetricsEvent(gomock.Any(), model.GetSegmentUsers)
+				p.MockProcessor.EXPECT().PushSizeMetricsEvent(1, model.GetSegmentUsers)
+
 				// Call in the segment users cache
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().Put(singleSegmentUser).Return(nil)
 
@@ -216,7 +231,7 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 		},
 		{
 			desc: "success: requestedAt not found",
-			setup: func(p *segmentUserProcessor) {
+			setup: func(p *testSegmentUserProcessor) {
 				// Call in the segment users cache
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().GetSegmentIDs().Return(make([]string, 0), nil)
 
@@ -235,6 +250,9 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 					nil,
 				)
 
+				p.MockProcessor.EXPECT().PushLatencyMetricsEvent(gomock.Any(), model.GetSegmentUsers)
+				p.MockProcessor.EXPECT().PushSizeMetricsEvent(1, model.GetSegmentUsers)
+
 				// Call in the segment users cache
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().Put(singleSegmentUser).Return(nil)
 
@@ -246,7 +264,7 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 		},
 		{
 			desc: "success: force update is true",
-			setup: func(p *segmentUserProcessor) {
+			setup: func(p *testSegmentUserProcessor) {
 				// Call in the segment users cache
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().GetSegmentIDs().
 					Return([]string{"segment-id"}, nil)
@@ -266,6 +284,9 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 					nil,
 				)
 
+				p.MockProcessor.EXPECT().PushLatencyMetricsEvent(gomock.Any(), model.GetSegmentUsers)
+				p.MockProcessor.EXPECT().PushSizeMetricsEvent(1, model.GetSegmentUsers)
+
 				// Call in the segment users cache
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().DeleteAll().Return(nil)
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().Put(singleSegmentUser).Return(nil)
@@ -278,7 +299,7 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 		},
 		{
 			desc: "success: force update is false",
-			setup: func(p *segmentUserProcessor) {
+			setup: func(p *testSegmentUserProcessor) {
 				// Call in the segment users cache
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().GetSegmentIDs().
 					Return([]string{"segment-id"}, nil)
@@ -301,6 +322,9 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 					1,
 					nil,
 				)
+
+				p.MockProcessor.EXPECT().PushLatencyMetricsEvent(gomock.Any(), model.GetSegmentUsers)
+				p.MockProcessor.EXPECT().PushSizeMetricsEvent(1, model.GetSegmentUsers)
 
 				// Call in the segment users cache
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().Put(singleSegmentUser).Return(nil)
@@ -327,11 +351,16 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 	}
 }
 
+type testSegmentUserProcessor struct {
+	*segmentUserProcessor
+	*mockevt.MockProcessor
+}
+
 func newMockSegmentUserProcessor(
 	t *testing.T,
 	controller *gomock.Controller,
 	pollingInterval time.Duration,
-) *segmentUserProcessor {
+) *testSegmentUserProcessor {
 	t.Helper()
 	cacheInMemory := mockcache.NewMockCache(controller)
 	segmentUsersCache := mockcache.NewMockSegmentUsersCache(controller)
@@ -339,12 +368,19 @@ func newMockSegmentUserProcessor(
 		EnableDebugLog: true,
 		ErrorLogger:    log.DefaultErrorLogger,
 	}
-	return &segmentUserProcessor{
-		apiClient:         mockapi.NewMockClient(controller),
-		cache:             cacheInMemory,
-		segmentUsersCache: segmentUsersCache,
-		closeCh:           make(chan struct{}),
-		pollingInterval:   pollingInterval,
-		loggers:           log.NewLoggers(loggerConf),
+	mockEventProcessor := mockevt.NewMockProcessor(controller)
+	return &testSegmentUserProcessor{
+		segmentUserProcessor: &segmentUserProcessor{
+			apiClient:               mockapi.NewMockClient(controller),
+			pushLatencyMetricsEvent: mockEventProcessor.PushLatencyMetricsEvent,
+			pushSizeMetricsEvent:    mockEventProcessor.PushSizeMetricsEvent,
+			pushErrorEvent:          mockEventProcessor.PushErrorEvent,
+			cache:                   cacheInMemory,
+			segmentUsersCache:       segmentUsersCache,
+			closeCh:                 make(chan struct{}),
+			pollingInterval:         pollingInterval,
+			loggers:                 log.NewLoggers(loggerConf),
+		},
+		MockProcessor: mockEventProcessor,
 	}
 }

@@ -26,13 +26,16 @@ type FeatureFlagProcessor interface {
 }
 
 type processor struct {
-	cache             cache.Cache
-	featureFlagsCache cache.FeaturesCache
-	pollingInterval   time.Duration
-	apiClient         api.Client
-	tag               string
-	closeCh           chan struct{}
-	loggers           *log.Loggers
+	cache                   cache.Cache
+	featureFlagsCache       cache.FeaturesCache
+	pollingInterval         time.Duration
+	apiClient               api.Client
+	pushLatencyMetricsEvent func(duration time.Duration, api model.APIID)
+	pushSizeMetricsEvent    func(sizeByte int, api model.APIID)
+	pushErrorEvent          func(err error, api model.APIID)
+	tag                     string
+	closeCh                 chan struct{}
+	loggers                 *log.Loggers
 }
 
 // ProcessorConfig is the config for Processor.
@@ -45,6 +48,15 @@ type FeatureFlagProcessorConfig struct {
 
 	// APIClient is the client for Bucketeer service.
 	APIClient api.Client
+
+	// PushLatencyMetricsEvent pushes the get evaluation latency metrics event to the queue.
+	PushLatencyMetricsEvent func(duration time.Duration, api model.APIID)
+
+	// PushSizeMetricsEvent pushes the get evaluation size metrics event to the queue.
+	PushSizeMetricsEvent func(sizeByte int, api model.APIID)
+
+	// Push error metric events to Bucketeer service
+	PushErrorEvent func(err error, api model.APIID)
 
 	// Loggers is the Bucketeer SDK Loggers.
 	Loggers *log.Loggers
@@ -62,13 +74,16 @@ const (
 
 func NewFeatureFlagProcessor(conf *FeatureFlagProcessorConfig) FeatureFlagProcessor {
 	p := &processor{
-		cache:             conf.Cache,
-		featureFlagsCache: cache.NewFeaturesCache(conf.Cache),
-		pollingInterval:   conf.PollingInterval,
-		apiClient:         conf.APIClient,
-		tag:               conf.Tag,
-		closeCh:           make(chan struct{}),
-		loggers:           conf.Loggers,
+		cache:                   conf.Cache,
+		featureFlagsCache:       cache.NewFeaturesCache(conf.Cache),
+		pollingInterval:         conf.PollingInterval,
+		apiClient:               conf.APIClient,
+		pushLatencyMetricsEvent: conf.PushLatencyMetricsEvent,
+		pushSizeMetricsEvent:    conf.PushSizeMetricsEvent,
+		pushErrorEvent:          conf.PushErrorEvent,
+		tag:                     conf.Tag,
+		closeCh:                 make(chan struct{}),
+		loggers:                 conf.Loggers,
 	}
 	return p
 }
@@ -125,10 +140,15 @@ func (p *processor) updateCache() error {
 		requestedAt,
 	)
 	// Get the latest cache from the server
+	reqStart := time.Now()
 	resp, size, err := p.apiClient.GetFeatureFlags(req)
 	if err != nil {
+		p.pushErrorEvent(err, model.GetFeatureFlags)
 		return err
 	}
+	p.pushLatencyMetricsEvent(time.Since(reqStart), model.GetFeatureFlags)
+	p.pushSizeMetricsEvent(size, model.GetFeatureFlags)
+
 	p.loggers.Debugf("bucketeer/cache: GetFeatureFlags response: %v, size: %d", resp, size)
 	// Delete all the local cache and save the new one
 	if resp.ForceUpdate {
