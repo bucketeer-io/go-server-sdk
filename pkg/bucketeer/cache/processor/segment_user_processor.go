@@ -26,12 +26,16 @@ type SegmentUserProcessor interface {
 }
 
 type segmentUserProcessor struct {
-	cache             cache.Cache
-	segmentUsersCache cache.SegmentUsersCache
-	pollingInterval   time.Duration
-	apiClient         api.Client
-	closeCh           chan struct{}
-	loggers           *log.Loggers
+	cache                   cache.Cache
+	segmentUsersCache       cache.SegmentUsersCache
+	pollingInterval         time.Duration
+	apiClient               api.Client
+	pushLatencyMetricsEvent func(duration time.Duration, api model.APIID)
+	pushSizeMetricsEvent    func(sizeByte int, api model.APIID)
+	pushErrorEvent          func(err error, api model.APIID)
+	tag                     string
+	closeCh                 chan struct{}
+	loggers                 *log.Loggers
 }
 
 // ProcessorConfig is the config for Processor.
@@ -45,8 +49,23 @@ type SegmentUserProcessorConfig struct {
 	// APIClient is the client for Bucketeer service.
 	APIClient api.Client
 
+	// PushLatencyMetricsEvent pushes the get evaluation latency metrics event to the queue.
+	PushLatencyMetricsEvent func(duration time.Duration, api model.APIID)
+
+	// PushSizeMetricsEvent pushes the get evaluation size metrics event to the queue.
+	PushSizeMetricsEvent func(sizeByte int, api model.APIID)
+
+	// PushErrorEvent pushes error metric events to Bucketeer service
+	PushErrorEvent func(err error, api model.APIID)
+
 	// Loggers is the Bucketeer SDK Loggers.
 	Loggers *log.Loggers
+
+	// Tag is the Feature Flag tag
+	// The tag is set when a Feature Flag is created, and can be retrieved from the admin console.
+	//
+	// Note: this tag is used to report metric events.
+	Tag string
 }
 
 const (
@@ -56,12 +75,16 @@ const (
 
 func NewSegmentUserProcessor(conf *SegmentUserProcessorConfig) SegmentUserProcessor {
 	p := &segmentUserProcessor{
-		cache:             conf.Cache,
-		segmentUsersCache: cache.NewSegmentUsersCache(conf.Cache),
-		pollingInterval:   conf.PollingInterval,
-		apiClient:         conf.APIClient,
-		closeCh:           make(chan struct{}),
-		loggers:           conf.Loggers,
+		cache:                   conf.Cache,
+		segmentUsersCache:       cache.NewSegmentUsersCache(conf.Cache),
+		pollingInterval:         conf.PollingInterval,
+		apiClient:               conf.APIClient,
+		pushLatencyMetricsEvent: conf.PushLatencyMetricsEvent,
+		pushSizeMetricsEvent:    conf.PushSizeMetricsEvent,
+		pushErrorEvent:          conf.PushErrorEvent,
+		tag:                     conf.Tag,
+		closeCh:                 make(chan struct{}),
+		loggers:                 conf.Loggers,
 	}
 	return p
 }
@@ -117,10 +140,15 @@ func (p *segmentUserProcessor) updateCache() error {
 		requestedAt,
 	)
 	// Get the latest cache from the server
+	reqStart := time.Now()
 	resp, size, err := p.apiClient.GetSegmentUsers(req)
 	if err != nil {
+		p.pushErrorEvent(err, model.GetSegmentUsers)
 		return err
 	}
+	p.pushLatencyMetricsEvent(time.Since(reqStart), model.GetSegmentUsers)
+	p.pushSizeMetricsEvent(size, model.GetSegmentUsers)
+
 	p.loggers.Debugf("bucketeer/cache: GetSegmentUsers response: %v, size: %d", resp, size)
 	// Delete all the local cache and save the new one
 	if resp.ForceUpdate {
