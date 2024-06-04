@@ -5,18 +5,21 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"strconv"
 	"time"
-
-	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"
 
 	// nolint:staticcheck
 	iotag "go.opencensus.io/tag"
 
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/api"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/cache"
+	cacheprocessor "github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/cache/processor"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/evaluator"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/event"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/log"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"
 )
 
 // SDK is the Bucketeer SDK.
@@ -73,10 +76,15 @@ type SDK interface {
 }
 
 type sdk struct {
-	tag            string
-	apiClient      api.Client
-	eventProcessor event.Processor
-	loggers        *log.Loggers
+	enableLocalEvaluation     bool
+	tag                       string
+	apiClient                 api.Client
+	eventProcessor            event.Processor
+	featureFlagCacheProcessor cacheprocessor.FeatureFlagProcessor
+	segmentUserCacheProcessor cacheprocessor.SegmentUserProcessor
+	featureFlagsCache         cache.FeaturesCache
+	segmentUsersCache         cache.SegmentUsersCache
+	loggers                   *log.Loggers
 }
 
 // NewSDK creates a new Bucketeer SDK.
@@ -104,12 +112,72 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		Tag:             dopts.tag,
 	}
 	processor := event.NewProcessor(ctx, processorConf)
+	if !dopts.enableLocalEvaluation {
+		// Evaluate the end user on the server
+		return &sdk{
+			enableLocalEvaluation: dopts.enableLocalEvaluation,
+			tag:                   dopts.tag,
+			apiClient:             client,
+			eventProcessor:        processor,
+			loggers:               loggers,
+		}, nil
+	}
+	// Set the cache processors to evaluate the end user locally
+	cacheInMemory := cache.NewInMemoryCache()
+	fcp := newFeatureFlagCacheProcessor(
+		cacheInMemory,
+		dopts.cachePollingInterval,
+		client,
+		dopts.tag,
+		loggers,
+	)
+	sucp := newSegmentUserCacheProcessor(
+		cacheInMemory,
+		dopts.cachePollingInterval,
+		client,
+		loggers,
+	)
 	return &sdk{
-		tag:            dopts.tag,
-		apiClient:      client,
-		eventProcessor: processor,
-		loggers:        loggers,
+		enableLocalEvaluation:     dopts.enableLocalEvaluation,
+		tag:                       dopts.tag,
+		apiClient:                 client,
+		eventProcessor:            processor,
+		featureFlagCacheProcessor: fcp,
+		segmentUserCacheProcessor: sucp,
+		featureFlagsCache:         cache.NewFeaturesCache(cacheInMemory),
+		segmentUsersCache:         cache.NewSegmentUsersCache(cacheInMemory),
+		loggers:                   loggers,
 	}, nil
+}
+
+func newFeatureFlagCacheProcessor(
+	cache cache.InMemoryCache,
+	pollingInterval time.Duration,
+	apiClient api.Client,
+	tag string,
+	loggers *log.Loggers) cacheprocessor.FeatureFlagProcessor {
+	conf := &cacheprocessor.FeatureFlagProcessorConfig{
+		Cache:           cache,
+		PollingInterval: pollingInterval,
+		APIClient:       apiClient,
+		Tag:             tag,
+		Loggers:         loggers,
+	}
+	return cacheprocessor.NewFeatureFlagProcessor(conf)
+}
+
+func newSegmentUserCacheProcessor(
+	cache cache.InMemoryCache,
+	pollingInterval time.Duration,
+	apiClient api.Client,
+	loggers *log.Loggers) cacheprocessor.SegmentUserProcessor {
+	conf := &cacheprocessor.SegmentUserProcessorConfig{
+		Cache:           cache,
+		PollingInterval: pollingInterval,
+		APIClient:       apiClient,
+		Loggers:         loggers,
+	}
+	return cacheprocessor.NewSegmentUserProcessor(conf)
 }
 
 func (s *sdk) BoolVariation(ctx context.Context, user *user.User, featureID string, defaultValue bool) bool {
@@ -217,6 +285,11 @@ func (s *sdk) getEvaluation(ctx context.Context, user *user.User, featureID stri
 	if !user.Valid() {
 		return nil, fmt.Errorf("invalid user: %v", user)
 	}
+	if s.enableLocalEvaluation {
+		// Evaluate the end user locally
+		return s.evaluateLocally(ctx, user, featureID)
+	}
+	// Evaluate the end user on the server
 	res, err := s.callGetEvaluationAPI(ctx, user, s.tag, featureID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call get evaluation api: %w", err)
@@ -227,36 +300,32 @@ func (s *sdk) getEvaluation(ctx context.Context, user *user.User, featureID stri
 	return res.Evaluation, nil
 }
 
+func (s *sdk) evaluateLocally(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+) (*model.Evaluation, error) {
+	reqStart := time.Now()
+	eval := evaluator.NewEvaluator(s.tag, s.featureFlagsCache, s.segmentUsersCache)
+	evaluation, err := eval.Evaluate(user, featureID)
+	if err != nil {
+		s.loggers.Errorf("bucketeer: failed to evaluate user locally: %w", err)
+		// This error must be reported as a SDK internal error
+		e := fmt.Errorf("internal error while evaluating user locally: %w", err)
+		s.eventProcessor.PushErrorEvent(e, model.SDKGetVariation)
+		return nil, err
+	}
+	s.eventProcessor.PushLatencyMetricsEvent(time.Since(reqStart), model.SDKGetVariation)
+	go s.collectMetrics(ctx, featureID, reqStart)
+	return evaluation, nil
+}
+
 func (s *sdk) callGetEvaluationAPI(
 	ctx context.Context,
 	user *user.User,
 	tag, featureID string,
 ) (*model.GetEvaluationResponse, error) {
-	var gserr error
 	reqStart := time.Now()
-	defer func() {
-		code, ok := api.GetStatusCode(gserr)
-		if !ok {
-			return
-		}
-		mutators := []iotag.Mutator{
-			iotag.Insert(keyFeatureID, featureID),
-			iotag.Insert(keyStatus, strconv.Itoa(code)),
-		}
-		ctx, err := newMetricsContext(ctx, mutators)
-		if err != nil {
-			s.loggers.Errorf("bucketeer: failed to create metrics context (featureID: %s, statusCode: %d)",
-				featureID,
-				code,
-			)
-			s.eventProcessor.PushErrorEvent(err, model.GetEvaluation)
-			return
-		}
-
-		count(ctx)
-		measure(ctx, time.Since(reqStart))
-	}()
-
 	res, size, err := s.apiClient.GetEvaluation(model.NewGetEvaluationRequest(
 		tag, featureID,
 		user,
@@ -267,6 +336,7 @@ func (s *sdk) callGetEvaluationAPI(
 	}
 	s.eventProcessor.PushLatencyMetricsEvent(time.Since(reqStart), model.GetEvaluation)
 	s.eventProcessor.PushSizeMetricsEvent(size, model.GetEvaluation)
+	go s.collectMetrics(ctx, featureID, reqStart)
 	return res, nil
 }
 
@@ -288,6 +358,29 @@ func (s *sdk) validateGetEvaluationResponse(res *model.GetEvaluationResponse, fe
 		return errors.New("variation value is empty")
 	}
 	return nil
+}
+
+// Collect metrics to OpenCensus
+func (s *sdk) collectMetrics(
+	ctx context.Context,
+	featureID string,
+	startTime time.Time) {
+	code := http.StatusOK
+	mutators := []iotag.Mutator{
+		iotag.Insert(keyFeatureID, featureID),
+		iotag.Insert(keyStatus, strconv.Itoa(code)),
+	}
+	ctx, err := newMetricsContext(ctx, mutators)
+	if err != nil {
+		s.loggers.Errorf("bucketeer: failed to create metrics context (featureID: %s, statusCode: %d)",
+			featureID,
+			code,
+		)
+		s.eventProcessor.PushErrorEvent(err, model.GetEvaluation)
+		return
+	}
+	count(ctx)
+	measure(ctx, time.Since(startTime))
 }
 
 func (s *sdk) logVariationError(err error, methodName, UserID, featureID string) {
@@ -319,6 +412,10 @@ func (s *sdk) TrackValue(ctx context.Context, user *user.User, GoalID string, va
 func (s *sdk) Close(ctx context.Context) error {
 	if err := s.eventProcessor.Close(ctx); err != nil {
 		return fmt.Errorf("bucketeer: failed to close event processor: %v", err)
+	}
+	if s.enableLocalEvaluation {
+		s.featureFlagCacheProcessor.Close()
+		s.segmentUserCacheProcessor.Close()
 	}
 	return nil
 }
