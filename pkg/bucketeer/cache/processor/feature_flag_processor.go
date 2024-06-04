@@ -3,6 +3,7 @@ package processor
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -123,6 +124,7 @@ func (p *processor) updateCache() error {
 	ftsID, err := p.getFeatureFlagsID()
 	if err != nil {
 		if !errors.Is(err, cache.ErrNotFound) {
+			p.pushErrorEvent(p.newInternalError(err), model.GetFeatureFlags)
 			return err
 		}
 		p.loggers.Debug("bucketeer/cache: updateCache featureFlagsID not found")
@@ -130,6 +132,7 @@ func (p *processor) updateCache() error {
 	requestedAt, err := p.getFeatureFlagsRequestedAt()
 	if err != nil {
 		if !errors.Is(err, cache.ErrNotFound) {
+			p.pushErrorEvent(p.newInternalError(err), model.GetFeatureFlags)
 			return err
 		}
 		p.loggers.Debug("bucketeer/cache: updateCache requestedAt not found")
@@ -143,7 +146,7 @@ func (p *processor) updateCache() error {
 	reqStart := time.Now()
 	resp, size, err := p.apiClient.GetFeatureFlags(req)
 	if err != nil {
-		p.pushErrorEvent(err, model.GetFeatureFlags)
+		p.pushErrorEvent(p.newInternalError(err), model.GetFeatureFlags)
 		return err
 	}
 	p.pushLatencyMetricsEvent(time.Since(reqStart), model.GetFeatureFlags)
@@ -152,15 +155,24 @@ func (p *processor) updateCache() error {
 	p.loggers.Debugf("bucketeer/cache: GetFeatureFlags response: %v, size: %d", resp, size)
 	// Delete all the local cache and save the new one
 	if resp.ForceUpdate {
-		return p.deleteAllAndSaveLocalCache(resp.FeatureFlagsId, resp.RequestedAt, resp.Features)
+		if err := p.deleteAllAndSaveLocalCache(resp.FeatureFlagsId, resp.RequestedAt, resp.Features); err != nil {
+			p.pushErrorEvent(p.newInternalError(err), model.GetFeatureFlags)
+			return err
+		}
+		return nil
 	}
 	// Update only the updated flags
-	return p.updateLocalCache(
+	err = p.updateLocalCache(
 		resp.FeatureFlagsId,
 		resp.RequestedAt,
 		resp.Features,
 		resp.ArchivedFeatureFlagIds,
 	)
+	if err != nil {
+		p.pushErrorEvent(p.newInternalError(err), model.GetFeatureFlags)
+		return err
+	}
+	return nil
 }
 
 // This will delete all the flags in the cache,
@@ -249,4 +261,8 @@ func (p *processor) getFeatureFlagsRequestedAt() (int64, error) {
 
 func (p *processor) putFeatureFlagsRequestedAt(timestamp int64) error {
 	return p.cache.Put(featureFlagsRequestedAtKey, timestamp, cacheTTL)
+}
+
+func (p *processor) newInternalError(err error) error {
+	return fmt.Errorf("internal error while updating feature flags: %w", err)
 }
