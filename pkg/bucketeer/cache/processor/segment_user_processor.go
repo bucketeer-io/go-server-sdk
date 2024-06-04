@@ -3,6 +3,7 @@ package processor
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
@@ -124,6 +125,7 @@ func (p *segmentUserProcessor) updateCache() error {
 	ftsID, err := p.segmentUsersCache.GetSegmentIDs()
 	if err != nil {
 		if !errors.Is(err, cache.ErrNotFound) {
+			p.pushErrorEvent(p.newInternalError(err), model.GetSegmentUsers)
 			return err
 		}
 		p.loggers.Debug("bucketeer/cache: segmentUsers updateCache segment IDs not found")
@@ -131,6 +133,7 @@ func (p *segmentUserProcessor) updateCache() error {
 	requestedAt, err := p.getSegmentUsersRequestedAt()
 	if err != nil {
 		if !errors.Is(err, cache.ErrNotFound) {
+			p.pushErrorEvent(p.newInternalError(err), model.GetSegmentUsers)
 			return err
 		}
 		p.loggers.Debug("bucketeer/cache: segmentUsers updateCache requestedAt not found")
@@ -143,7 +146,7 @@ func (p *segmentUserProcessor) updateCache() error {
 	reqStart := time.Now()
 	resp, size, err := p.apiClient.GetSegmentUsers(req)
 	if err != nil {
-		p.pushErrorEvent(err, model.GetSegmentUsers)
+		p.pushErrorEvent(p.newInternalError(err), model.GetSegmentUsers)
 		return err
 	}
 	p.pushLatencyMetricsEvent(time.Since(reqStart), model.GetSegmentUsers)
@@ -152,14 +155,18 @@ func (p *segmentUserProcessor) updateCache() error {
 	p.loggers.Debugf("bucketeer/cache: GetSegmentUsers response: %v, size: %d", resp, size)
 	// Delete all the local cache and save the new one
 	if resp.ForceUpdate {
-		return p.deleteAllAndSaveLocalCache(resp.RequestedAt, resp.SegmentUsers)
+		if err := p.deleteAllAndSaveLocalCache(resp.RequestedAt, resp.SegmentUsers); err != nil {
+			p.pushErrorEvent(p.newInternalError(err), model.GetSegmentUsers)
+			return err
+		}
+		return nil
 	}
 	// Update only the updated segment users
-	return p.updateLocalCache(
-		resp.RequestedAt,
-		resp.SegmentUsers,
-		resp.DeletedSegmentIds,
-	)
+	if err := p.updateLocalCache(resp.RequestedAt, resp.SegmentUsers, resp.DeletedSegmentIds); err != nil {
+		p.pushErrorEvent(p.newInternalError(err), model.GetSegmentUsers)
+		return err
+	}
+	return nil
 }
 
 // This will delete all the segment users in the cache,
@@ -222,4 +229,8 @@ func (p *segmentUserProcessor) getSegmentUsersRequestedAt() (int64, error) {
 
 func (p *segmentUserProcessor) putSegmentUsersRequestedAt(timestamp int64) error {
 	return p.cache.Put(segmentUsersRequestedAtKey, timestamp, segmentUserCacheTTL)
+}
+
+func (p *segmentUserProcessor) newInternalError(err error) error {
+	return fmt.Errorf("internal error while updating segment users: %w", err)
 }
