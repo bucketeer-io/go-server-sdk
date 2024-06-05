@@ -11,20 +11,6 @@ jobs:
     name: Release Please
     runs-on: ubuntu-latest
     steps:
-      - uses: google-github-actions/release-please-action@2a4590f9c1d322790253d997de5cad7f7ad4bc1b # v3.5.1
+      - uses: googleapis/release-please-action@f3969c04a4ec81d7a9aa4010d84ae6a7602f86a7 # v4.1.1
         with:
-          changelog-types: |
-            [
-              {"type":"build","section":"Build System","hidden":false},
-              {"type":"chore","section":"Miscellaneous","hidden":false},
-              {"type":"feat","section":"Features","hidden":false},
-              {"type":"fix","section":"Bug Fixes","hidden":false},
-              {"type":"perf","section":"Performance Improvements","hidden":false},
-              {"type":"revert","section":"Reverts","hidden":false}
-            ]
-          release-type: go
-          package-name: bucketeer-go-server-sdk
-          bump-minor-pre-major: true
-          extra-files: |
-            pkg/bucketeer/version/version.go
           token: ${{ secrets.WORKFLOW_TOKEN }} # We need to set the PAT so the update changelog docs page workflow can be triggered
