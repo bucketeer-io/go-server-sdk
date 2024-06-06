@@ -3,6 +3,7 @@ package bucketeer
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -659,6 +660,10 @@ func TestGetEvaluation(t *testing.T) {
 					100,
 					model.GetEvaluation,
 				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
+					errResponseNil,
+					model.GetEvaluation,
+				)
 			},
 			user:          newUser(t, sdkUserID),
 			featureID:     sdkFeatureID,
@@ -680,6 +685,10 @@ func TestGetEvaluation(t *testing.T) {
 					100,
 					model.GetEvaluation,
 				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
+					errResponseEvaluationNil,
+					model.GetEvaluation,
+				)
 			},
 			user:          newUser(t, sdkUserID),
 			featureID:     sdkFeatureID,
@@ -691,6 +700,11 @@ func TestGetEvaluation(t *testing.T) {
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
 				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
 				res := newGetEvaluationResponse(t, "invalid-feature-id", "value")
+				err := fmt.Errorf(
+					errResponseDifferentFeatureIDs,
+					res.Evaluation.FeatureID,
+					featureID,
+				)
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					gomock.Any(), // duration
@@ -698,6 +712,10 @@ func TestGetEvaluation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
 					100,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
+					err,
 					model.GetEvaluation,
 				)
 			},
@@ -718,6 +736,10 @@ func TestGetEvaluation(t *testing.T) {
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
 					100,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
+					errResponseVariationValueEmpty,
 					model.GetEvaluation,
 				)
 			},

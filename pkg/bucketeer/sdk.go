@@ -75,6 +75,13 @@ type SDK interface {
 	Close(ctx context.Context) error
 }
 
+var (
+	errResponseNil                 = errors.New("invalid get evaluation response: res is nil")
+	errResponseEvaluationNil       = errors.New("invalid get evaluation response: evaluation is nil")
+	errResponseVariationValueEmpty = errors.New("invalid get evaluation response: variation value is empty")
+	errResponseDifferentFeatureIDs = "invalid get evaluation response: feature id doesn't match: actual %s != expected %s"
+)
+
 type sdk struct {
 	enableLocalEvaluation     bool
 	tag                       string
@@ -287,20 +294,13 @@ func (s *sdk) getEvaluation(ctx context.Context, user *user.User, featureID stri
 	}
 	if s.enableLocalEvaluation {
 		// Evaluate the end user locally
-		return s.evaluateLocally(ctx, user, featureID)
+		return s.getEvaluationLocally(ctx, user, featureID)
 	}
 	// Evaluate the end user on the server
-	res, err := s.callGetEvaluationAPI(ctx, user, s.tag, featureID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to call get evaluation api: %w", err)
-	}
-	if err := s.validateGetEvaluationResponse(res, featureID); err != nil {
-		return nil, fmt.Errorf("invalid get evaluation response: %w", err)
-	}
-	return res.Evaluation, nil
+	return s.getEvaluationRemotely(ctx, user, featureID)
 }
 
-func (s *sdk) evaluateLocally(
+func (s *sdk) getEvaluationLocally(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
@@ -320,14 +320,14 @@ func (s *sdk) evaluateLocally(
 	return evaluation, nil
 }
 
-func (s *sdk) callGetEvaluationAPI(
+func (s *sdk) getEvaluationRemotely(
 	ctx context.Context,
 	user *user.User,
-	tag, featureID string,
-) (*model.GetEvaluationResponse, error) {
+	featureID string,
+) (*model.Evaluation, error) {
 	reqStart := time.Now()
 	res, size, err := s.apiClient.GetEvaluation(model.NewGetEvaluationRequest(
-		tag, featureID,
+		s.tag, featureID,
 		user,
 	))
 	if err != nil {
@@ -336,26 +336,31 @@ func (s *sdk) callGetEvaluationAPI(
 	}
 	s.eventProcessor.PushLatencyMetricsEvent(time.Since(reqStart), model.GetEvaluation)
 	s.eventProcessor.PushSizeMetricsEvent(size, model.GetEvaluation)
+	// Validate the response from the server
+	if err := s.validateGetEvaluationResponse(res, featureID); err != nil {
+		s.eventProcessor.PushErrorEvent(err, model.GetEvaluation)
+		return nil, err
+	}
 	go s.collectMetrics(ctx, featureID, reqStart)
-	return res, nil
+	return res.Evaluation, nil
 }
 
 func (s *sdk) validateGetEvaluationResponse(res *model.GetEvaluationResponse, featureID string) error {
 	if res == nil {
-		return errors.New("res is nil")
+		return errResponseNil
 	}
 	if res.Evaluation == nil {
-		return errors.New("evaluation is nil")
+		return errResponseEvaluationNil
 	}
 	if res.Evaluation.FeatureID != featureID {
 		return fmt.Errorf(
-			"feature id doesn't match: actual %s != expected %s",
+			errResponseDifferentFeatureIDs,
 			res.Evaluation.FeatureID,
 			featureID,
 		)
 	}
 	if res.Evaluation.VariationValue == "" {
-		return errors.New("variation value is empty")
+		return errResponseVariationValueEmpty
 	}
 	return nil
 }
