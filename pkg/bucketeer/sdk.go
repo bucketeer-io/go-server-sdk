@@ -74,12 +74,6 @@ type SDK interface {
 	//
 	// After calling this, the SDK should no longer be used.
 	Close(ctx context.Context) error
-
-	// getEvaluationLocally gets the end user variation by evaluating the user on the SDK.
-	getEvaluationLocally(ctx context.Context, user *user.User, featureID string) (*model.Evaluation, error)
-
-	// getEvaluationRemotely gets the end user variation by evaluating the user on the server side.
-	getEvaluationRemotely(ctx context.Context, user *user.User, featureID string) (*model.Evaluation, error)
 }
 
 var (
@@ -143,6 +137,7 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		cacheInMemory,
 		dopts.cachePollingInterval,
 		client,
+		processor,
 		dopts.tag,
 		loggers,
 	)
@@ -150,6 +145,7 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		cacheInMemory,
 		dopts.cachePollingInterval,
 		client,
+		processor,
 		loggers,
 	)
 	// Run the cache processors to update the cache in background
@@ -173,14 +169,18 @@ func newFeatureFlagCacheProcessor(
 	cache cache.InMemoryCache,
 	pollingInterval time.Duration,
 	apiClient api.Client,
+	eventProcessor event.Processor,
 	tag string,
 	loggers *log.Loggers) cacheprocessor.FeatureFlagProcessor {
 	conf := &cacheprocessor.FeatureFlagProcessorConfig{
-		Cache:           cache,
-		PollingInterval: pollingInterval,
-		APIClient:       apiClient,
-		Tag:             tag,
-		Loggers:         loggers,
+		Cache:                   cache,
+		PollingInterval:         pollingInterval,
+		APIClient:               apiClient,
+		PushLatencyMetricsEvent: eventProcessor.PushLatencyMetricsEvent,
+		PushSizeMetricsEvent:    eventProcessor.PushSizeMetricsEvent,
+		PushErrorEvent:          eventProcessor.PushErrorEvent,
+		Tag:                     tag,
+		Loggers:                 loggers,
 	}
 	return cacheprocessor.NewFeatureFlagProcessor(conf)
 }
@@ -189,12 +189,16 @@ func newSegmentUserCacheProcessor(
 	cache cache.InMemoryCache,
 	pollingInterval time.Duration,
 	apiClient api.Client,
+	eventProcessor event.Processor,
 	loggers *log.Loggers) cacheprocessor.SegmentUserProcessor {
 	conf := &cacheprocessor.SegmentUserProcessorConfig{
-		Cache:           cache,
-		PollingInterval: pollingInterval,
-		APIClient:       apiClient,
-		Loggers:         loggers,
+		Cache:                   cache,
+		PollingInterval:         pollingInterval,
+		APIClient:               apiClient,
+		PushLatencyMetricsEvent: eventProcessor.PushLatencyMetricsEvent,
+		PushSizeMetricsEvent:    eventProcessor.PushSizeMetricsEvent,
+		PushErrorEvent:          eventProcessor.PushErrorEvent,
+		Loggers:                 loggers,
 	}
 	return cacheprocessor.NewSegmentUserProcessor(conf)
 }
@@ -488,12 +492,4 @@ func (s *nopSDK) TrackValue(ctx context.Context, user *user.User, GoalID string,
 
 func (s *nopSDK) Close(ctx context.Context) error {
 	return nil
-}
-
-func (s *nopSDK) getEvaluationLocally(ctx context.Context, user *user.User, featureID string) (*model.Evaluation, error) {
-	return nil, nil
-}
-
-func (s *nopSDK) getEvaluationRemotely(ctx context.Context, user *user.User, featureID string) (*model.Evaluation, error) {
-	return nil, nil
 }

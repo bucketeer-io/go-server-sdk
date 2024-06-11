@@ -3,6 +3,7 @@ package e2e
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -10,7 +11,7 @@ import (
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"
 )
 
-func TestStringVariation(t *testing.T) {
+func TestLocalStringVariation(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -33,24 +34,26 @@ func TestStringVariation(t *testing.T) {
 		},
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	sdk := newLocalSDK(t, ctx)
+	defer func() {
+		// Close
+		err := sdk.Close(ctx)
+		assert.NoError(t, err)
+	}()
+
+	time.Sleep(10 * time.Second) // Wait for the cache updates
+
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), timeout)
-			defer cancel()
-			sdk := newSDK(t, ctx)
-			defer func() {
-				// Close
-				err := sdk.Close(ctx)
-				assert.NoError(t, err)
-			}()
-
 			actual := sdk.StringVariation(ctx, tt.user, tt.featureID, "default")
 			assert.Equal(t, tt.expected, actual, "userID: %s, featureID: %s", tt.user.ID, tt.featureID)
 		})
 	}
 }
 
-func TestBoolVariation(t *testing.T) {
+func TestLocalBoolVariation(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -73,24 +76,26 @@ func TestBoolVariation(t *testing.T) {
 		},
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	sdk := newLocalSDK(t, ctx)
+	defer func() {
+		// Close
+		err := sdk.Close(ctx)
+		assert.NoError(t, err)
+	}()
+
+	time.Sleep(10 * time.Second) // Wait for the cache updates
+
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), timeout)
-			defer cancel()
-			sdk := newSDK(t, ctx)
-			defer func() {
-				// Close
-				err := sdk.Close(ctx)
-				assert.NoError(t, err)
-			}()
-
 			actual := sdk.BoolVariation(ctx, tt.user, tt.featureID, false)
 			assert.Equal(t, tt.expected, actual, "userID: %s, featureID: %s", tt.user.ID, tt.featureID)
 		})
 	}
 }
 
-func TestIntVariation(t *testing.T) {
+func TestLocalIntVariation(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -113,24 +118,26 @@ func TestIntVariation(t *testing.T) {
 		},
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	sdk := newLocalSDK(t, ctx)
+	defer func() {
+		// Close
+		err := sdk.Close(ctx)
+		assert.NoError(t, err)
+	}()
+
+	time.Sleep(10 * time.Second) // Wait for the cache updates
+
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), timeout)
-			defer cancel()
-			sdk := newSDK(t, ctx)
-			defer func() {
-				// Close
-				err := sdk.Close(ctx)
-				assert.NoError(t, err)
-			}()
-
 			actual := sdk.IntVariation(ctx, tt.user, tt.featureID, -1)
 			assert.Equal(t, tt.expected, actual, "userID: %s, featureID: %s", tt.user.ID, tt.featureID)
 		})
 	}
 }
 
-func TestInt64Variation(t *testing.T) {
+func TestLocalInt64Variation(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -153,24 +160,26 @@ func TestInt64Variation(t *testing.T) {
 		},
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	sdk := newLocalSDK(t, ctx)
+	defer func() {
+		// Close
+		err := sdk.Close(ctx)
+		assert.NoError(t, err)
+	}()
+
+	time.Sleep(10 * time.Second) // Wait for the cache updates
+
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), timeout)
-			defer cancel()
-			sdk := newSDK(t, ctx)
-			defer func() {
-				// Close
-				err := sdk.Close(ctx)
-				assert.NoError(t, err)
-			}()
-
 			actual := sdk.Int64Variation(ctx, tt.user, tt.featureID, -1000000000)
 			assert.Equal(t, tt.expected, actual, "userID: %s, featureID: %s", tt.user.ID, tt.featureID)
 		})
 	}
 }
 
-func TestFloat64Variation(t *testing.T) {
+func TestLocalFloat64Variation(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -193,24 +202,26 @@ func TestFloat64Variation(t *testing.T) {
 		},
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	sdk := newLocalSDK(t, ctx)
+	defer func() {
+		// Close
+		err := sdk.Close(ctx)
+		assert.NoError(t, err)
+	}()
+
+	time.Sleep(10 * time.Second) // Wait for the cache updates
+
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), timeout)
-			defer cancel()
-			sdk := newSDK(t, ctx)
-			defer func() {
-				// Close
-				err := sdk.Close(ctx)
-				assert.NoError(t, err)
-			}()
-
 			actual := sdk.Float64Variation(ctx, tt.user, tt.featureID, -1.1)
 			assert.Equal(t, tt.expected, actual, "userID: %s, featureID: %s", tt.user.ID, tt.featureID)
 		})
 	}
 }
 
-func TestJSONVariation(t *testing.T) {
+func TestLocalJSONVariation(t *testing.T) {
 	t.Parallel()
 
 	type TestJson struct {
@@ -238,17 +249,19 @@ func TestJSONVariation(t *testing.T) {
 		},
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	sdk := newLocalSDK(t, ctx)
+	defer func() {
+		// Close
+		err := sdk.Close(ctx)
+		assert.NoError(t, err)
+	}()
+
+	time.Sleep(10 * time.Second) // Wait for the cache updates
+
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), timeout)
-			defer cancel()
-			sdk := newSDK(t, ctx)
-			defer func() {
-				// Close
-				err := sdk.Close(ctx)
-				assert.NoError(t, err)
-			}()
-
 			v := &TestJson{}
 			sdk.JSONVariation(ctx, tt.user, tt.featureID, v)
 			assert.Equal(t, tt.expected, v, "userID: %s, featureID: %s", tt.user.ID, tt.featureID)
@@ -256,12 +269,14 @@ func TestJSONVariation(t *testing.T) {
 	}
 }
 
-func newSDK(t *testing.T, ctx context.Context) bucketeer.SDK {
+func newLocalSDK(t *testing.T, ctx context.Context) bucketeer.SDK {
 	t.Helper()
 	sdk, err := bucketeer.NewSDK(
 		ctx,
+		bucketeer.WithCachePollingInterval(5*time.Second),
+		bucketeer.WithEnableLocalEvaluation(true),
 		bucketeer.WithTag(tag),
-		bucketeer.WithAPIKey(*apiKey),
+		bucketeer.WithAPIKey(*apiKeyServer),
 		bucketeer.WithHost(*host),
 		bucketeer.WithPort(*port),
 		bucketeer.WithEventQueueCapacity(100),
@@ -271,9 +286,4 @@ func newSDK(t *testing.T, ctx context.Context) bucketeer.SDK {
 	)
 	assert.NoError(t, err)
 	return sdk
-}
-
-func newUser(t *testing.T, id string) *user.User {
-	t.Helper()
-	return user.NewUser(id, map[string]string{"attr-key": "attr-value"})
 }

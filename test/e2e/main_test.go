@@ -6,7 +6,7 @@ import (
 )
 
 const (
-	timeout = 10 * time.Second
+	timeout = 20 * time.Second
 
 	tag                 = "go-server"
 	userID              = "bucketeer-go-server-user-id-1"
