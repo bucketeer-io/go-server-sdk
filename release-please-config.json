@@ -13,6 +13,7 @@
 		{"type":"build","section":"Build System","hidden":false}
 	],
 	"release-type": "go",
+	"pull-request-title-pattern": "chore: release v${version}",
   "packages": {
     ".": {
       "changelog-path": "CHANGELOG.md",
