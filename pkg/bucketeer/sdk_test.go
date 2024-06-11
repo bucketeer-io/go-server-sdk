@@ -923,6 +923,7 @@ func TestClose(t *testing.T) {
 		})
 	}
 }
+
 func newSDKWithMock(t *testing.T, mockCtrl *gomock.Controller) *sdk {
 	t.Helper()
 	return &sdk{

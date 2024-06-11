@@ -1,5 +1,6 @@
 package bucketeer
 
+//go:generate mockgen -source=$GOFILE -package=$GOPACKAGE -destination=../../test/mock/$GOPACKAGE/$GOFILE
 import (
 	"context"
 	"encoding/json"
@@ -73,6 +74,12 @@ type SDK interface {
 	//
 	// After calling this, the SDK should no longer be used.
 	Close(ctx context.Context) error
+
+	// getEvaluationLocally gets the end user variation by evaluating the user on the SDK.
+	getEvaluationLocally(ctx context.Context, user *user.User, featureID string) (*model.Evaluation, error)
+
+	// getEvaluationRemotely gets the end user variation by evaluating the user on the server side.
+	getEvaluationRemotely(ctx context.Context, user *user.User, featureID string) (*model.Evaluation, error)
 }
 
 var (
@@ -129,7 +136,8 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 			loggers:               loggers,
 		}, nil
 	}
-	// Set the cache processors to evaluate the end user locally
+	// Evaluate the user locally
+	// Set the cache processors to update the flags and segment users cache in the background
 	cacheInMemory := cache.NewInMemoryCache()
 	fcp := newFeatureFlagCacheProcessor(
 		cacheInMemory,
@@ -144,6 +152,10 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		client,
 		loggers,
 	)
+	// Run the cache processors to update the cache in background
+	fcp.Run()
+	sucp.Run()
+
 	return &sdk{
 		enableLocalEvaluation:     dopts.enableLocalEvaluation,
 		tag:                       dopts.tag,
@@ -312,10 +324,10 @@ func (s *sdk) getEvaluationLocally(
 		s.loggers.Errorf("bucketeer: failed to evaluate user locally: %w", err)
 		// This error must be reported as a SDK internal error
 		e := fmt.Errorf("internal error while evaluating user locally: %w", err)
-		s.eventProcessor.PushErrorEvent(e, model.SDKGetVariation)
+		s.eventProcessor.PushErrorEvent(e, model.SDKGetEvaluation)
 		return nil, err
 	}
-	s.eventProcessor.PushLatencyMetricsEvent(time.Since(reqStart), model.SDKGetVariation)
+	s.eventProcessor.PushLatencyMetricsEvent(time.Since(reqStart), model.SDKGetEvaluation)
 	go s.collectMetrics(ctx, featureID, reqStart)
 	return evaluation, nil
 }
@@ -476,4 +488,12 @@ func (s *nopSDK) TrackValue(ctx context.Context, user *user.User, GoalID string,
 
 func (s *nopSDK) Close(ctx context.Context) error {
 	return nil
+}
+
+func (s *nopSDK) getEvaluationLocally(ctx context.Context, user *user.User, featureID string) (*model.Evaluation, error) {
+	return nil, nil
+}
+
+func (s *nopSDK) getEvaluationRemotely(ctx context.Context, user *user.User, featureID string) (*model.Evaluation, error) {
+	return nil, nil
 }
