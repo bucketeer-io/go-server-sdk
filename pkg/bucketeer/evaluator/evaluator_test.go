@@ -212,7 +212,7 @@ func TestEvalute(t *testing.T) {
 		expectedErr    error
 	}{
 		{
-			desc: "err: falied to get feature flag from cache",
+			desc: "err: failed to get feature flag from cache",
 			setup: func(e *evaluator) {
 				e.featuresCache.(*mock.MockFeaturesCache).EXPECT().Get(ft1.Id).Return(nil, internalErr)
 			},
@@ -222,7 +222,7 @@ func TestEvalute(t *testing.T) {
 			expectedErr: internalErr,
 		},
 		{
-			desc: "err: falied to get prerequisite feature flag from cache",
+			desc: "err: failed to get prerequisite feature flag from cache",
 			setup: func(e *evaluator) {
 				e.featuresCache.(*mock.MockFeaturesCache).EXPECT().Get(ft1.Id).Return(ft1, nil)
 				e.featuresCache.(*mock.MockFeaturesCache).EXPECT().Get(ft2.Id).Return(nil, internalErr)
@@ -233,7 +233,7 @@ func TestEvalute(t *testing.T) {
 			expectedErr: internalErr,
 		},
 		{
-			desc: "err: falied to get segment from cache",
+			desc: "err: failed to get segment from cache",
 			setup: func(e *evaluator) {
 				e.featuresCache.(*mock.MockFeaturesCache).EXPECT().Get(ft5.Id).Return(ft5, nil)
 				e.segmentUsersCache.(*mock.MockSegmentUsersCache).EXPECT().Get(segment2.SegmentId).Return(nil, internalErr)
@@ -337,8 +337,6 @@ func TestEvalute(t *testing.T) {
 	}
 }
 
-// user *user.User, featureID string) (*model.Evaluation
-
 func TestGetTargetFeatures(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
@@ -351,7 +349,7 @@ func TestGetTargetFeatures(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc: "err: falied to get feature flag from cache",
+			desc: "err: failed to get feature flag from cache",
 			setup: func(e *evaluator) {
 				e.featuresCache.(*mock.MockFeaturesCache).EXPECT().Get(ft4.Id).Return(nil, internalErr)
 			},
@@ -395,7 +393,7 @@ func TestGetPrerequisiteFeatures(t *testing.T) {
 		expectedErr error
 	}{
 		{
-			desc: "err: falied to get feature flag from cache",
+			desc: "err: failed to get feature flag from cache",
 			setup: func(e *evaluator) {
 				e.featuresCache.(*mock.MockFeaturesCache).EXPECT().Get(ft4.Id).Return(nil, internalErr)
 			},
