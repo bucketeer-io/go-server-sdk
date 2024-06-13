@@ -30,6 +30,12 @@ func TestLocalStringVariation(t *testing.T) {
 			featureID: featureIDString,
 			expected:  featureIDStringTargetVariation,
 		},
+		{
+			desc:      "get Variation by Segment user",
+			user:      newUser(t, targetSegmentUserID),
+			featureID: featureIDString,
+			expected:  featureIDStringVariation3,
+		},
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
