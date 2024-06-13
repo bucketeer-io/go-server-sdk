@@ -39,17 +39,17 @@ func TestStringVariation(t *testing.T) {
 		},
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	sdk := newSDK(t, ctx)
+	defer func() {
+		// Close
+		err := sdk.Close(ctx)
+		assert.NoError(t, err)
+	}()
+
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), timeout)
-			defer cancel()
-			sdk := newSDK(t, ctx)
-			defer func() {
-				// Close
-				err := sdk.Close(ctx)
-				assert.NoError(t, err)
-			}()
-
 			actual := sdk.StringVariation(ctx, tt.user, tt.featureID, "default")
 			assert.Equal(t, tt.expected, actual, "userID: %s, featureID: %s", tt.user.ID, tt.featureID)
 		})
@@ -79,17 +79,17 @@ func TestBoolVariation(t *testing.T) {
 		},
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	sdk := newSDK(t, ctx)
+	defer func() {
+		// Close
+		err := sdk.Close(ctx)
+		assert.NoError(t, err)
+	}()
+
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), timeout)
-			defer cancel()
-			sdk := newSDK(t, ctx)
-			defer func() {
-				// Close
-				err := sdk.Close(ctx)
-				assert.NoError(t, err)
-			}()
-
 			actual := sdk.BoolVariation(ctx, tt.user, tt.featureID, false)
 			assert.Equal(t, tt.expected, actual, "userID: %s, featureID: %s", tt.user.ID, tt.featureID)
 		})
@@ -119,17 +119,17 @@ func TestIntVariation(t *testing.T) {
 		},
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	sdk := newSDK(t, ctx)
+	defer func() {
+		// Close
+		err := sdk.Close(ctx)
+		assert.NoError(t, err)
+	}()
+
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), timeout)
-			defer cancel()
-			sdk := newSDK(t, ctx)
-			defer func() {
-				// Close
-				err := sdk.Close(ctx)
-				assert.NoError(t, err)
-			}()
-
 			actual := sdk.IntVariation(ctx, tt.user, tt.featureID, -1)
 			assert.Equal(t, tt.expected, actual, "userID: %s, featureID: %s", tt.user.ID, tt.featureID)
 		})
@@ -159,17 +159,17 @@ func TestInt64Variation(t *testing.T) {
 		},
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	sdk := newSDK(t, ctx)
+	defer func() {
+		// Close
+		err := sdk.Close(ctx)
+		assert.NoError(t, err)
+	}()
+
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), timeout)
-			defer cancel()
-			sdk := newSDK(t, ctx)
-			defer func() {
-				// Close
-				err := sdk.Close(ctx)
-				assert.NoError(t, err)
-			}()
-
 			actual := sdk.Int64Variation(ctx, tt.user, tt.featureID, -1000000000)
 			assert.Equal(t, tt.expected, actual, "userID: %s, featureID: %s", tt.user.ID, tt.featureID)
 		})
@@ -199,17 +199,17 @@ func TestFloat64Variation(t *testing.T) {
 		},
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	sdk := newSDK(t, ctx)
+	defer func() {
+		// Close
+		err := sdk.Close(ctx)
+		assert.NoError(t, err)
+	}()
+
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), timeout)
-			defer cancel()
-			sdk := newSDK(t, ctx)
-			defer func() {
-				// Close
-				err := sdk.Close(ctx)
-				assert.NoError(t, err)
-			}()
-
 			actual := sdk.Float64Variation(ctx, tt.user, tt.featureID, -1.1)
 			assert.Equal(t, tt.expected, actual, "userID: %s, featureID: %s", tt.user.ID, tt.featureID)
 		})
@@ -244,17 +244,17 @@ func TestJSONVariation(t *testing.T) {
 		},
 	}
 
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	sdk := newSDK(t, ctx)
+	defer func() {
+		// Close
+		err := sdk.Close(ctx)
+		assert.NoError(t, err)
+	}()
+
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), timeout)
-			defer cancel()
-			sdk := newSDK(t, ctx)
-			defer func() {
-				// Close
-				err := sdk.Close(ctx)
-				assert.NoError(t, err)
-			}()
-
 			v := &TestJson{}
 			sdk.JSONVariation(ctx, tt.user, tt.featureID, v)
 			assert.Equal(t, tt.expected, v, "userID: %s, featureID: %s", tt.user.ID, tt.featureID)
