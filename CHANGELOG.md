@@ -1,5 +1,37 @@
 # Changelog
 
+## [1.4.0](https://github.com/bucketeer-io/go-server-sdk/compare/v1.3.6...v1.4.0) (2024-06-13)
+
+
+### Features
+
+* enable local evaluation ([#129](https://github.com/bucketeer-io/go-server-sdk/issues/129)) ([ea8092d](https://github.com/bucketeer-io/go-server-sdk/commit/ea8092d16990baff6bb181c718a49e3b7c070da6))
+
+
+### Bug Fixes
+
+* missing metrics in the cache processor ([#130](https://github.com/bucketeer-io/go-server-sdk/issues/130)) ([1ec9f89](https://github.com/bucketeer-io/go-server-sdk/commit/1ec9f89cac6c16dc64d7e42a32f13040e6e8c4b9))
+
+
+### Miscellaneous
+
+* add cache interface ([#119](https://github.com/bucketeer-io/go-server-sdk/issues/119)) ([ff593c8](https://github.com/bucketeer-io/go-server-sdk/commit/ff593c810c3ed9471250898ebff34b6520da7821))
+* add codeowners file ([#116](https://github.com/bucketeer-io/go-server-sdk/issues/116)) ([8bb2693](https://github.com/bucketeer-io/go-server-sdk/commit/8bb26937c3edd93c9b0d4ab81e2a31eed7caa317))
+* add feature flag and segment user cacher ([#121](https://github.com/bucketeer-io/go-server-sdk/issues/121)) ([df35501](https://github.com/bucketeer-io/go-server-sdk/commit/df35501500b55bd4d173cac89de3709231d0aa63))
+* add feature flag cache processor ([#122](https://github.com/bucketeer-io/go-server-sdk/issues/122)) ([f65db04](https://github.com/bucketeer-io/go-server-sdk/commit/f65db04487cdaa9b22432899621ae8b52d410b25))
+* add get feature flags and get segment users api ([#120](https://github.com/bucketeer-io/go-server-sdk/issues/120)) ([5d04d74](https://github.com/bucketeer-io/go-server-sdk/commit/5d04d7491bc304c33ef9332d57e56ecf184fe099))
+* add metric events in the cache processors ([#127](https://github.com/bucketeer-io/go-server-sdk/issues/127)) ([6713101](https://github.com/bucketeer-io/go-server-sdk/commit/6713101a3754d64c3ac46d3ca73787f29804eb62))
+* add new metrics events to handle unknown errors ([#115](https://github.com/bucketeer-io/go-server-sdk/issues/115)) ([19319b8](https://github.com/bucketeer-io/go-server-sdk/commit/19319b86e242180226b7f4cf175da98d65785d4a))
+* add segment user cache processor ([#123](https://github.com/bucketeer-io/go-server-sdk/issues/123)) ([585afc3](https://github.com/bucketeer-io/go-server-sdk/commit/585afc3edaa639063d3b2f5c272b93b5add647b0))
+* add SourceID and SDKVersion to the required request ([#118](https://github.com/bucketeer-io/go-server-sdk/issues/118)) ([fbf6e94](https://github.com/bucketeer-io/go-server-sdk/commit/fbf6e941e19ea2f4b14eaafc78898f1454e17591))
+* export push event function so other processors report metric events ([#124](https://github.com/bucketeer-io/go-server-sdk/issues/124)) ([1ad1ecc](https://github.com/bucketeer-io/go-server-sdk/commit/1ad1ecc0b9b77b87bde87dcb47a543198d09c582))
+* remove unused ctx paraemeter from event processor interface ([#125](https://github.com/bucketeer-io/go-server-sdk/issues/125)) ([b956faa](https://github.com/bucketeer-io/go-server-sdk/commit/b956faa22cfe4dc678316ae2d93054ac2312b484))
+
+
+### Build System
+
+* update dependencies ([#126](https://github.com/bucketeer-io/go-server-sdk/issues/126)) ([c6d0576](https://github.com/bucketeer-io/go-server-sdk/commit/c6d0576be341e22f84837ca21fe11c0a3ff69a9e))
+
 ## [1.3.6](https://github.com/bucketeer-io/go-server-sdk/compare/v1.3.5...v1.3.6) (2024-02-28)
 
 
