@@ -12,6 +12,7 @@ import (
 )
 
 func TestLocalStringVariation(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		desc      string
 		user      *user.User
@@ -58,6 +59,7 @@ func TestLocalStringVariation(t *testing.T) {
 }
 
 func TestLocalBoolVariation(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		desc      string
 		user      *user.User
@@ -98,6 +100,7 @@ func TestLocalBoolVariation(t *testing.T) {
 }
 
 func TestLocalIntVariation(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		desc      string
 		user      *user.User
@@ -138,6 +141,7 @@ func TestLocalIntVariation(t *testing.T) {
 }
 
 func TestLocalInt64Variation(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		desc      string
 		user      *user.User
@@ -178,6 +182,7 @@ func TestLocalInt64Variation(t *testing.T) {
 }
 
 func TestLocalFloat64Variation(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
 		desc      string
 		user      *user.User
@@ -218,6 +223,7 @@ func TestLocalFloat64Variation(t *testing.T) {
 }
 
 func TestLocalJSONVariation(t *testing.T) {
+	t.Parallel()
 	type TestJson struct {
 		Str string `json:"str"`
 		Int string `json:"int"`
