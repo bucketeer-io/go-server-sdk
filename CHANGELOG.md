@@ -3,9 +3,11 @@
 ## [1.4.1](https://github.com/bucketeer-io/go-server-sdk/compare/v1.4.0...v1.4.1) (2024-06-13)
 
 
-### Build System
+### Features
 
-* **deps:** update bucketeer to 0.4.5 ([#134](https://github.com/bucketeer-io/go-server-sdk/issues/134)) ([a71487d](https://github.com/bucketeer-io/go-server-sdk/commit/a71487da87ba8b08a6ace07479a4670e08d36741))
+* new `Feature Flag` custom rule in the targeting settings ([#134](https://github.com/bucketeer-io/go-server-sdk/issues/134)) ([a71487d](https://github.com/bucketeer-io/go-server-sdk/commit/a71487da87ba8b08a6ace07479a4670e08d36741))
+
+[See more information](https://docs.bucketeer.io/feature-flags/creating-feature-flags/targeting/#feature-flag)
 
 ## [1.4.0](https://github.com/bucketeer-io/go-server-sdk/compare/v1.3.6...v1.4.0) (2024-06-13)
 
