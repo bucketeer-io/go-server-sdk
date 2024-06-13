@@ -34,9 +34,9 @@ type APIID int
 // The API IDs must match the IDs defined on the main repository
 // https://github.com/bucketeer-io/bucketeer/blob/main/proto/event/client/event.proto
 const (
-	GetEvaluation   APIID = 1
-	RegisterEvents  APIID = 3
-	GetFeatureFlags APIID = 4
-	GetSegmentUsers APIID = 5
-	SDKGetVariation APIID = 100
+	GetEvaluation    APIID = 1
+	RegisterEvents   APIID = 3
+	GetFeatureFlags  APIID = 4
+	GetSegmentUsers  APIID = 5
+	SDKGetEvaluation APIID = 100
 )

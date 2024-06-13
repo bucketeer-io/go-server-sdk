@@ -11,6 +11,8 @@ import (
 
 func TestWithOptions(t *testing.T) {
 	t.Parallel()
+	enableLocalEvaluation := true
+	cachePollingInterval := 30 * time.Second
 	tag := "go-server"
 	apiKey := "apiKey"
 	host := "host"
@@ -23,6 +25,8 @@ func TestWithOptions(t *testing.T) {
 	errorLogger := log.DiscardErrorLogger
 
 	opts := []Option{
+		WithEnableLocalEvaluation(enableLocalEvaluation),
+		WithCachePollingInterval(cachePollingInterval),
 		WithTag(tag),
 		WithAPIKey(apiKey),
 		WithHost(host),
@@ -39,6 +43,8 @@ func TestWithOptions(t *testing.T) {
 		opt(&dopts)
 	}
 
+	assert.Equal(t, enableLocalEvaluation, dopts.enableLocalEvaluation)
+	assert.Equal(t, cachePollingInterval, dopts.cachePollingInterval)
 	assert.Equal(t, tag, dopts.tag)
 	assert.Equal(t, apiKey, dopts.apiKey)
 	assert.Equal(t, host, dopts.host)

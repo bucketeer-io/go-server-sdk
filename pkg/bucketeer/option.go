@@ -10,29 +10,52 @@ import (
 type Option func(*options)
 
 type options struct {
-	tag                  string
-	apiKey               string
-	host                 string
-	port                 int
-	eventQueueCapacity   int
-	numEventFlushWorkers int
-	eventFlushInterval   time.Duration
-	eventFlushSize       int
-	enableDebugLog       bool
-	errorLogger          log.BaseLogger
+	enableLocalEvaluation bool
+	cachePollingInterval  time.Duration
+	tag                   string
+	apiKey                string
+	host                  string
+	port                  int
+	eventQueueCapacity    int
+	numEventFlushWorkers  int
+	eventFlushInterval    time.Duration
+	eventFlushSize        int
+	enableDebugLog        bool
+	errorLogger           log.BaseLogger
 }
 
 var defaultOptions = options{
-	tag:                  "",
-	apiKey:               "",
-	host:                 "",
-	port:                 443,
-	eventQueueCapacity:   100_000,
-	numEventFlushWorkers: 50,
-	eventFlushInterval:   1 * time.Minute,
-	eventFlushSize:       100,
-	enableDebugLog:       false,
-	errorLogger:          log.DefaultErrorLogger,
+	enableLocalEvaluation: false,
+	cachePollingInterval:  1 * time.Minute,
+	tag:                   "",
+	apiKey:                "",
+	host:                  "",
+	port:                  443,
+	eventQueueCapacity:    100_000,
+	numEventFlushWorkers:  50,
+	eventFlushInterval:    1 * time.Minute,
+	eventFlushSize:        100,
+	enableDebugLog:        false,
+	errorLogger:           log.DefaultErrorLogger,
+}
+
+// WithEnableLocalEvaluation sets whether the user will be evaluated locally or not. (Default: false)
+//
+// Evaluate the end user locally in the SDK instead of on the server.
+// Note: To evaluate the user locally, you must create an API key and select the server-side role.
+func WithEnableLocalEvaluation(enable bool) Option {
+	return func(opts *options) {
+		opts.enableLocalEvaluation = enable
+	}
+}
+
+// WithCachePollingInterval sets the polling interval for cache updating. (Default: 1 min)
+//
+// Note: To use the cache you must set the `WithEnableLocalEvaluation` to true.
+func WithCachePollingInterval(interval time.Duration) Option {
+	return func(opts *options) {
+		opts.cachePollingInterval = interval
+	}
 }
 
 // WithTag sets tag specified in getting evaluation. (Default: "")

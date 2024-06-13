@@ -8,5 +8,10 @@ type Reason struct {
 type ReasonType string
 
 const (
-	ReasonClient ReasonType = "CLIENT"
+	ReasonTarget       ReasonType = "TARGET"
+	ReasonRule         ReasonType = "RULE"
+	ReasonDefault      ReasonType = "DEFAULT"
+	ReasonClient       ReasonType = "CLIENT"
+	ReasonOffVariation ReasonType = "OFF_VARIATION"
+	ReasonPrerequisite ReasonType = "PREREQUISITE"
 )
