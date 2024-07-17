@@ -96,6 +96,60 @@ func TestBoolVariation(t *testing.T) {
 	}
 }
 
+func TestBoolVariationDetail(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		desc      string
+		user      *user.User
+		featureID string
+		expected  bucketeer.EvaluationDetail[bool]
+	}{
+		{
+			desc:      "get Variation by Default Strategy",
+			user:      newUser(t, "user-1"),
+			featureID: featureIDBoolean,
+			expected: bucketeer.EvaluationDetail[bool]{
+				FeatureID:      featureIDBoolean,
+				FeatureVersion: 1,
+				UserID:         "user-1",
+				VariationID:    "true",
+				Value:          true,
+				Reason:         bucketeer.ReasonDefault,
+			},
+		},
+		{
+			desc:      "get Variation by Targeting Strategy",
+			user:      newUser(t, targetUserID),
+			featureID: featureIDBoolean,
+			expected: bucketeer.EvaluationDetail[bool]{
+				FeatureID:      featureIDBoolean,
+				FeatureVersion: 1,
+				UserID:         "user-1",
+				VariationID:    "true",
+				Value:          featureIDBooleanTargetVariation,
+				Reason:         bucketeer.ReasonTarget,
+			},
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	sdk := newSDK(t, ctx)
+	defer func() {
+		// Close
+		err := sdk.Close(ctx)
+		assert.NoError(t, err)
+	}()
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			actual := sdk.BoolVariationDetail(ctx, tt.user, tt.featureID, false)
+			assert.Equal(t, tt.expected, actual, "userID: %s, featureID: %s", tt.user.ID, tt.featureID)
+		})
+	}
+}
+
 func TestIntVariation(t *testing.T) {
 	t.Parallel()
 

@@ -51,6 +51,20 @@ func (mr *MockSDKMockRecorder) BoolVariation(ctx, user, featureID, defaultValue 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BoolVariation", reflect.TypeOf((*MockSDK)(nil).BoolVariation), ctx, user, featureID, defaultValue)
 }
 
+// BoolVariationDetail mocks base method.
+func (m *MockSDK) BoolVariationDetail(ctx context.Context, user *user.User, featureID string, defaultValue bool) model.EvaluationDetail[bool] {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BoolVariationDetail", ctx, user, featureID, defaultValue)
+	ret0, _ := ret[0].(model.EvaluationDetail[bool])
+	return ret0
+}
+
+// BoolVariationDetail indicates an expected call of BoolVariationDetail.
+func (mr *MockSDKMockRecorder) BoolVariationDetail(ctx, user, featureID, defaultValue any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BoolVariationDetail", reflect.TypeOf((*MockSDK)(nil).BoolVariationDetail), ctx, user, featureID, defaultValue)
+}
+
 // Close mocks base method.
 func (m *MockSDK) Close(ctx context.Context) error {
 	m.ctrl.T.Helper()

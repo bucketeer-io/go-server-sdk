@@ -122,6 +122,124 @@ func TestBoolVariation(t *testing.T) {
 	}
 }
 
+func TestBoolVariationDetail(t *testing.T) {
+	t.Parallel()
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	tests := []struct {
+		desc         string
+		setup        func(context.Context, *sdk, *user.User, string)
+		user         *user.User
+		featureID    string
+		defaultValue bool
+		expected     model.EvaluationDetail[bool]
+	}{
+		{
+			desc: "return default value when failed to get evaluation",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				err := api.NewErrStatus(http.StatusInternalServerError)
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
+					nil,
+					100, err,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+					user,
+					featureID,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
+					err,
+					model.GetEvaluation,
+				)
+			},
+			user:         newUser(t, sdkUserID),
+			featureID:    sdkFeatureID,
+			defaultValue: false,
+			expected: model.EvaluationDetail[bool]{
+				FeatureID:      sdkFeatureID,
+				FeatureVersion: 0,
+				UserID:         sdkUserID,
+				VariationID:    "",
+				Value:          false,
+				Reason:         model.EvaluationReasonClient,
+			},
+		},
+		{
+			desc: "return default value when filed to parse variation",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				res := newGetEvaluationResponse(t, featureID, "invalid")
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), // duration
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
+					100,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+					user,
+					featureID,
+				)
+			},
+			user:         newUser(t, sdkUserID),
+			featureID:    sdkFeatureID,
+			defaultValue: false,
+			expected: model.EvaluationDetail[bool]{
+				FeatureID:      sdkFeatureID,
+				FeatureVersion: 1,
+				UserID:         sdkUserID,
+				VariationID:    "testVersion",
+				Value:          false,
+				Reason:         model.EvaluationReasonTarget,
+			},
+		},
+		{
+			desc: "success",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				res := newGetEvaluationResponse(t, featureID, "true")
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), // duration
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
+					100,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
+					user,
+					res.Evaluation,
+				)
+			},
+			user:         newUser(t, sdkUserID),
+			featureID:    sdkFeatureID,
+			defaultValue: false,
+			expected: model.EvaluationDetail[bool]{
+				FeatureID:      sdkFeatureID,
+				FeatureVersion: 1,
+				UserID:         sdkUserID,
+				VariationID:    "testVersion",
+				Value:          true,
+				Reason:         model.EvaluationReasonTarget,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			s := newSDKWithMock(t, mockCtrl)
+			ctx := context.Background()
+			if tt.setup != nil {
+				tt.setup(ctx, s, tt.user, tt.featureID)
+			}
+			actual := s.BoolVariationDetail(ctx, tt.user, tt.featureID, tt.defaultValue)
+			assert.Equal(t, tt.expected, actual)
+		})
+	}
+}
+
 func TestIntVariation(t *testing.T) {
 	t.Parallel()
 	mockCtrl := gomock.NewController(t)
@@ -947,7 +1065,13 @@ func newGetEvaluationResponse(t *testing.T, featureID, value string) *model.GetE
 	return &model.GetEvaluationResponse{
 		Evaluation: &model.Evaluation{
 			FeatureID:      featureID,
+			FeatureVersion: 1,
+			VariationID:    "testVersion",
 			VariationValue: value,
+			Reason: &model.Reason{
+				RuleID: "test",
+				Type:   model.ReasonTarget,
+			},
 		},
 	}
 }

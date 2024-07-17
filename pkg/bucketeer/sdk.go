@@ -36,6 +36,12 @@ type SDK interface {
 	// BoolVariation returns defaultValue if an error occurs.
 	BoolVariation(ctx context.Context, user *user.User, featureID string, defaultValue bool) bool
 
+	BoolVariationDetail(
+		ctx context.Context,
+		user *user.User,
+		featureID string,
+		defaultValue bool) model.EvaluationDetail[bool]
+
 	// IntVariation returns the value of a feature flag (whose variations are ints) for the given user.
 	//
 	// IntVariation returns defaultValue if an error occurs.
@@ -219,6 +225,49 @@ func (s *sdk) BoolVariation(ctx context.Context, user *user.User, featureID stri
 	}
 	s.eventProcessor.PushEvaluationEvent(user, evaluation)
 	return v
+}
+
+func (s *sdk) BoolVariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue bool) model.EvaluationDetail[bool] {
+	evaluation, err := s.getEvaluation(ctx, user, featureID)
+	if err != nil {
+		s.logVariationError(err, "BoolVariation", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+		return model.EvaluationDetail[bool]{
+			FeatureID:      featureID,
+			FeatureVersion: 0,
+			UserID:         user.ID,
+			VariationID:    "",
+			Reason:         model.EvaluationReasonClient,
+			Value:          defaultValue,
+		}
+	}
+	variation := evaluation.VariationValue
+	v, err := strconv.ParseBool(variation)
+	if err != nil {
+		s.logVariationError(err, "BoolVariation", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+		return model.EvaluationDetail[bool]{
+			FeatureID:      featureID,
+			FeatureVersion: evaluation.FeatureVersion,
+			UserID:         user.ID,
+			VariationID:    evaluation.VariationID,
+			Reason:         model.ConvertEvaluationReason(evaluation.Reason.Type),
+			Value:          defaultValue,
+		}
+	}
+	s.eventProcessor.PushEvaluationEvent(user, evaluation)
+	return model.EvaluationDetail[bool]{
+		FeatureID:      featureID,
+		FeatureVersion: evaluation.FeatureVersion,
+		UserID:         user.ID,
+		VariationID:    evaluation.VariationID,
+		Reason:         model.ConvertEvaluationReason(evaluation.Reason.Type),
+		Value:          v,
+	}
 }
 
 func (s *sdk) IntVariation(ctx context.Context, user *user.User, featureID string, defaultValue int) int {
@@ -451,8 +500,27 @@ func NewNopSDK() SDK {
 	return &nopSDK{}
 }
 
-func (s *nopSDK) BoolVariation(ctx context.Context, user *user.User, featureID string, defaultValue bool) bool {
+func (s *nopSDK) BoolVariation(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue bool) bool {
 	return defaultValue
+}
+
+func (s *nopSDK) BoolVariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue bool) model.EvaluationDetail[bool] {
+	return model.EvaluationDetail[bool]{
+		FeatureID:      featureID,
+		FeatureVersion: 0,
+		UserID:         user.ID,
+		VariationID:    "no-op",
+		Reason:         model.EvaluationReasonDefault,
+		Value:          defaultValue,
+	}
 }
 
 func (s *nopSDK) IntVariation(ctx context.Context, user *user.User, featureID string, defaultValue int) int {
