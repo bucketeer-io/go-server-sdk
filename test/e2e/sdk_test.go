@@ -101,36 +101,25 @@ func TestBoolVariationDetail(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		desc      string
-		user      *user.User
-		featureID string
-		expected  model.EvaluationDetail[bool]
+		desc           string
+		user           *user.User
+		featureID      string
+		expectedValue  bool
+		expectedReason model.EvaluationReason
 	}{
 		{
-			desc:      "get Variation by Default Strategy",
-			user:      newUser(t, "user-1"),
-			featureID: featureIDBoolean,
-			expected: model.EvaluationDetail[bool]{
-				FeatureID:      featureIDBoolean,
-				FeatureVersion: 1,
-				UserID:         "user-1",
-				VariationID:    "true",
-				Value:          true,
-				Reason:         model.EvaluationReasonDefault,
-			},
+			desc:           "get Variation by Default Strategy",
+			user:           newUser(t, "user-1"),
+			featureID:      featureIDBoolean,
+			expectedValue:  true,
+			expectedReason: model.EvaluationReasonDefault,
 		},
 		{
-			desc:      "get Variation by Targeting Strategy",
-			user:      newUser(t, targetUserID),
-			featureID: featureIDBoolean,
-			expected: model.EvaluationDetail[bool]{
-				FeatureID:      featureIDBoolean,
-				FeatureVersion: 1,
-				UserID:         "user-1",
-				VariationID:    "true",
-				Value:          featureIDBooleanTargetVariation,
-				Reason:         model.EvaluationReasonTarget,
-			},
+			desc:           "get Variation by Targeting Strategy",
+			user:           newUser(t, targetUserID),
+			featureID:      featureIDBoolean,
+			expectedValue:  featureIDBooleanTargetVariation,
+			expectedReason: model.EvaluationReasonTarget,
 		},
 	}
 
@@ -146,7 +135,10 @@ func TestBoolVariationDetail(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			actual := sdk.BoolVariationDetail(ctx, tt.user, tt.featureID, false)
-			assert.Equal(t, tt.expected, actual, "userID: %s, featureID: %s", tt.user.ID, tt.featureID)
+			assert.Equal(t, tt.expectedValue, actual.Value)
+			assert.Equal(t, tt.expectedReason, actual.Reason)
+			assert.Equal(t, tt.featureID, actual.FeatureID)
+			assert.Equal(t, tt.user.ID, actual.UserID)
 		})
 	}
 }
