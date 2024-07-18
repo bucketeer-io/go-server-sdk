@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer"
@@ -103,32 +104,32 @@ func TestBoolVariationDetail(t *testing.T) {
 		desc      string
 		user      *user.User
 		featureID string
-		expected  bucketeer.EvaluationDetail[bool]
+		expected  model.EvaluationDetail[bool]
 	}{
 		{
 			desc:      "get Variation by Default Strategy",
 			user:      newUser(t, "user-1"),
 			featureID: featureIDBoolean,
-			expected: bucketeer.EvaluationDetail[bool]{
+			expected: model.EvaluationDetail[bool]{
 				FeatureID:      featureIDBoolean,
 				FeatureVersion: 1,
 				UserID:         "user-1",
 				VariationID:    "true",
 				Value:          true,
-				Reason:         bucketeer.ReasonDefault,
+				Reason:         model.EvaluationReasonDefault,
 			},
 		},
 		{
 			desc:      "get Variation by Targeting Strategy",
 			user:      newUser(t, targetUserID),
 			featureID: featureIDBoolean,
-			expected: bucketeer.EvaluationDetail[bool]{
+			expected: model.EvaluationDetail[bool]{
 				FeatureID:      featureIDBoolean,
 				FeatureVersion: 1,
 				UserID:         "user-1",
 				VariationID:    "true",
 				Value:          featureIDBooleanTargetVariation,
-				Reason:         bucketeer.ReasonTarget,
+				Reason:         model.EvaluationReasonTarget,
 			},
 		},
 	}
