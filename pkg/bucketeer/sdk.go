@@ -236,38 +236,38 @@ func (s *sdk) BoolVariationDetail(
 	if err != nil {
 		s.logVariationError(err, "BoolVariation", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return model.EvaluationDetail[bool]{
-			FeatureID:      featureID,
-			FeatureVersion: 0,
-			UserID:         user.ID,
-			VariationID:    "",
-			Reason:         model.EvaluationReasonClient,
-			Value:          defaultValue,
-		}
+		return model.NewEvaluationDetail[bool](
+			featureID,
+			user.ID,
+			"",
+			0,
+			model.EvaluationReasonClient,
+			defaultValue,
+		)
 	}
 	variation := evaluation.VariationValue
 	v, err := strconv.ParseBool(variation)
 	if err != nil {
 		s.logVariationError(err, "BoolVariation", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return model.EvaluationDetail[bool]{
-			FeatureID:      featureID,
-			FeatureVersion: evaluation.FeatureVersion,
-			UserID:         user.ID,
-			VariationID:    evaluation.VariationID,
-			Reason:         model.ConvertEvaluationReason(evaluation.Reason.Type),
-			Value:          defaultValue,
-		}
+		return model.NewEvaluationDetail[bool](
+			featureID,
+			user.ID,
+			evaluation.VariationID,
+			evaluation.FeatureVersion,
+			model.ConvertEvaluationReason(evaluation.Reason.Type),
+			defaultValue,
+		)
 	}
 	s.eventProcessor.PushEvaluationEvent(user, evaluation)
-	return model.EvaluationDetail[bool]{
-		FeatureID:      featureID,
-		FeatureVersion: evaluation.FeatureVersion,
-		UserID:         user.ID,
-		VariationID:    evaluation.VariationID,
-		Reason:         model.ConvertEvaluationReason(evaluation.Reason.Type),
-		Value:          v,
-	}
+	return model.NewEvaluationDetail[bool](
+		featureID,
+		user.ID,
+		evaluation.VariationID,
+		evaluation.FeatureVersion,
+		model.ConvertEvaluationReason(evaluation.Reason.Type),
+		v,
+	)
 }
 
 func (s *sdk) IntVariation(ctx context.Context, user *user.User, featureID string, defaultValue int) int {
@@ -513,14 +513,14 @@ func (s *nopSDK) BoolVariationDetail(
 	user *user.User,
 	featureID string,
 	defaultValue bool) model.EvaluationDetail[bool] {
-	return model.EvaluationDetail[bool]{
-		FeatureID:      featureID,
-		FeatureVersion: 0,
-		UserID:         user.ID,
-		VariationID:    "no-op",
-		Reason:         model.EvaluationReasonDefault,
-		Value:          defaultValue,
-	}
+	return model.NewEvaluationDetail[bool](
+		featureID,
+		user.ID,
+		"no-op",
+		0,
+		model.EvaluationReasonDefault,
+		defaultValue,
+	)
 }
 
 func (s *nopSDK) IntVariation(ctx context.Context, user *user.User, featureID string, defaultValue int) int {

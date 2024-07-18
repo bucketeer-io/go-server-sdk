@@ -24,6 +24,22 @@ const (
 	EvaluationReasonPrerequisite EvaluationReason = "PREREQUISITE"
 )
 
+func NewEvaluationDetail[T EvaluationValue](
+	featureID, userId, variationID string,
+	featureVersion int32,
+	reason EvaluationReason,
+	value T,
+) EvaluationDetail[T] {
+	return EvaluationDetail[T]{
+		FeatureID:      featureID,
+		FeatureVersion: featureVersion,
+		VariationID:    variationID,
+		UserID:         userId,
+		Reason:         reason,
+		Value:          value,
+	}
+}
+
 func ConvertEvaluationReason(reasonType ReasonType) EvaluationReason {
 	switch reasonType {
 	case ReasonTarget:
