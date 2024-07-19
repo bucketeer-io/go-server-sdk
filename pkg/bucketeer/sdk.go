@@ -47,6 +47,12 @@ type SDK interface {
 	// IntVariation returns defaultValue if an error occurs.
 	IntVariation(ctx context.Context, user *user.User, featureID string, defaultValue int) int
 
+	IntVariationDetail(
+		ctx context.Context,
+		user *user.User,
+		featureID string,
+		defaultValue int) model.EvaluationDetail[int]
+
 	// Int64Variation returns the value of a feature flag (whose variations are int64s) for the given user.
 	//
 	// Int64Variation returns defaultValue if an error occurs.
@@ -234,7 +240,7 @@ func (s *sdk) BoolVariationDetail(
 	defaultValue bool) model.EvaluationDetail[bool] {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
-		s.logVariationError(err, "BoolVariation", user.ID, featureID)
+		s.logVariationError(err, "BoolVariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
 		return model.NewEvaluationDetail[bool](
 			featureID,
@@ -248,7 +254,7 @@ func (s *sdk) BoolVariationDetail(
 	variation := evaluation.VariationValue
 	v, err := strconv.ParseBool(variation)
 	if err != nil {
-		s.logVariationError(err, "BoolVariation", user.ID, featureID)
+		s.logVariationError(err, "BoolVariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
 		return model.NewEvaluationDetail[bool](
 			featureID,
@@ -286,6 +292,42 @@ func (s *sdk) IntVariation(ctx context.Context, user *user.User, featureID strin
 	}
 	s.eventProcessor.PushEvaluationEvent(user, evaluation)
 	return int(v)
+}
+
+func (s *sdk) IntVariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue int) model.EvaluationDetail[int] {
+	evaluation, err := s.getEvaluation(ctx, user, featureID)
+	if err != nil {
+		s.logVariationError(err, "IntVariationDetail", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+		return model.NewEvaluationDetail[int](featureID, user.ID, "", 0, model.EvaluationReasonClient, defaultValue)
+	}
+	variation := evaluation.VariationValue
+	v, err := strconv.ParseInt(variation, 10, 64)
+	if err != nil {
+		s.logVariationError(err, "IntVariationDetail", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+		return model.NewEvaluationDetail[int](
+			featureID,
+			user.ID,
+			evaluation.VariationID,
+			evaluation.FeatureVersion,
+			model.EvaluationReasonClient,
+			defaultValue,
+		)
+	}
+	s.eventProcessor.PushEvaluationEvent(user, evaluation)
+	return model.NewEvaluationDetail[int](
+		featureID,
+		user.ID,
+		evaluation.VariationID,
+		evaluation.FeatureVersion,
+		model.ConvertEvaluationReason(evaluation.Reason.Type),
+		int(v),
+	)
 }
 
 func (s *sdk) Int64Variation(ctx context.Context, user *user.User, featureID string, defaultValue int64) int64 {
@@ -525,6 +567,21 @@ func (s *nopSDK) BoolVariationDetail(
 
 func (s *nopSDK) IntVariation(ctx context.Context, user *user.User, featureID string, defaultValue int) int {
 	return defaultValue
+}
+
+func (s *nopSDK) IntVariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue int) model.EvaluationDetail[int] {
+	return model.EvaluationDetail[int]{
+		FeatureID:      featureID,
+		FeatureVersion: 0,
+		UserID:         user.ID,
+		VariationID:    "no-op",
+		Reason:         model.EvaluationReasonDefault,
+		Value:          defaultValue,
+	}
 }
 
 func (s *nopSDK) Int64Variation(ctx context.Context, user *user.User, featureID string, defaultValue int64) int64 {

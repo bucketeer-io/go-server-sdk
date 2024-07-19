@@ -121,6 +121,20 @@ func (mr *MockSDKMockRecorder) IntVariation(ctx, user, featureID, defaultValue i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IntVariation", reflect.TypeOf((*MockSDK)(nil).IntVariation), ctx, user, featureID, defaultValue)
 }
 
+// IntVariationDetail mocks base method.
+func (m *MockSDK) IntVariationDetail(ctx context.Context, user *user.User, featureID string, defaultValue int) model.EvaluationDetail[int] {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IntVariationDetail", ctx, user, featureID, defaultValue)
+	ret0, _ := ret[0].(model.EvaluationDetail[int])
+	return ret0
+}
+
+// IntVariationDetail indicates an expected call of IntVariationDetail.
+func (mr *MockSDKMockRecorder) IntVariationDetail(ctx, user, featureID, defaultValue any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IntVariationDetail", reflect.TypeOf((*MockSDK)(nil).IntVariationDetail), ctx, user, featureID, defaultValue)
+}
+
 // JSONVariation mocks base method.
 func (m *MockSDK) JSONVariation(ctx context.Context, user *user.User, featureID string, dst interface{}) {
 	m.ctrl.T.Helper()

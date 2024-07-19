@@ -4,8 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"
@@ -179,6 +180,52 @@ func TestIntVariation(t *testing.T) {
 		t.Run(tt.desc, func(t *testing.T) {
 			actual := sdk.IntVariation(ctx, tt.user, tt.featureID, -1)
 			assert.Equal(t, tt.expected, actual, "userID: %s, featureID: %s", tt.user.ID, tt.featureID)
+		})
+	}
+}
+
+func TestIntVariationDetail(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		desc           string
+		user           *user.User
+		featureID      string
+		expectedValue  int
+		expectedReason model.EvaluationReason
+	}{
+		{
+			desc:           "get Variation by Default Strategy",
+			user:           newUser(t, "user-1"),
+			featureID:      featureIDInt,
+			expectedValue:  featureIDIntVariation1,
+			expectedReason: model.EvaluationReasonDefault,
+		},
+		{
+			desc:           "get Variation by Targeting Strategy",
+			user:           newUser(t, targetUserID),
+			featureID:      featureIDInt,
+			expectedValue:  featureIDIntTargetVariation,
+			expectedReason: model.EvaluationReasonTarget,
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	sdk := newSDK(t, ctx)
+	defer func() {
+		// Close
+		err := sdk.Close(ctx)
+		assert.NoError(t, err)
+	}()
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			actual := sdk.IntVariationDetail(ctx, tt.user, tt.featureID, -1)
+			assert.Equal(t, tt.expectedValue, actual.Value)
+			assert.Equal(t, tt.expectedReason, actual.Reason)
+			assert.Equal(t, tt.featureID, actual.FeatureID)
+			assert.Equal(t, tt.user.ID, actual.UserID)
 		})
 	}
 }
