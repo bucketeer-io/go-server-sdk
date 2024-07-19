@@ -553,6 +553,124 @@ func TestInt64Variation(t *testing.T) {
 	}
 }
 
+func TestInt64VariationDetail(t *testing.T) {
+	t.Parallel()
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	tests := []struct {
+		desc         string
+		setup        func(context.Context, *sdk, *user.User, string)
+		user         *user.User
+		featureID    string
+		defaultValue int64
+		expected     model.EvaluationDetail[int64]
+	}{
+		{
+			desc: "return default value when failed to get evaluation",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				err := api.NewErrStatus(http.StatusInternalServerError)
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
+					nil,
+					100,
+					err,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+					user,
+					featureID,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
+					err,
+					model.GetEvaluation,
+				)
+			},
+			user:         newUser(t, sdkUserID),
+			featureID:    sdkFeatureID,
+			defaultValue: 1,
+			expected: model.EvaluationDetail[int64]{
+				FeatureID:      sdkFeatureID,
+				FeatureVersion: 0,
+				UserID:         sdkUserID,
+				VariationID:    "",
+				Value:          1,
+				Reason:         model.EvaluationReasonClient,
+			},
+		},
+		{
+			desc: "return default value when failed to parse variation",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				res := newGetEvaluationResponse(t, featureID, "invalid")
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 5, nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), // duration
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
+					5,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+					user,
+					featureID,
+				)
+			},
+			user:         newUser(t, sdkUserID),
+			featureID:    sdkFeatureID,
+			defaultValue: 1,
+			expected: model.EvaluationDetail[int64]{
+				FeatureID:      sdkFeatureID,
+				FeatureVersion: 1,
+				UserID:         sdkUserID,
+				VariationID:    "testVersion",
+				Value:          1,
+				Reason:         model.EvaluationReasonClient,
+			}},
+		{
+			desc: "success",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				res := newGetEvaluationResponse(t, featureID, "2")
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 10, nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), // duration
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
+					10,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
+					user,
+					res.Evaluation,
+				)
+			},
+			user:         newUser(t, sdkUserID),
+			featureID:    sdkFeatureID,
+			defaultValue: 1,
+			expected: model.EvaluationDetail[int64]{
+				FeatureID:      sdkFeatureID,
+				FeatureVersion: 1,
+				UserID:         sdkUserID,
+				VariationID:    "testVersion",
+				Value:          2,
+				Reason:         model.EvaluationReasonTarget,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			s := newSDKWithMock(t, mockCtrl)
+			ctx := context.Background()
+			if tt.setup != nil {
+				tt.setup(ctx, s, tt.user, tt.featureID)
+			}
+			actual := s.Int64VariationDetail(ctx, tt.user, tt.featureID, tt.defaultValue)
+			assert.Equal(t, tt.expected, actual)
+		})
+	}
+}
+
 func TestFloat64Variation(t *testing.T) {
 	t.Parallel()
 	mockCtrl := gomock.NewController(t)

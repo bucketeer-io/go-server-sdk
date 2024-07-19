@@ -10,7 +10,7 @@ type EvaluationDetail[T EvaluationValue] struct {
 }
 
 type EvaluationValue interface {
-	int | string | bool | interface{}
+	int | int64 | string | bool | interface{}
 }
 
 type EvaluationReason string
@@ -25,7 +25,7 @@ const (
 )
 
 func NewEvaluationDetail[T EvaluationValue](
-	featureID, userId, variationID string,
+	featureID, userID, variationID string,
 	featureVersion int32,
 	reason EvaluationReason,
 	value T,
@@ -34,7 +34,7 @@ func NewEvaluationDetail[T EvaluationValue](
 		FeatureID:      featureID,
 		FeatureVersion: featureVersion,
 		VariationID:    variationID,
-		UserID:         userId,
+		UserID:         userID,
 		Reason:         reason,
 		Value:          value,
 	}

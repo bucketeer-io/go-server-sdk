@@ -58,6 +58,12 @@ type SDK interface {
 	// Int64Variation returns defaultValue if an error occurs.
 	Int64Variation(ctx context.Context, user *user.User, featureID string, defaultValue int64) int64
 
+	Int64VariationDetail(
+		ctx context.Context,
+		user *user.User,
+		featureID string,
+		defaultValue int64) model.EvaluationDetail[int64]
+
 	// Float64Variation returns the value of a feature flag (whose variations are float64s) for the given user.
 	//
 	// Float64Variation returns defaultValue if an error occurs.
@@ -348,6 +354,49 @@ func (s *sdk) Int64Variation(ctx context.Context, user *user.User, featureID str
 	return v
 }
 
+func (s *sdk) Int64VariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue int64) model.EvaluationDetail[int64] {
+	evaluation, err := s.getEvaluation(ctx, user, featureID)
+	if err != nil {
+		s.logVariationError(err, "Int64VariationDetail", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+		return model.NewEvaluationDetail[int64](
+			featureID,
+			user.ID,
+			"",
+			0,
+			model.EvaluationReasonClient,
+			defaultValue,
+		)
+	}
+	variation := evaluation.VariationValue
+	v, err := strconv.ParseInt(variation, 10, 64)
+	if err != nil {
+		s.logVariationError(err, "Int64VariationDetail", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+		return model.NewEvaluationDetail[int64](
+			featureID,
+			user.ID,
+			evaluation.VariationID,
+			evaluation.FeatureVersion,
+			model.EvaluationReasonClient,
+			defaultValue,
+		)
+	}
+	s.eventProcessor.PushEvaluationEvent(user, evaluation)
+	return model.NewEvaluationDetail[int64](
+		featureID,
+		user.ID,
+		evaluation.VariationID,
+		evaluation.FeatureVersion,
+		model.ConvertEvaluationReason(evaluation.Reason.Type),
+		v,
+	)
+}
+
 func (s *sdk) Float64Variation(ctx context.Context, user *user.User, featureID string, defaultValue float64) float64 {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
@@ -574,18 +623,37 @@ func (s *nopSDK) IntVariationDetail(
 	user *user.User,
 	featureID string,
 	defaultValue int) model.EvaluationDetail[int] {
-	return model.EvaluationDetail[int]{
-		FeatureID:      featureID,
-		FeatureVersion: 0,
-		UserID:         user.ID,
-		VariationID:    "no-op",
-		Reason:         model.EvaluationReasonDefault,
-		Value:          defaultValue,
-	}
+	return model.NewEvaluationDetail(
+		featureID,
+		user.ID,
+		"no-op",
+		0,
+		model.EvaluationReasonDefault,
+		defaultValue,
+	)
 }
 
-func (s *nopSDK) Int64Variation(ctx context.Context, user *user.User, featureID string, defaultValue int64) int64 {
+func (s *nopSDK) Int64Variation(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue int64) int64 {
 	return defaultValue
+}
+
+func (s *nopSDK) Int64VariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue int64) model.EvaluationDetail[int64] {
+	return model.NewEvaluationDetail(
+		featureID,
+		user.ID,
+		"no-op",
+		0,
+		model.EvaluationReasonDefault,
+		defaultValue,
+	)
 }
 
 func (s *nopSDK) Float64Variation(

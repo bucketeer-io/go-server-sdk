@@ -107,6 +107,20 @@ func (mr *MockSDKMockRecorder) Int64Variation(ctx, user, featureID, defaultValue
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Int64Variation", reflect.TypeOf((*MockSDK)(nil).Int64Variation), ctx, user, featureID, defaultValue)
 }
 
+// Int64VariationDetail mocks base method.
+func (m *MockSDK) Int64VariationDetail(ctx context.Context, user *user.User, featureID string, defaultValue int64) model.EvaluationDetail[int64] {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Int64VariationDetail", ctx, user, featureID, defaultValue)
+	ret0, _ := ret[0].(model.EvaluationDetail[int64])
+	return ret0
+}
+
+// Int64VariationDetail indicates an expected call of Int64VariationDetail.
+func (mr *MockSDKMockRecorder) Int64VariationDetail(ctx, user, featureID, defaultValue any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Int64VariationDetail", reflect.TypeOf((*MockSDK)(nil).Int64VariationDetail), ctx, user, featureID, defaultValue)
+}
+
 // IntVariation mocks base method.
 func (m *MockSDK) IntVariation(ctx context.Context, user *user.User, featureID string, defaultValue int) int {
 	m.ctrl.T.Helper()
