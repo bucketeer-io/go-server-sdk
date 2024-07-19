@@ -69,6 +69,12 @@ type SDK interface {
 	// Float64Variation returns defaultValue if an error occurs.
 	Float64Variation(ctx context.Context, user *user.User, featureID string, defaultValue float64) float64
 
+	Float64VariationDetail(
+		ctx context.Context,
+		user *user.User,
+		featureID string,
+		defaultValue float64) model.EvaluationDetail[float64]
+
 	// StringVariation returns the value of a feature flag (whose variations are strings) for the given user.
 	//
 	// StringVariation returns defaultValue if an error occurs.
@@ -415,6 +421,49 @@ func (s *sdk) Float64Variation(ctx context.Context, user *user.User, featureID s
 	return v
 }
 
+func (s *sdk) Float64VariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue float64) model.EvaluationDetail[float64] {
+	evaluation, err := s.getEvaluation(ctx, user, featureID)
+	if err != nil {
+		s.logVariationError(err, "Float64VariationDetail", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+		return model.NewEvaluationDetail[float64](
+			featureID,
+			user.ID,
+			"",
+			0,
+			model.EvaluationReasonClient,
+			defaultValue,
+		)
+	}
+	variation := evaluation.VariationValue
+	v, err := strconv.ParseFloat(variation, 64)
+	if err != nil {
+		s.logVariationError(err, "Float64VariationDetail", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+		return model.NewEvaluationDetail[float64](
+			featureID,
+			user.ID,
+			evaluation.VariationID,
+			evaluation.FeatureVersion,
+			model.EvaluationReasonClient,
+			defaultValue,
+		)
+	}
+	s.eventProcessor.PushEvaluationEvent(user, evaluation)
+	return model.NewEvaluationDetail[float64](
+		featureID,
+		user.ID,
+		evaluation.VariationID,
+		evaluation.FeatureVersion,
+		model.ConvertEvaluationReason(evaluation.Reason.Type),
+		v,
+	)
+}
+
 func (s *sdk) StringVariation(ctx context.Context, user *user.User, featureID, defaultValue string) string {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
@@ -663,6 +712,22 @@ func (s *nopSDK) Float64Variation(
 	defaultValue float64,
 ) float64 {
 	return defaultValue
+}
+
+func (s *nopSDK) Float64VariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue float64,
+) model.EvaluationDetail[float64] {
+	return model.NewEvaluationDetail(
+		featureID,
+		user.ID,
+		"no-op",
+		0,
+		model.EvaluationReasonDefault,
+		defaultValue,
+	)
 }
 
 func (s *nopSDK) StringVariation(

@@ -356,6 +356,52 @@ func TestFloat64Variation(t *testing.T) {
 	}
 }
 
+func TestFloat64VariationDetail(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		desc           string
+		user           *user.User
+		featureID      string
+		expectedValue  float64
+		expectedReason model.EvaluationReason
+	}{
+		{
+			desc:           "get Variation by Default Strategy",
+			user:           newUser(t, "user-1"),
+			featureID:      featureIDFloat,
+			expectedValue:  featureIDFloatVariation1,
+			expectedReason: model.EvaluationReasonDefault,
+		},
+		{
+			desc:           "get Variation by Targeting Strategy",
+			user:           newUser(t, targetUserID),
+			featureID:      featureIDFloat,
+			expectedValue:  featureIDFloatTargetVariation,
+			expectedReason: model.EvaluationReasonTarget,
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	sdk := newSDK(t, ctx)
+	defer func() {
+		// Close
+		err := sdk.Close(ctx)
+		assert.NoError(t, err)
+	}()
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			actual := sdk.Float64VariationDetail(ctx, tt.user, tt.featureID, -1.1)
+			assert.Equal(t, tt.expectedValue, actual.Value)
+			assert.Equal(t, tt.expectedReason, actual.Reason)
+			assert.Equal(t, tt.featureID, actual.FeatureID)
+			assert.Equal(t, tt.user.ID, actual.UserID)
+		})
+	}
+}
+
 func TestJSONVariation(t *testing.T) {
 	t.Parallel()
 

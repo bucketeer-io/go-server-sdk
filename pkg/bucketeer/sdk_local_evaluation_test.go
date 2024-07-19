@@ -719,6 +719,85 @@ func TestLocalFloat64Variation(t *testing.T) {
 	}
 }
 
+func TestLocalFloat64VariationDetail(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	defer controller.Finish()
+	internalErr := errors.New("internal error")
+	patterns := []struct {
+		desc      string
+		setup     func(*sdk, *user.User, string)
+		user      *user.User
+		featureID string
+		expected  model.EvaluationDetail[float64]
+	}{
+		{
+			desc: "err: internal error",
+			setup: func(s *sdk, u *user.User, featureID string) {
+				s.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Get(featureID).Return(
+					nil,
+					internalErr,
+				)
+				e := fmt.Errorf("internal error while evaluating user locally: %w", internalErr)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(e, model.SDKGetEvaluation)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID)
+			},
+			user:      &user.User{ID: "user-id-1"},
+			featureID: ftFloat.Id,
+			expected: model.EvaluationDetail[float64]{
+				FeatureID:      ftFloat.Id,
+				FeatureVersion: 0,
+				UserID:         "user-id-1",
+				Reason:         model.EvaluationReasonClient,
+				Value:          0.0,
+				VariationID:    "",
+			},
+		},
+		{
+			desc: "success",
+			setup: func(s *sdk, u *user.User, featureID string) {
+				s.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Get(featureID).Return(
+					ftFloat,
+					nil,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), model.SDKGetEvaluation,
+				)
+				eval := &model.Evaluation{
+					ID:             "feature-id-float:0:user-id-1",
+					UserID:         "user-id-1",
+					FeatureID:      ftFloat.Id,
+					FeatureVersion: ftFloat.Version,
+					VariationID:    ftFloat.Variations[0].Id,
+					VariationValue: ftFloat.Variations[0].Value,
+					Reason:         &model.Reason{Type: model.ReasonDefault},
+				}
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(u, eval)
+			},
+			user:      &user.User{ID: "user-id-1"},
+			featureID: ftFloat.Id,
+			expected: model.EvaluationDetail[float64]{
+				FeatureID:      ftFloat.Id,
+				FeatureVersion: 0,
+				UserID:         "user-id-1",
+				Reason:         model.EvaluationReasonDefault,
+				Value:          10.00,
+				VariationID:    ftFloat.Variations[0].Id,
+			},
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			sdk := newSDKLocalEvaluationWithMock(t, controller)
+			ctx := context.Background()
+			p.setup(sdk, p.user, p.featureID)
+			variation := sdk.Float64VariationDetail(ctx, p.user, p.featureID, 0)
+			assert.Equal(t, p.expected, variation)
+		})
+	}
+}
+
 func TestLocalStringVariation(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
