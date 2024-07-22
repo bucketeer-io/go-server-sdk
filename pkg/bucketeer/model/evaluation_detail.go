@@ -10,7 +10,7 @@ type EvaluationDetail[T EvaluationValue] struct {
 }
 
 type EvaluationValue interface {
-	int | int64 | string | bool | interface{}
+	int | int64 | float64 | string | bool | interface{}
 }
 
 type EvaluationReason string

@@ -87,7 +87,7 @@ func TestStringVariationDetail(t *testing.T) {
 			user:           newUser(t, targetSegmentUserID),
 			featureID:      featureIDString,
 			expectedValue:  featureIDStringVariation3,
-			expectedReason: model.EvaluationReasonTarget,
+			expectedReason: model.EvaluationReasonRule,
 		},
 	}
 
