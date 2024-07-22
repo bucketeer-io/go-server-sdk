@@ -175,6 +175,18 @@ func (mr *MockSDKMockRecorder) JSONVariation(ctx, user, featureID, dst interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "JSONVariation", reflect.TypeOf((*MockSDK)(nil).JSONVariation), ctx, user, featureID, dst)
 }
 
+// JSONVariationDetail mocks base method.
+func (m *MockSDK) JSONVariationDetail(ctx context.Context, user *user.User, featureID string, dst *model.EvaluationDetail[any]) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "JSONVariationDetail", ctx, user, featureID, dst)
+}
+
+// JSONVariationDetail indicates an expected call of JSONVariationDetail.
+func (mr *MockSDKMockRecorder) JSONVariationDetail(ctx, user, featureID, dst any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "JSONVariationDetail", reflect.TypeOf((*MockSDK)(nil).JSONVariationDetail), ctx, user, featureID, dst)
+}
+
 // StringVariation mocks base method.
 func (m *MockSDK) StringVariation(ctx context.Context, user *user.User, featureID, defaultValue string) string {
 	m.ctrl.T.Helper()

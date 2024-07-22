@@ -90,6 +90,8 @@ type SDK interface {
 	// and stores the result in dst.
 	JSONVariation(ctx context.Context, user *user.User, featureID string, dst interface{})
 
+	JSONVariationDetail(ctx context.Context, user *user.User, featureID string, dst *model.EvaluationDetail[interface{}])
+
 	// Track reports that a user has performed a goal event.
 	//
 	// TODO: Track doesn't work correctly until Bucketeer service implements the new goal tracking architecture.
@@ -529,6 +531,38 @@ func (s *sdk) JSONVariation(ctx context.Context, user *user.User, featureID stri
 	s.eventProcessor.PushEvaluationEvent(user, evaluation)
 }
 
+func (s *sdk) JSONVariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	dst *model.EvaluationDetail[interface{}]) {
+	evaluation, err := s.getEvaluation(ctx, user, featureID)
+	if err != nil {
+		s.logVariationError(err, "JSONVariationDetail", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+		dst.FeatureID = featureID
+		dst.FeatureVersion = 0
+		dst.UserID = user.ID
+		dst.VariationID = ""
+		dst.Reason = model.EvaluationReasonClient
+		return
+	}
+	dst.FeatureID = featureID
+	dst.FeatureVersion = evaluation.FeatureVersion
+	dst.UserID = user.ID
+	dst.VariationID = evaluation.VariationID
+	dst.Reason = model.ConvertEvaluationReason(evaluation.Reason.Type)
+
+	variation := evaluation.VariationValue
+	err = json.Unmarshal([]byte(variation), dst.Value)
+	if err != nil {
+		s.logVariationError(err, "JSONVariationDetail", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+		return
+	}
+	s.eventProcessor.PushEvaluationEvent(user, evaluation)
+}
+
 func (s *sdk) getEvaluation(ctx context.Context, user *user.User, featureID string) (*model.Evaluation, error) {
 	if !user.Valid() {
 		return nil, fmt.Errorf("invalid user: %v", user)
@@ -792,6 +826,18 @@ func (s *nopSDK) StringVariationDetail(
 }
 
 func (s *nopSDK) JSONVariation(ctx context.Context, user *user.User, featureID string, dst interface{}) {
+}
+
+func (s *nopSDK) JSONVariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	dst *model.EvaluationDetail[interface{}]) {
+	dst.FeatureID = featureID
+	dst.FeatureVersion = 0
+	dst.UserID = user.ID
+	dst.VariationID = "no-op"
+	dst.Reason = model.EvaluationReasonDefault
 }
 
 func (s *nopSDK) Track(ctx context.Context, user *user.User, GoalID string) {

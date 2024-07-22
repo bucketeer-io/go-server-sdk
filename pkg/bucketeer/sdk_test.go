@@ -1148,6 +1148,134 @@ func TestJSONVariation(t *testing.T) {
 	}
 }
 
+func TestJSONVariationDetail(t *testing.T) {
+	t.Parallel()
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	type DstStruct struct {
+		Str string `json:"str"`
+		Int string `json:"int"`
+	}
+	tests := []struct {
+		desc      string
+		setup     func(context.Context, *sdk, *user.User, string)
+		user      *user.User
+		featureID string
+		dst       *model.EvaluationDetail[interface{}]
+		expected  *model.EvaluationDetail[interface{}]
+	}{
+		{
+			desc: "failed to get evaluation",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				err := api.NewErrStatus(http.StatusInternalServerError)
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
+					nil,
+					100, err,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+					user,
+					featureID,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
+					err,
+					model.GetEvaluation,
+				)
+			},
+			user:      newUser(t, sdkUserID),
+			featureID: sdkFeatureID,
+			dst: &model.EvaluationDetail[interface{}]{
+				Value: &DstStruct{},
+			},
+			expected: &model.EvaluationDetail[interface{}]{
+				FeatureID:      sdkFeatureID,
+				FeatureVersion: 0,
+				UserID:         sdkUserID,
+				VariationID:    "",
+				Reason:         model.EvaluationReasonClient,
+				Value:          &DstStruct{},
+			},
+		},
+		{
+			desc: "faled to unmarshal variation",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				res := newGetEvaluationResponse(t, featureID, `invalid`)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), // duration
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
+					100,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+					user,
+					featureID,
+				)
+			},
+			user:      newUser(t, sdkUserID),
+			featureID: sdkFeatureID,
+			dst: &model.EvaluationDetail[interface{}]{
+				Value: &DstStruct{},
+			},
+			expected: &model.EvaluationDetail[interface{}]{
+				FeatureID:      sdkFeatureID,
+				FeatureVersion: 1,
+				UserID:         sdkUserID,
+				VariationID:    "testVersion",
+				Reason:         model.EvaluationReasonClient,
+				Value:          &DstStruct{},
+			},
+		},
+		{
+			desc: "success",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				res := newGetEvaluationResponse(t, featureID, `{"str": "str2", "int": "int2"}`)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), // duration
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
+					100,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
+					user,
+					res.Evaluation,
+				)
+			},
+			user:      newUser(t, sdkUserID),
+			featureID: sdkFeatureID,
+			dst: &model.EvaluationDetail[interface{}]{
+				Value: &DstStruct{},
+			},
+			expected: &model.EvaluationDetail[interface{}]{
+				FeatureID:      sdkFeatureID,
+				FeatureVersion: 1,
+				UserID:         sdkUserID,
+				VariationID:    "testVersion",
+				Reason:         model.EvaluationReasonClient,
+				Value:          &DstStruct{Str: "str2", Int: "int2"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			s := newSDKWithMock(t, mockCtrl)
+			ctx := context.Background()
+			if tt.setup != nil {
+				tt.setup(ctx, s, tt.user, tt.featureID)
+			}
+			s.JSONVariationDetail(ctx, tt.user, tt.featureID, tt.dst)
+			assert.Equal(t, tt.expected, tt.dst)
+		})
+	}
+}
+
 func TestGetEvaluation(t *testing.T) {
 	t.Parallel()
 	mockCtrl := gomock.NewController(t)
