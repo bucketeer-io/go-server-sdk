@@ -58,6 +58,59 @@ func TestStringVariation(t *testing.T) {
 	}
 }
 
+func TestStringVariationDetail(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		desc           string
+		user           *user.User
+		featureID      string
+		expectedValue  string
+		expectedReason model.EvaluationReason
+	}{
+		{
+			desc:           "get Variation by Default Strategy",
+			user:           newUser(t, "user-1"),
+			featureID:      featureIDString,
+			expectedValue:  featureIDStringVariation1,
+			expectedReason: model.EvaluationReasonDefault,
+		},
+		{
+			desc:           "get Variation by Targeting Strategy",
+			user:           newUser(t, targetUserID),
+			featureID:      featureIDString,
+			expectedValue:  featureIDStringTargetVariation,
+			expectedReason: model.EvaluationReasonTarget,
+		},
+		{
+			desc:           "get Variation by Segment user",
+			user:           newUser(t, targetSegmentUserID),
+			featureID:      featureIDString,
+			expectedValue:  featureIDStringVariation3,
+			expectedReason: model.EvaluationReasonTarget,
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	sdk := newSDK(t, ctx)
+	defer func() {
+		// Close
+		err := sdk.Close(ctx)
+		assert.NoError(t, err)
+	}()
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			actual := sdk.StringVariationDetail(ctx, tt.user, tt.featureID, "default")
+			assert.Equal(t, tt.expectedValue, actual.Value)
+			assert.Equal(t, tt.expectedReason, actual.Reason)
+			assert.Equal(t, tt.featureID, actual.FeatureID)
+			assert.Equal(t, tt.user.ID, actual.UserID)
+		})
+	}
+}
+
 func TestBoolVariation(t *testing.T) {
 	t.Parallel()
 

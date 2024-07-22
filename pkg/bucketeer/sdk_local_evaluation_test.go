@@ -863,6 +863,85 @@ func TestLocalStringVariation(t *testing.T) {
 	}
 }
 
+func TestLocalStringVariationDetail(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	defer controller.Finish()
+	internalErr := errors.New("internal error")
+	patterns := []struct {
+		desc      string
+		setup     func(*sdk, *user.User, string)
+		user      *user.User
+		featureID string
+		expected  model.EvaluationDetail[string]
+	}{
+		{
+			desc: "err: internal error",
+			setup: func(s *sdk, u *user.User, featureID string) {
+				s.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Get(featureID).Return(
+					nil,
+					internalErr,
+				)
+				e := fmt.Errorf("internal error while evaluating user locally: %w", internalErr)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(e, model.SDKGetEvaluation)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID)
+			},
+			user:      &user.User{ID: "user-id-1"},
+			featureID: ftString.Id,
+			expected: model.EvaluationDetail[string]{
+				FeatureID:      ftString.Id,
+				FeatureVersion: 0,
+				UserID:         "user-id-1",
+				Reason:         model.EvaluationReasonClient,
+				Value:          "value default",
+				VariationID:    "",
+			},
+		},
+		{
+			desc: "success",
+			setup: func(s *sdk, u *user.User, featureID string) {
+				s.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Get(featureID).Return(
+					ftString,
+					nil,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), model.SDKGetEvaluation,
+				)
+				eval := &model.Evaluation{
+					ID:             "feature-id-string:0:user-id-1",
+					UserID:         "user-id-1",
+					FeatureID:      ftString.Id,
+					FeatureVersion: ftString.Version,
+					VariationID:    ftString.Variations[0].Id,
+					VariationValue: ftString.Variations[0].Value,
+					Reason:         &model.Reason{Type: model.ReasonDefault},
+				}
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(u, eval)
+			},
+			user:      &user.User{ID: "user-id-1"},
+			featureID: ftString.Id,
+			expected: model.EvaluationDetail[string]{
+				FeatureID:      ftString.Id,
+				FeatureVersion: 0,
+				UserID:         "user-id-1",
+				Reason:         model.EvaluationReasonDefault,
+				Value:          "value 10",
+				VariationID:    ftString.Variations[0].Id,
+			},
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			sdk := newSDKLocalEvaluationWithMock(t, controller)
+			ctx := context.Background()
+			p.setup(sdk, p.user, p.featureID)
+			variation := sdk.StringVariationDetail(ctx, p.user, p.featureID, "value default")
+			assert.Equal(t, p.expected, variation)
+		})
+	}
+}
+
 func TestLocalJSONVariation(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)

@@ -189,6 +189,20 @@ func (mr *MockSDKMockRecorder) StringVariation(ctx, user, featureID, defaultValu
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StringVariation", reflect.TypeOf((*MockSDK)(nil).StringVariation), ctx, user, featureID, defaultValue)
 }
 
+// StringVariationDetail mocks base method.
+func (m *MockSDK) StringVariationDetail(ctx context.Context, user *user.User, featureID, defaultValue string) model.EvaluationDetail[string] {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "StringVariationDetail", ctx, user, featureID, defaultValue)
+	ret0, _ := ret[0].(model.EvaluationDetail[string])
+	return ret0
+}
+
+// StringVariationDetail indicates an expected call of StringVariationDetail.
+func (mr *MockSDKMockRecorder) StringVariationDetail(ctx, user, featureID, defaultValue any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StringVariationDetail", reflect.TypeOf((*MockSDK)(nil).StringVariationDetail), ctx, user, featureID, defaultValue)
+}
+
 // Track mocks base method.
 func (m *MockSDK) Track(ctx context.Context, user *user.User, GoalID string) {
 	m.ctrl.T.Helper()

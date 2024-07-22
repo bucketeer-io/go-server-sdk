@@ -80,6 +80,12 @@ type SDK interface {
 	// StringVariation returns defaultValue if an error occurs.
 	StringVariation(ctx context.Context, user *user.User, featureID, defaultValue string) string
 
+	StringVariationDetail(
+		ctx context.Context,
+		user *user.User,
+		featureID,
+		defaultValue string) model.EvaluationDetail[string]
+
 	// JSONVariation parses the value of a feature flag (whose variations are jsons) for the given user,
 	// and stores the result in dst.
 	JSONVariation(ctx context.Context, user *user.User, featureID string, dst interface{})
@@ -476,6 +482,36 @@ func (s *sdk) StringVariation(ctx context.Context, user *user.User, featureID, d
 	return variation
 }
 
+func (s *sdk) StringVariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID,
+	defaultValue string) model.EvaluationDetail[string] {
+	evaluation, err := s.getEvaluation(ctx, user, featureID)
+	if err != nil {
+		s.logVariationError(err, "StringVariationDetail", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+		return model.NewEvaluationDetail[string](
+			featureID,
+			user.ID,
+			"",
+			0,
+			model.EvaluationReasonClient,
+			defaultValue,
+		)
+	}
+	variation := evaluation.VariationValue
+	s.eventProcessor.PushEvaluationEvent(user, evaluation)
+	return model.NewEvaluationDetail[string](
+		featureID,
+		user.ID,
+		evaluation.VariationID,
+		evaluation.FeatureVersion,
+		model.ConvertEvaluationReason(evaluation.Reason.Type),
+		variation,
+	)
+}
+
 func (s *sdk) JSONVariation(ctx context.Context, user *user.User, featureID string, dst interface{}) {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
@@ -737,6 +773,22 @@ func (s *nopSDK) StringVariation(
 	defaultValue string,
 ) string {
 	return defaultValue
+}
+
+func (s *nopSDK) StringVariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID,
+	defaultValue string,
+) model.EvaluationDetail[string] {
+	return model.NewEvaluationDetail(
+		featureID,
+		user.ID,
+		"no-op",
+		0,
+		model.EvaluationReasonDefault,
+		defaultValue,
+	)
 }
 
 func (s *nopSDK) JSONVariation(ctx context.Context, user *user.User, featureID string, dst interface{}) {
