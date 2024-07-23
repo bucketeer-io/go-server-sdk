@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.2](https://github.com/bucketeer-io/go-server-sdk/compare/v1.4.1...v1.4.2) (2024-07-23)
+
+
+### Build System
+
+* **deps:** update bucketeer 0.4.6 ([#137](https://github.com/bucketeer-io/go-server-sdk/issues/137)) ([09fa041](https://github.com/bucketeer-io/go-server-sdk/commit/09fa0415a267392c5cc175207e6b2f1d3986bac3))
+
 ## [1.4.1](https://github.com/bucketeer-io/go-server-sdk/compare/v1.4.0...v1.4.1) (2024-06-13)
 
 
