@@ -52,10 +52,10 @@ func (mr *MockSDKMockRecorder) BoolVariation(ctx, user, featureID, defaultValue 
 }
 
 // BoolVariationDetail mocks base method.
-func (m *MockSDK) BoolVariationDetail(ctx context.Context, user *user.User, featureID string, defaultValue bool) model.EvaluationDetail[bool] {
+func (m *MockSDK) BoolVariationDetail(ctx context.Context, user *user.User, featureID string, defaultValue bool) model.BKTEvaluationDetail[bool] {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BoolVariationDetail", ctx, user, featureID, defaultValue)
-	ret0, _ := ret[0].(model.EvaluationDetail[bool])
+	ret0, _ := ret[0].(model.BKTEvaluationDetail[bool])
 	return ret0
 }
 
@@ -94,10 +94,10 @@ func (mr *MockSDKMockRecorder) Float64Variation(ctx, user, featureID, defaultVal
 }
 
 // Float64VariationDetail mocks base method.
-func (m *MockSDK) Float64VariationDetail(ctx context.Context, user *user.User, featureID string, defaultValue float64) model.EvaluationDetail[float64] {
+func (m *MockSDK) Float64VariationDetail(ctx context.Context, user *user.User, featureID string, defaultValue float64) model.BKTEvaluationDetail[float64] {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Float64VariationDetail", ctx, user, featureID, defaultValue)
-	ret0, _ := ret[0].(model.EvaluationDetail[float64])
+	ret0, _ := ret[0].(model.BKTEvaluationDetail[float64])
 	return ret0
 }
 
@@ -122,10 +122,10 @@ func (mr *MockSDKMockRecorder) Int64Variation(ctx, user, featureID, defaultValue
 }
 
 // Int64VariationDetail mocks base method.
-func (m *MockSDK) Int64VariationDetail(ctx context.Context, user *user.User, featureID string, defaultValue int64) model.EvaluationDetail[int64] {
+func (m *MockSDK) Int64VariationDetail(ctx context.Context, user *user.User, featureID string, defaultValue int64) model.BKTEvaluationDetail[int64] {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Int64VariationDetail", ctx, user, featureID, defaultValue)
-	ret0, _ := ret[0].(model.EvaluationDetail[int64])
+	ret0, _ := ret[0].(model.BKTEvaluationDetail[int64])
 	return ret0
 }
 
@@ -150,10 +150,10 @@ func (mr *MockSDKMockRecorder) IntVariation(ctx, user, featureID, defaultValue i
 }
 
 // IntVariationDetail mocks base method.
-func (m *MockSDK) IntVariationDetail(ctx context.Context, user *user.User, featureID string, defaultValue int) model.EvaluationDetail[int] {
+func (m *MockSDK) IntVariationDetail(ctx context.Context, user *user.User, featureID string, defaultValue int) model.BKTEvaluationDetail[int] {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IntVariationDetail", ctx, user, featureID, defaultValue)
-	ret0, _ := ret[0].(model.EvaluationDetail[int])
+	ret0, _ := ret[0].(model.BKTEvaluationDetail[int])
 	return ret0
 }
 
@@ -176,7 +176,7 @@ func (mr *MockSDKMockRecorder) JSONVariation(ctx, user, featureID, dst interface
 }
 
 // JSONVariationDetail mocks base method.
-func (m *MockSDK) JSONVariationDetail(ctx context.Context, user *user.User, featureID string, dst *model.EvaluationDetail[any]) {
+func (m *MockSDK) JSONVariationDetail(ctx context.Context, user *user.User, featureID string, dst *model.BKTEvaluationDetail[any]) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "JSONVariationDetail", ctx, user, featureID, dst)
 }
@@ -202,10 +202,10 @@ func (mr *MockSDKMockRecorder) StringVariation(ctx, user, featureID, defaultValu
 }
 
 // StringVariationDetail mocks base method.
-func (m *MockSDK) StringVariationDetail(ctx context.Context, user *user.User, featureID, defaultValue string) model.EvaluationDetail[string] {
+func (m *MockSDK) StringVariationDetail(ctx context.Context, user *user.User, featureID, defaultValue string) model.BKTEvaluationDetail[string] {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "StringVariationDetail", ctx, user, featureID, defaultValue)
-	ret0, _ := ret[0].(model.EvaluationDetail[string])
+	ret0, _ := ret[0].(model.BKTEvaluationDetail[string])
 	return ret0
 }
 
