@@ -297,7 +297,7 @@ func TestLocalBoolVariationDetail(t *testing.T) {
 		setup     func(*sdk, *user.User, string)
 		user      *user.User
 		featureID string
-		expected  model.EvaluationDetail[bool]
+		expected  model.BKTEvaluationDetail[bool]
 	}{
 		{
 			desc: "err: internal error",
@@ -312,12 +312,12 @@ func TestLocalBoolVariationDetail(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftBoolean.Id,
-			expected: model.EvaluationDetail[bool]{
+			expected: model.BKTEvaluationDetail[bool]{
 				FeatureID:      ftBoolean.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
 				Reason:         model.EvaluationReasonClient,
-				Value:          false,
+				VariationValue: false,
 				VariationID:    "",
 			},
 		},
@@ -344,12 +344,12 @@ func TestLocalBoolVariationDetail(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftBoolean.Id,
-			expected: model.EvaluationDetail[bool]{
+			expected: model.BKTEvaluationDetail[bool]{
 				FeatureID:      ftBoolean.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
 				Reason:         model.EvaluationReasonDefault,
-				Value:          true,
+				VariationValue: true,
 				VariationID:    ftBoolean.Variations[0].Id,
 			},
 		},
@@ -441,7 +441,7 @@ func TestLocalIntVariationDetail(t *testing.T) {
 		setup     func(*sdk, *user.User, string)
 		user      *user.User
 		featureID string
-		expected  model.EvaluationDetail[int]
+		expected  model.BKTEvaluationDetail[int]
 	}{
 		{
 			desc: "err: internal error",
@@ -456,12 +456,12 @@ func TestLocalIntVariationDetail(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftInt.Id,
-			expected: model.EvaluationDetail[int]{
+			expected: model.BKTEvaluationDetail[int]{
 				FeatureID:      ftInt.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
 				Reason:         model.EvaluationReasonClient,
-				Value:          0,
+				VariationValue: 0,
 				VariationID:    "",
 			},
 		},
@@ -488,12 +488,12 @@ func TestLocalIntVariationDetail(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftInt.Id,
-			expected: model.EvaluationDetail[int]{
+			expected: model.BKTEvaluationDetail[int]{
 				FeatureID:      ftInt.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
 				Reason:         model.EvaluationReasonDefault,
-				Value:          10,
+				VariationValue: 10,
 				VariationID:    ftInt.Variations[0].Id,
 			},
 		},
@@ -585,7 +585,7 @@ func TestLocalInt64VariationDetail(t *testing.T) {
 		setup     func(*sdk, *user.User, string)
 		user      *user.User
 		featureID string
-		expected  model.EvaluationDetail[int64]
+		expected  model.BKTEvaluationDetail[int64]
 	}{
 		{
 			desc: "err: internal error",
@@ -600,12 +600,12 @@ func TestLocalInt64VariationDetail(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftInt.Id,
-			expected: model.EvaluationDetail[int64]{
+			expected: model.BKTEvaluationDetail[int64]{
 				FeatureID:      ftInt.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
 				Reason:         model.EvaluationReasonClient,
-				Value:          0,
+				VariationValue: 0,
 				VariationID:    "",
 			},
 		},
@@ -632,12 +632,12 @@ func TestLocalInt64VariationDetail(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftInt.Id,
-			expected: model.EvaluationDetail[int64]{
+			expected: model.BKTEvaluationDetail[int64]{
 				FeatureID:      ftInt.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
 				Reason:         model.EvaluationReasonDefault,
-				Value:          10,
+				VariationValue: 10,
 				VariationID:    ftInt.Variations[0].Id,
 			},
 		},
@@ -658,7 +658,6 @@ func TestLocalFloat64Variation(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
 	defer controller.Finish()
-	internalErr := errors.New("internal error")
 	patterns := []struct {
 		desc      string
 		setup     func(*sdk, *user.User, string)
@@ -669,6 +668,7 @@ func TestLocalFloat64Variation(t *testing.T) {
 		{
 			desc: "err: internal error",
 			setup: func(s *sdk, u *user.User, featureID string) {
+				internalErr := errors.New("internal error")
 				s.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Get(featureID).Return(
 					nil,
 					internalErr,
@@ -729,7 +729,7 @@ func TestLocalFloat64VariationDetail(t *testing.T) {
 		setup     func(*sdk, *user.User, string)
 		user      *user.User
 		featureID string
-		expected  model.EvaluationDetail[float64]
+		expected  model.BKTEvaluationDetail[float64]
 	}{
 		{
 			desc: "err: internal error",
@@ -744,12 +744,12 @@ func TestLocalFloat64VariationDetail(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftFloat.Id,
-			expected: model.EvaluationDetail[float64]{
+			expected: model.BKTEvaluationDetail[float64]{
 				FeatureID:      ftFloat.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
 				Reason:         model.EvaluationReasonClient,
-				Value:          0.0,
+				VariationValue: 0.0,
 				VariationID:    "",
 			},
 		},
@@ -776,12 +776,12 @@ func TestLocalFloat64VariationDetail(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftFloat.Id,
-			expected: model.EvaluationDetail[float64]{
+			expected: model.BKTEvaluationDetail[float64]{
 				FeatureID:      ftFloat.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
 				Reason:         model.EvaluationReasonDefault,
-				Value:          10.00,
+				VariationValue: 10.00,
 				VariationID:    ftFloat.Variations[0].Id,
 			},
 		},
@@ -873,7 +873,7 @@ func TestLocalStringVariationDetail(t *testing.T) {
 		setup     func(*sdk, *user.User, string)
 		user      *user.User
 		featureID string
-		expected  model.EvaluationDetail[string]
+		expected  model.BKTEvaluationDetail[string]
 	}{
 		{
 			desc: "err: internal error",
@@ -888,12 +888,12 @@ func TestLocalStringVariationDetail(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftString.Id,
-			expected: model.EvaluationDetail[string]{
+			expected: model.BKTEvaluationDetail[string]{
 				FeatureID:      ftString.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
 				Reason:         model.EvaluationReasonClient,
-				Value:          "value default",
+				VariationValue: "value default",
 				VariationID:    "",
 			},
 		},
@@ -920,12 +920,12 @@ func TestLocalStringVariationDetail(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftString.Id,
-			expected: model.EvaluationDetail[string]{
+			expected: model.BKTEvaluationDetail[string]{
 				FeatureID:      ftString.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
 				Reason:         model.EvaluationReasonDefault,
-				Value:          "value 10",
+				VariationValue: "value 10",
 				VariationID:    ftString.Variations[0].Id,
 			},
 		},
@@ -1026,7 +1026,7 @@ func TestLocalJSONVariationDetail(t *testing.T) {
 		setup     func(*sdk, *user.User, string)
 		user      *user.User
 		featureID string
-		expected  *model.EvaluationDetail[interface{}]
+		expected  *model.BKTEvaluationDetail[interface{}]
 	}{
 		{
 			desc: "err: internal error",
@@ -1041,13 +1041,13 @@ func TestLocalJSONVariationDetail(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftJSON.Id,
-			expected: &model.EvaluationDetail[interface{}]{
+			expected: &model.BKTEvaluationDetail[interface{}]{
 				FeatureID:      ftJSON.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
 				VariationID:    "",
 				Reason:         model.EvaluationReasonClient,
-				Value:          &DstStruct{},
+				VariationValue: &DstStruct{},
 			},
 		},
 		{
@@ -1073,13 +1073,13 @@ func TestLocalJSONVariationDetail(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftJSON.Id,
-			expected: &model.EvaluationDetail[interface{}]{
+			expected: &model.BKTEvaluationDetail[interface{}]{
 				FeatureID:      ftJSON.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
 				VariationID:    ftJSON.Variations[0].Id,
 				Reason:         model.EvaluationReasonDefault,
-				Value:          &DstStruct{Str: "str1", Int: "int1"},
+				VariationValue: &DstStruct{Str: "str1", Int: "int1"},
 			},
 		},
 	}
@@ -1089,8 +1089,8 @@ func TestLocalJSONVariationDetail(t *testing.T) {
 			sdk := newSDKLocalEvaluationWithMock(t, controller)
 			ctx := context.Background()
 			p.setup(sdk, p.user, p.featureID)
-			var dst = &model.EvaluationDetail[interface{}]{
-				Value: &DstStruct{},
+			var dst = &model.BKTEvaluationDetail[interface{}]{
+				VariationValue: &DstStruct{},
 			}
 			sdk.JSONVariationDetail(ctx, p.user, p.featureID, dst)
 			assert.Equal(t, p.expected, dst)

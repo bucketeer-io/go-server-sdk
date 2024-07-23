@@ -40,7 +40,7 @@ type SDK interface {
 		ctx context.Context,
 		user *user.User,
 		featureID string,
-		defaultValue bool) model.EvaluationDetail[bool]
+		defaultValue bool) model.BKTEvaluationDetail[bool]
 
 	// IntVariation returns the value of a feature flag (whose variations are ints) for the given user.
 	//
@@ -51,7 +51,7 @@ type SDK interface {
 		ctx context.Context,
 		user *user.User,
 		featureID string,
-		defaultValue int) model.EvaluationDetail[int]
+		defaultValue int) model.BKTEvaluationDetail[int]
 
 	// Int64Variation returns the value of a feature flag (whose variations are int64s) for the given user.
 	//
@@ -62,7 +62,7 @@ type SDK interface {
 		ctx context.Context,
 		user *user.User,
 		featureID string,
-		defaultValue int64) model.EvaluationDetail[int64]
+		defaultValue int64) model.BKTEvaluationDetail[int64]
 
 	// Float64Variation returns the value of a feature flag (whose variations are float64s) for the given user.
 	//
@@ -73,7 +73,7 @@ type SDK interface {
 		ctx context.Context,
 		user *user.User,
 		featureID string,
-		defaultValue float64) model.EvaluationDetail[float64]
+		defaultValue float64) model.BKTEvaluationDetail[float64]
 
 	// StringVariation returns the value of a feature flag (whose variations are strings) for the given user.
 	//
@@ -84,13 +84,18 @@ type SDK interface {
 		ctx context.Context,
 		user *user.User,
 		featureID,
-		defaultValue string) model.EvaluationDetail[string]
+		defaultValue string) model.BKTEvaluationDetail[string]
 
 	// JSONVariation parses the value of a feature flag (whose variations are jsons) for the given user,
 	// and stores the result in dst.
 	JSONVariation(ctx context.Context, user *user.User, featureID string, dst interface{})
 
-	JSONVariationDetail(ctx context.Context, user *user.User, featureID string, dst *model.EvaluationDetail[interface{}])
+	JSONVariationDetail(
+		ctx context.Context,
+		user *user.User,
+		featureID string,
+		dst *model.BKTEvaluationDetail[interface{}]
+		)
 
 	// Track reports that a user has performed a goal event.
 	//
@@ -236,28 +241,14 @@ func newSegmentUserCacheProcessor(
 }
 
 func (s *sdk) BoolVariation(ctx context.Context, user *user.User, featureID string, defaultValue bool) bool {
-	evaluation, err := s.getEvaluation(ctx, user, featureID)
-	if err != nil {
-		s.logVariationError(err, "BoolVariation", user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return defaultValue
-	}
-	variation := evaluation.VariationValue
-	v, err := strconv.ParseBool(variation)
-	if err != nil {
-		s.logVariationError(err, "BoolVariation", user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return defaultValue
-	}
-	s.eventProcessor.PushEvaluationEvent(user, evaluation)
-	return v
+	return s.BoolVariationDetail(ctx, user, featureID, defaultValue).VariationValue
 }
 
 func (s *sdk) BoolVariationDetail(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue bool) model.EvaluationDetail[bool] {
+	defaultValue bool) model.BKTEvaluationDetail[bool] {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
 		s.logVariationError(err, "BoolVariationDetail", user.ID, featureID)
@@ -266,8 +257,9 @@ func (s *sdk) BoolVariationDetail(
 			featureID,
 			user.ID,
 			"",
+			"",
 			0,
-			model.EvaluationReasonClient,
+			model.ReasonClient,
 			defaultValue,
 		)
 	}
@@ -280,8 +272,9 @@ func (s *sdk) BoolVariationDetail(
 			featureID,
 			user.ID,
 			evaluation.VariationID,
+			evaluation.VariationName,
 			evaluation.FeatureVersion,
-			model.ConvertEvaluationReason(evaluation.Reason.Type),
+			evaluation.Reason.Type,
 			defaultValue,
 		)
 	}
@@ -290,40 +283,27 @@ func (s *sdk) BoolVariationDetail(
 		featureID,
 		user.ID,
 		evaluation.VariationID,
+		evaluation.VariationName,
 		evaluation.FeatureVersion,
-		model.ConvertEvaluationReason(evaluation.Reason.Type),
+		evaluation.Reason.Type,
 		v,
 	)
 }
 
 func (s *sdk) IntVariation(ctx context.Context, user *user.User, featureID string, defaultValue int) int {
-	evaluation, err := s.getEvaluation(ctx, user, featureID)
-	if err != nil {
-		s.logVariationError(err, "IntVariation", user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return defaultValue
-	}
-	variation := evaluation.VariationValue
-	v, err := strconv.ParseInt(variation, 10, 64)
-	if err != nil {
-		s.logVariationError(err, "IntVariation", user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return defaultValue
-	}
-	s.eventProcessor.PushEvaluationEvent(user, evaluation)
-	return int(v)
+	return s.IntVariationDetail(ctx, user, featureID, defaultValue).VariationValue
 }
 
 func (s *sdk) IntVariationDetail(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue int) model.EvaluationDetail[int] {
+	defaultValue int) model.BKTEvaluationDetail[int] {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
 		s.logVariationError(err, "IntVariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return model.NewEvaluationDetail[int](featureID, user.ID, "", 0, model.EvaluationReasonClient, defaultValue)
+		return model.NewEvaluationDetail[int](featureID, user.ID, "", "", 0, model.ReasonClient, defaultValue)
 	}
 	variation := evaluation.VariationValue
 	v, err := strconv.ParseInt(variation, 10, 64)
@@ -334,8 +314,9 @@ func (s *sdk) IntVariationDetail(
 			featureID,
 			user.ID,
 			evaluation.VariationID,
+			evaluation.VariationName,
 			evaluation.FeatureVersion,
-			model.EvaluationReasonClient,
+			model.ReasonClient,
 			defaultValue,
 		)
 	}
@@ -344,35 +325,22 @@ func (s *sdk) IntVariationDetail(
 		featureID,
 		user.ID,
 		evaluation.VariationID,
+		evaluation.VariationName,
 		evaluation.FeatureVersion,
-		model.ConvertEvaluationReason(evaluation.Reason.Type),
+		evaluation.Reason.Type,
 		int(v),
 	)
 }
 
 func (s *sdk) Int64Variation(ctx context.Context, user *user.User, featureID string, defaultValue int64) int64 {
-	evaluation, err := s.getEvaluation(ctx, user, featureID)
-	if err != nil {
-		s.logVariationError(err, "Int64Variation", user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return defaultValue
-	}
-	variation := evaluation.VariationValue
-	v, err := strconv.ParseInt(variation, 10, 64)
-	if err != nil {
-		s.logVariationError(err, "Int64Variation", user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return defaultValue
-	}
-	s.eventProcessor.PushEvaluationEvent(user, evaluation)
-	return v
+	return s.Int64VariationDetail(ctx, user, featureID, defaultValue).VariationValue
 }
 
 func (s *sdk) Int64VariationDetail(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue int64) model.EvaluationDetail[int64] {
+	defaultValue int64) model.BKTEvaluationDetail[int64] {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
 		s.logVariationError(err, "Int64VariationDetail", user.ID, featureID)
@@ -381,8 +349,9 @@ func (s *sdk) Int64VariationDetail(
 			featureID,
 			user.ID,
 			"",
+			"",
 			0,
-			model.EvaluationReasonClient,
+			model.ReasonClient,
 			defaultValue,
 		)
 	}
@@ -395,8 +364,9 @@ func (s *sdk) Int64VariationDetail(
 			featureID,
 			user.ID,
 			evaluation.VariationID,
+			evaluation.VariationName,
 			evaluation.FeatureVersion,
-			model.EvaluationReasonClient,
+			model.ReasonClient,
 			defaultValue,
 		)
 	}
@@ -405,35 +375,22 @@ func (s *sdk) Int64VariationDetail(
 		featureID,
 		user.ID,
 		evaluation.VariationID,
+		evaluation.VariationName,
 		evaluation.FeatureVersion,
-		model.ConvertEvaluationReason(evaluation.Reason.Type),
+		evaluation.Reason.Type,
 		v,
 	)
 }
 
 func (s *sdk) Float64Variation(ctx context.Context, user *user.User, featureID string, defaultValue float64) float64 {
-	evaluation, err := s.getEvaluation(ctx, user, featureID)
-	if err != nil {
-		s.logVariationError(err, "Float64Variation", user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return defaultValue
-	}
-	variation := evaluation.VariationValue
-	v, err := strconv.ParseFloat(variation, 64)
-	if err != nil {
-		s.logVariationError(err, "Float64Variation", user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return defaultValue
-	}
-	s.eventProcessor.PushEvaluationEvent(user, evaluation)
-	return v
+	return s.Float64VariationDetail(ctx, user, featureID, defaultValue).VariationValue
 }
 
 func (s *sdk) Float64VariationDetail(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue float64) model.EvaluationDetail[float64] {
+	defaultValue float64) model.BKTEvaluationDetail[float64] {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
 		s.logVariationError(err, "Float64VariationDetail", user.ID, featureID)
@@ -442,8 +399,9 @@ func (s *sdk) Float64VariationDetail(
 			featureID,
 			user.ID,
 			"",
+			"",
 			0,
-			model.EvaluationReasonClient,
+			model.ReasonClient,
 			defaultValue,
 		)
 	}
@@ -456,8 +414,9 @@ func (s *sdk) Float64VariationDetail(
 			featureID,
 			user.ID,
 			evaluation.VariationID,
+			evaluation.VariationName,
 			evaluation.FeatureVersion,
-			model.EvaluationReasonClient,
+			model.ReasonClient,
 			defaultValue,
 		)
 	}
@@ -466,29 +425,22 @@ func (s *sdk) Float64VariationDetail(
 		featureID,
 		user.ID,
 		evaluation.VariationID,
+		evaluation.VariationName,
 		evaluation.FeatureVersion,
-		model.ConvertEvaluationReason(evaluation.Reason.Type),
+		evaluation.Reason.Type,
 		v,
 	)
 }
 
 func (s *sdk) StringVariation(ctx context.Context, user *user.User, featureID, defaultValue string) string {
-	evaluation, err := s.getEvaluation(ctx, user, featureID)
-	if err != nil {
-		s.logVariationError(err, "StringVariation", user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return defaultValue
-	}
-	variation := evaluation.VariationValue
-	s.eventProcessor.PushEvaluationEvent(user, evaluation)
-	return variation
+	return s.StringVariationDetail(ctx, user, featureID, defaultValue).VariationValue
 }
 
 func (s *sdk) StringVariationDetail(
 	ctx context.Context,
 	user *user.User,
 	featureID,
-	defaultValue string) model.EvaluationDetail[string] {
+	defaultValue string) model.BKTEvaluationDetail[string] {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
 		s.logVariationError(err, "StringVariationDetail", user.ID, featureID)
@@ -497,8 +449,9 @@ func (s *sdk) StringVariationDetail(
 			featureID,
 			user.ID,
 			"",
+			"",
 			0,
-			model.EvaluationReasonClient,
+			model.ReasonClient,
 			defaultValue,
 		)
 	}
@@ -508,34 +461,22 @@ func (s *sdk) StringVariationDetail(
 		featureID,
 		user.ID,
 		evaluation.VariationID,
+		evaluation.VariationName,
 		evaluation.FeatureVersion,
-		model.ConvertEvaluationReason(evaluation.Reason.Type),
+		evaluation.Reason.Type,
 		variation,
 	)
 }
 
 func (s *sdk) JSONVariation(ctx context.Context, user *user.User, featureID string, dst interface{}) {
-	evaluation, err := s.getEvaluation(ctx, user, featureID)
-	if err != nil {
-		s.logVariationError(err, "JSONVariation", user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return
-	}
-	variation := evaluation.VariationValue
-	err = json.Unmarshal([]byte(variation), dst)
-	if err != nil {
-		s.logVariationError(err, "JSONVariation", user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return
-	}
-	s.eventProcessor.PushEvaluationEvent(user, evaluation)
+	s.JSONVariationDetail(ctx, user, featureID, &model.BKTEvaluationDetail[interface{}]{VariationValue: dst})
 }
 
 func (s *sdk) JSONVariationDetail(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	dst *model.EvaluationDetail[interface{}]) {
+	dst *model.BKTEvaluationDetail[interface{}]) {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
 		s.logVariationError(err, "JSONVariationDetail", user.ID, featureID)
@@ -547,14 +488,23 @@ func (s *sdk) JSONVariationDetail(
 		dst.Reason = model.EvaluationReasonClient
 		return
 	}
-	dst.FeatureID = featureID
-	dst.FeatureVersion = evaluation.FeatureVersion
-	dst.UserID = user.ID
-	dst.VariationID = evaluation.VariationID
-	dst.Reason = model.ConvertEvaluationReason(evaluation.Reason.Type)
+	ev := model.NewEvaluationDetail(
+		featureID,
+		user.ID,
+		evaluation.VariationID,
+		evaluation.VariationName,
+		evaluation.FeatureVersion,
+		evaluation.Reason.Type,
+		dst.VariationValue,
+	)
+	dst.FeatureID = ev.FeatureID
+	dst.FeatureVersion = ev.FeatureVersion
+	dst.UserID = ev.UserID
+	dst.VariationID = ev.VariationID
+	dst.Reason = ev.Reason
 
 	variation := evaluation.VariationValue
-	err = json.Unmarshal([]byte(variation), dst.Value)
+	err = json.Unmarshal([]byte(variation), dst.VariationValue)
 	if err != nil {
 		s.logVariationError(err, "JSONVariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
@@ -722,13 +672,14 @@ func (s *nopSDK) BoolVariationDetail(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue bool) model.EvaluationDetail[bool] {
+	defaultValue bool) model.BKTEvaluationDetail[bool] {
 	return model.NewEvaluationDetail[bool](
 		featureID,
 		user.ID,
 		"no-op",
+		"no-op-name",
 		0,
-		model.EvaluationReasonDefault,
+		model.ReasonDefault,
 		defaultValue,
 	)
 }
@@ -741,13 +692,14 @@ func (s *nopSDK) IntVariationDetail(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue int) model.EvaluationDetail[int] {
+	defaultValue int) model.BKTEvaluationDetail[int] {
 	return model.NewEvaluationDetail(
 		featureID,
 		user.ID,
 		"no-op",
+		"no-op-name",
 		0,
-		model.EvaluationReasonDefault,
+		model.ReasonDefault,
 		defaultValue,
 	)
 }
@@ -764,13 +716,14 @@ func (s *nopSDK) Int64VariationDetail(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue int64) model.EvaluationDetail[int64] {
+	defaultValue int64) model.BKTEvaluationDetail[int64] {
 	return model.NewEvaluationDetail(
 		featureID,
 		user.ID,
 		"no-op",
+		"no-op-name",
 		0,
-		model.EvaluationReasonDefault,
+		model.ReasonDefault,
 		defaultValue,
 	)
 }
@@ -789,13 +742,14 @@ func (s *nopSDK) Float64VariationDetail(
 	user *user.User,
 	featureID string,
 	defaultValue float64,
-) model.EvaluationDetail[float64] {
+) model.BKTEvaluationDetail[float64] {
 	return model.NewEvaluationDetail(
 		featureID,
 		user.ID,
 		"no-op",
+		"no-op-name",
 		0,
-		model.EvaluationReasonDefault,
+		model.ReasonDefault,
 		defaultValue,
 	)
 }
@@ -814,13 +768,14 @@ func (s *nopSDK) StringVariationDetail(
 	user *user.User,
 	featureID,
 	defaultValue string,
-) model.EvaluationDetail[string] {
+) model.BKTEvaluationDetail[string] {
 	return model.NewEvaluationDetail(
 		featureID,
 		user.ID,
 		"no-op",
+		"no-op-name",
 		0,
-		model.EvaluationReasonDefault,
+		model.ReasonDefault,
 		defaultValue,
 	)
 }
@@ -832,7 +787,7 @@ func (s *nopSDK) JSONVariationDetail(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	dst *model.EvaluationDetail[interface{}]) {
+	dst *model.BKTEvaluationDetail[interface{}]) {
 	dst.FeatureID = featureID
 	dst.FeatureVersion = 0
 	dst.UserID = user.ID

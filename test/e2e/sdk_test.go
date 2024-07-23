@@ -103,7 +103,7 @@ func TestStringVariationDetail(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			actual := sdk.StringVariationDetail(ctx, tt.user, tt.featureID, "default")
-			assert.Equal(t, tt.expectedValue, actual.Value)
+			assert.Equal(t, tt.expectedValue, actual.VariationValue)
 			assert.Equal(t, tt.expectedReason, actual.Reason)
 			assert.Equal(t, tt.featureID, actual.FeatureID)
 			assert.Equal(t, tt.user.ID, actual.UserID)
@@ -189,7 +189,7 @@ func TestBoolVariationDetail(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			actual := sdk.BoolVariationDetail(ctx, tt.user, tt.featureID, false)
-			assert.Equal(t, tt.expectedValue, actual.Value)
+			assert.Equal(t, tt.expectedValue, actual.VariationValue)
 			assert.Equal(t, tt.expectedReason, actual.Reason)
 			assert.Equal(t, tt.featureID, actual.FeatureID)
 			assert.Equal(t, tt.user.ID, actual.UserID)
@@ -275,7 +275,7 @@ func TestIntVariationDetail(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			actual := sdk.IntVariationDetail(ctx, tt.user, tt.featureID, -1)
-			assert.Equal(t, tt.expectedValue, actual.Value)
+			assert.Equal(t, tt.expectedValue, actual.VariationValue)
 			assert.Equal(t, tt.expectedReason, actual.Reason)
 			assert.Equal(t, tt.featureID, actual.FeatureID)
 			assert.Equal(t, tt.user.ID, actual.UserID)
@@ -361,7 +361,7 @@ func TestInt64VariationDetail(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			actual := sdk.Int64VariationDetail(ctx, tt.user, tt.featureID, -1000000000)
-			assert.Equal(t, tt.expectedValue, actual.Value)
+			assert.Equal(t, tt.expectedValue, actual.VariationValue)
 			assert.Equal(t, tt.expectedReason, actual.Reason)
 			assert.Equal(t, tt.featureID, actual.FeatureID)
 			assert.Equal(t, tt.user.ID, actual.UserID)
@@ -447,7 +447,7 @@ func TestFloat64VariationDetail(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			actual := sdk.Float64VariationDetail(ctx, tt.user, tt.featureID, -1.1)
-			assert.Equal(t, tt.expectedValue, actual.Value)
+			assert.Equal(t, tt.expectedValue, actual.VariationValue)
 			assert.Equal(t, tt.expectedReason, actual.Reason)
 			assert.Equal(t, tt.featureID, actual.FeatureID)
 			assert.Equal(t, tt.user.ID, actual.UserID)
@@ -543,11 +543,11 @@ func TestJSONVariationDetail(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			dst := &model.EvaluationDetail[interface{}]{
-				Value: &TestJson{},
+			dst := &model.BKTEvaluationDetail[interface{}]{
+				VariationValue: &TestJson{},
 			}
 			sdk.JSONVariationDetail(ctx, tt.user, tt.featureID, dst)
-			assert.Equal(t, tt.expectedValue, dst.Value)
+			assert.Equal(t, tt.expectedValue, dst.VariationValue)
 			assert.Equal(t, tt.expectedReason, dst.Reason)
 			assert.Equal(t, tt.featureID, dst.FeatureID)
 			assert.Equal(t, tt.user.ID, dst.UserID)

@@ -15,116 +15,129 @@ func TestNewEvaluationDetail(t *testing.T) {
 	featureID := "feature-id"
 	var featureVersion int32 = 1
 	variationID := "variation-id"
+	variationName := "variation-name"
 	userID := "user-id"
-	reason := EvaluationReasonClient
+	reasonType := ReasonClient
 	tests := []struct {
 		desc          string
 		value         interface{}
-		expectedValue EvaluationDetail[interface{}]
+		expectedValue BKTEvaluationDetail[interface{}]
 	}{
 		{
 			desc:  "valueType: bool",
 			value: true,
-			expectedValue: EvaluationDetail[interface{}]{
+			expectedValue: BKTEvaluationDetail[interface{}]{
 				FeatureID:      featureID,
 				FeatureVersion: featureVersion,
 				UserID:         userID,
 				VariationID:    variationID,
-				Reason:         reason,
-				Value:          true,
+				Reason:         EvaluationReasonClient,
+				VariationName:  variationName,
+				VariationValue: true,
 			},
 		},
 		{
 			desc:  "valueType: int",
 			value: 100,
-			expectedValue: EvaluationDetail[interface{}]{
+			expectedValue: BKTEvaluationDetail[interface{}]{
 				FeatureID:      featureID,
 				FeatureVersion: featureVersion,
 				UserID:         userID,
 				VariationID:    variationID,
-				Reason:         reason,
-				Value:          100,
+				Reason:         EvaluationReasonClient,
+				VariationName:  variationName,
+				VariationValue: 100,
 			},
 		},
 		{
 			desc:  "valueType: string",
 			value: "value",
-			expectedValue: EvaluationDetail[interface{}]{
+			expectedValue: BKTEvaluationDetail[interface{}]{
 				FeatureID:      featureID,
 				FeatureVersion: featureVersion,
 				UserID:         userID,
 				VariationID:    variationID,
-				Reason:         reason,
-				Value:          "value",
+				Reason:         EvaluationReasonClient,
+				VariationName:  variationName,
+				VariationValue: "value",
 			},
 		},
 		{
 			desc:  "valueType: json",
 			value: &DstStruct{Str: "str", Int: "int"},
-			expectedValue: EvaluationDetail[interface{}]{
+			expectedValue: BKTEvaluationDetail[interface{}]{
 				FeatureID:      featureID,
 				FeatureVersion: featureVersion,
 				UserID:         userID,
 				VariationID:    variationID,
-				Reason:         reason,
-				Value:          &DstStruct{Str: "str", Int: "int"},
+				Reason:         EvaluationReasonClient,
+				VariationName:  variationName,
+				VariationValue: &DstStruct{Str: "str", Int: "int"},
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			actual := NewEvaluationDetail(featureID, userID, variationID, featureVersion, reason, tt.value)
-			assert.Equal(t, tt.expectedValue.Value, actual.Value)
+			actual := NewEvaluationDetail(featureID, userID, variationID, variationName, featureVersion, reasonType, tt.value)
+			assert.Equal(t, tt.expectedValue.VariationValue, actual.VariationValue)
 			assert.Equal(t, featureID, actual.FeatureID)
 			assert.Equal(t, featureVersion, actual.FeatureVersion)
 			assert.Equal(t, userID, actual.UserID)
 			assert.Equal(t, variationID, actual.VariationID)
-			assert.Equal(t, reason, actual.Reason)
+			assert.Equal(t, variationName, actual.VariationName)
 		})
 	}
 }
-func TestConvertReason(t *testing.T) {
+
+func TestConvertEvaluationReason(t *testing.T) {
 	t.Parallel()
+	featureID := "feature-id"
+	var featureVersion int32 = 1
+	variationID := "variation-id"
+	variationName := "variation-name"
+	userID := "user-id"
+	value := true
 	tests := []struct {
-		desc          string
-		reasonType    ReasonType
-		expectedValue EvaluationReason
+		desc           string
+		reasonType     ReasonType
+		expectedReason EvaluationReason
 	}{
 		{
-			desc:          "reasonType: ReasonTarget",
-			reasonType:    ReasonTarget,
-			expectedValue: EvaluationReasonTarget,
+			desc:           "reasonType: ReasonTarget",
+			reasonType:     ReasonTarget,
+			expectedReason: EvaluationReasonTarget,
 		},
 		{
-			desc:          "reasonType: ReasonClient",
-			reasonType:    ReasonClient,
-			expectedValue: EvaluationReasonClient,
+			desc:           "reasonType: ReasonClient",
+			reasonType:     ReasonClient,
+			expectedReason: EvaluationReasonClient,
 		},
 		{
-			desc:          "reasonType: ReasonDefault",
-			reasonType:    ReasonDefault,
-			expectedValue: EvaluationReasonDefault,
+			desc:           "reasonType: ReasonDefault",
+			reasonType:     ReasonDefault,
+			expectedReason: EvaluationReasonDefault,
 		},
 		{
-			desc:          "reasonType: ReasonPrerequisite",
-			reasonType:    ReasonPrerequisite,
-			expectedValue: EvaluationReasonPrerequisite,
+			desc:           "reasonType: ReasonPrerequisite",
+			reasonType:     ReasonPrerequisite,
+			expectedReason: EvaluationReasonPrerequisite,
 		},
 		{
-			desc:          "reasonType: ReasonOffVariation",
-			reasonType:    ReasonOffVariation,
-			expectedValue: EvaluationReasonOffVariation,
+			desc:           "reasonType: ReasonOffVariation",
+			reasonType:     ReasonOffVariation,
+			expectedReason: EvaluationReasonOffVariation,
 		},
 		{
-			desc:          "reasonType: ReasonRule",
-			reasonType:    ReasonRule,
-			expectedValue: EvaluationReasonRule,
+			desc:           "reasonType: ReasonRule",
+			reasonType:     ReasonRule,
+			expectedReason: EvaluationReasonRule,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			actual := ConvertEvaluationReason(tt.reasonType)
-			assert.Equal(t, tt.expectedValue, actual)
+			//
+			actual := NewEvaluationDetail(featureID, userID, variationID, variationName, featureVersion, tt.reasonType, value)
+			assert.Equal(t, tt.expectedReason, actual.Reason)
 		})
 	}
 }

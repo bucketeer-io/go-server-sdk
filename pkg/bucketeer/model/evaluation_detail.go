@@ -1,12 +1,13 @@
 package model
 
-type EvaluationDetail[T EvaluationValue] struct {
+type BKTEvaluationDetail[T EvaluationValue] struct {
 	FeatureID      string
 	FeatureVersion int32
 	UserID         string
 	VariationID    string
+	VariationName  string
+	VariationValue T
 	Reason         EvaluationReason
-	Value          T
 }
 
 type EvaluationValue interface {
@@ -25,22 +26,23 @@ const (
 )
 
 func NewEvaluationDetail[T EvaluationValue](
-	featureID, userID, variationID string,
+	featureID, userID, variationID, variationName string,
 	featureVersion int32,
-	reason EvaluationReason,
+	reasonType ReasonType,
 	value T,
-) EvaluationDetail[T] {
-	return EvaluationDetail[T]{
+) BKTEvaluationDetail[T] {
+	return BKTEvaluationDetail[T]{
 		FeatureID:      featureID,
 		FeatureVersion: featureVersion,
-		VariationID:    variationID,
 		UserID:         userID,
-		Reason:         reason,
-		Value:          value,
+		VariationID:    variationID,
+		VariationName:  variationName,
+		VariationValue: value,
+		Reason:         convertEvaluationReason(reasonType),
 	}
 }
 
-func ConvertEvaluationReason(reasonType ReasonType) EvaluationReason {
+func convertEvaluationReason(reasonType ReasonType) EvaluationReason {
 	switch reasonType {
 	case ReasonTarget:
 		return EvaluationReasonTarget

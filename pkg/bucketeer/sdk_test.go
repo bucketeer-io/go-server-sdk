@@ -132,7 +132,7 @@ func TestBoolVariationDetail(t *testing.T) {
 		user         *user.User
 		featureID    string
 		defaultValue bool
-		expected     model.EvaluationDetail[bool]
+		expected     model.BKTEvaluationDetail[bool]
 	}{
 		{
 			desc: "return default value when failed to get evaluation",
@@ -155,12 +155,13 @@ func TestBoolVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: false,
-			expected: model.EvaluationDetail[bool]{
+			expected: model.BKTEvaluationDetail[bool]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 0,
 				UserID:         sdkUserID,
 				VariationID:    "",
-				Value:          false,
+				VariationValue: false,
+				VariationName:  "",
 				Reason:         model.EvaluationReasonClient,
 			},
 		},
@@ -186,12 +187,13 @@ func TestBoolVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: false,
-			expected: model.EvaluationDetail[bool]{
+			expected: model.BKTEvaluationDetail[bool]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
 				VariationID:    "testVersion",
-				Value:          false,
+				VariationValue: false,
+				VariationName:  "testVersionName",
 				Reason:         model.EvaluationReasonTarget,
 			},
 		},
@@ -217,12 +219,13 @@ func TestBoolVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: false,
-			expected: model.EvaluationDetail[bool]{
+			expected: model.BKTEvaluationDetail[bool]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
 				VariationID:    "testVersion",
-				Value:          true,
+				VariationValue: true,
+				VariationName:  "testVersionName",
 				Reason:         model.EvaluationReasonTarget,
 			},
 		},
@@ -347,7 +350,7 @@ func TestIntVariationDetail(t *testing.T) {
 		user         *user.User
 		featureID    string
 		defaultValue int
-		expected     model.EvaluationDetail[int]
+		expected     model.BKTEvaluationDetail[int]
 	}{
 		{
 			desc: "return default value when failed to get evaluation",
@@ -370,12 +373,13 @@ func TestIntVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: 1,
-			expected: model.EvaluationDetail[int]{
+			expected: model.BKTEvaluationDetail[int]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 0,
 				UserID:         sdkUserID,
 				VariationID:    "",
-				Value:          1,
+				VariationName:  "",
+				VariationValue: 1,
 				Reason:         model.EvaluationReasonClient,
 			},
 		},
@@ -401,12 +405,13 @@ func TestIntVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: 1,
-			expected: model.EvaluationDetail[int]{
+			expected: model.BKTEvaluationDetail[int]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
 				VariationID:    "testVersion",
-				Value:          1,
+				VariationName:  "testVersionName",
+				VariationValue: 1,
 				Reason:         model.EvaluationReasonClient,
 			},
 		},
@@ -432,12 +437,13 @@ func TestIntVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: 1,
-			expected: model.EvaluationDetail[int]{
+			expected: model.BKTEvaluationDetail[int]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
 				VariationID:    "testVersion",
-				Value:          2,
+				VariationValue: 2,
+				VariationName:  "testVersionName",
 				Reason:         model.EvaluationReasonTarget,
 			},
 		},
@@ -563,7 +569,7 @@ func TestInt64VariationDetail(t *testing.T) {
 		user         *user.User
 		featureID    string
 		defaultValue int64
-		expected     model.EvaluationDetail[int64]
+		expected     model.BKTEvaluationDetail[int64]
 	}{
 		{
 			desc: "return default value when failed to get evaluation",
@@ -587,12 +593,13 @@ func TestInt64VariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: 1,
-			expected: model.EvaluationDetail[int64]{
+			expected: model.BKTEvaluationDetail[int64]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 0,
 				UserID:         sdkUserID,
 				VariationID:    "",
-				Value:          1,
+				VariationValue: 1,
+				VariationName:  "",
 				Reason:         model.EvaluationReasonClient,
 			},
 		},
@@ -618,12 +625,13 @@ func TestInt64VariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: 1,
-			expected: model.EvaluationDetail[int64]{
+			expected: model.BKTEvaluationDetail[int64]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
 				VariationID:    "testVersion",
-				Value:          1,
+				VariationValue: 1,
+				VariationName:  "testVersionName",
 				Reason:         model.EvaluationReasonClient,
 			},
 		},
@@ -649,12 +657,13 @@ func TestInt64VariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: 1,
-			expected: model.EvaluationDetail[int64]{
+			expected: model.BKTEvaluationDetail[int64]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
 				VariationID:    "testVersion",
-				Value:          2,
+				VariationValue: 2,
+				VariationName:  "testVersionName",
 				Reason:         model.EvaluationReasonTarget,
 			},
 		},
@@ -779,7 +788,7 @@ func TestFloat64VariationDetail(t *testing.T) {
 		user         *user.User
 		featureID    string
 		defaultValue float64
-		expected     model.EvaluationDetail[float64]
+		expected     model.BKTEvaluationDetail[float64]
 	}{
 		{
 			desc: "return default value when failed to get evaluation",
@@ -802,12 +811,13 @@ func TestFloat64VariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: 1.1,
-			expected: model.EvaluationDetail[float64]{
+			expected: model.BKTEvaluationDetail[float64]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 0,
 				UserID:         sdkUserID,
 				VariationID:    "",
-				Value:          1.1,
+				VariationValue: 1.1,
+				VariationName:  "",
 				Reason:         model.EvaluationReasonClient,
 			},
 		},
@@ -833,12 +843,13 @@ func TestFloat64VariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: 1.1,
-			expected: model.EvaluationDetail[float64]{
+			expected: model.BKTEvaluationDetail[float64]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
 				VariationID:    "testVersion",
-				Value:          1.1,
+				VariationValue: 1.1,
+				VariationName:  "testVersionName",
 				Reason:         model.EvaluationReasonClient,
 			},
 		},
@@ -864,12 +875,13 @@ func TestFloat64VariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: 1.1,
-			expected: model.EvaluationDetail[float64]{
+			expected: model.BKTEvaluationDetail[float64]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
 				VariationID:    "testVersion",
-				Value:          2.2,
+				VariationValue: 2.2,
+				VariationName:  "testVersionName",
 				Reason:         model.EvaluationReasonTarget,
 			},
 		},
@@ -970,7 +982,7 @@ func TestStringVariationDetail(t *testing.T) {
 		user         *user.User
 		featureID    string
 		defaultValue string
-		expected     model.EvaluationDetail[string]
+		expected     model.BKTEvaluationDetail[string]
 	}{
 		{
 			desc: "return default value when failed to get evaluation",
@@ -993,12 +1005,13 @@ func TestStringVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: "default",
-			expected: model.EvaluationDetail[string]{
+			expected: model.BKTEvaluationDetail[string]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 0,
 				UserID:         sdkUserID,
 				VariationID:    "",
-				Value:          "default",
+				VariationValue: "default",
+				VariationName:  "",
 				Reason:         model.EvaluationReasonClient,
 			},
 		},
@@ -1024,12 +1037,13 @@ func TestStringVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: "default",
-			expected: model.EvaluationDetail[string]{
+			expected: model.BKTEvaluationDetail[string]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
 				VariationID:    "testVersion",
-				Value:          "value",
+				VariationName:  "testVersionName",
+				VariationValue: "value",
 				Reason:         model.EvaluationReasonTarget,
 			},
 		},
@@ -1161,8 +1175,8 @@ func TestJSONVariationDetail(t *testing.T) {
 		setup     func(context.Context, *sdk, *user.User, string)
 		user      *user.User
 		featureID string
-		dst       *model.EvaluationDetail[interface{}]
-		expected  *model.EvaluationDetail[interface{}]
+		dst       *model.BKTEvaluationDetail[interface{}]
+		expected  *model.BKTEvaluationDetail[interface{}]
 	}{
 		{
 			desc: "failed to get evaluation",
@@ -1184,16 +1198,16 @@ func TestJSONVariationDetail(t *testing.T) {
 			},
 			user:      newUser(t, sdkUserID),
 			featureID: sdkFeatureID,
-			dst: &model.EvaluationDetail[interface{}]{
-				Value: &DstStruct{},
+			dst: &model.BKTEvaluationDetail[interface{}]{
+				VariationValue: &DstStruct{},
 			},
-			expected: &model.EvaluationDetail[interface{}]{
+			expected: &model.BKTEvaluationDetail[interface{}]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 0,
 				UserID:         sdkUserID,
 				VariationID:    "",
 				Reason:         model.EvaluationReasonClient,
-				Value:          &DstStruct{},
+				VariationValue: &DstStruct{},
 			},
 		},
 		{
@@ -1217,16 +1231,16 @@ func TestJSONVariationDetail(t *testing.T) {
 			},
 			user:      newUser(t, sdkUserID),
 			featureID: sdkFeatureID,
-			dst: &model.EvaluationDetail[interface{}]{
-				Value: &DstStruct{},
+			dst: &model.BKTEvaluationDetail[interface{}]{
+				VariationValue: &DstStruct{},
 			},
-			expected: &model.EvaluationDetail[interface{}]{
+			expected: &model.BKTEvaluationDetail[interface{}]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
 				VariationID:    "testVersion",
 				Reason:         model.EvaluationReasonTarget,
-				Value:          &DstStruct{},
+				VariationValue: &DstStruct{},
 			},
 		},
 		{
@@ -1250,16 +1264,16 @@ func TestJSONVariationDetail(t *testing.T) {
 			},
 			user:      newUser(t, sdkUserID),
 			featureID: sdkFeatureID,
-			dst: &model.EvaluationDetail[interface{}]{
-				Value: &DstStruct{},
+			dst: &model.BKTEvaluationDetail[interface{}]{
+				VariationValue: &DstStruct{},
 			},
-			expected: &model.EvaluationDetail[interface{}]{
+			expected: &model.BKTEvaluationDetail[interface{}]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
 				VariationID:    "testVersion",
 				Reason:         model.EvaluationReasonTarget,
-				Value:          &DstStruct{Str: "str2", Int: "int2"},
+				VariationValue: &DstStruct{Str: "str2", Int: "int2"},
 			},
 		},
 	}
@@ -1637,6 +1651,7 @@ func newGetEvaluationResponse(t *testing.T, featureID, value string) *model.GetE
 			FeatureID:      featureID,
 			FeatureVersion: 1,
 			VariationID:    "testVersion",
+			VariationName:  "testVersionName",
 			VariationValue: value,
 			Reason: &model.Reason{
 				RuleID: "test",
