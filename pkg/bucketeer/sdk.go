@@ -94,8 +94,7 @@ type SDK interface {
 		ctx context.Context,
 		user *user.User,
 		featureID string,
-		dst *model.BKTEvaluationDetail[interface{}]
-		)
+		dst *model.BKTEvaluationDetail[interface{}])
 
 	// Track reports that a user has performed a goal event.
 	//
