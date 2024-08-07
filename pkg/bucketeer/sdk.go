@@ -94,7 +94,7 @@ type SDK interface {
 		ctx context.Context,
 		user *user.User,
 		featureID string,
-		dst *model.BKTEvaluationDetail[interface{}])
+		defaultValue *model.BKTEvaluationDetail[interface{}])
 
 	// Track reports that a user has performed a goal event.
 	//
@@ -467,24 +467,24 @@ func (s *sdk) StringVariationDetail(
 	)
 }
 
-func (s *sdk) JSONVariation(ctx context.Context, user *user.User, featureID string, dst interface{}) {
-	s.JSONVariationDetail(ctx, user, featureID, &model.BKTEvaluationDetail[interface{}]{VariationValue: dst})
+func (s *sdk) JSONVariation(ctx context.Context, user *user.User, featureID string, defaultValue interface{}) {
+	s.JSONVariationDetail(ctx, user, featureID, &model.BKTEvaluationDetail[interface{}]{VariationValue: defaultValue})
 }
 
 func (s *sdk) JSONVariationDetail(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	dst *model.BKTEvaluationDetail[interface{}]) {
+	defaultValue *model.BKTEvaluationDetail[interface{}]) {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
 		s.logVariationError(err, "JSONVariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		dst.FeatureID = featureID
-		dst.FeatureVersion = 0
-		dst.UserID = user.ID
-		dst.VariationID = ""
-		dst.Reason = model.EvaluationReasonClient
+		defaultValue.FeatureID = featureID
+		defaultValue.FeatureVersion = 0
+		defaultValue.UserID = user.ID
+		defaultValue.VariationID = ""
+		defaultValue.Reason = model.EvaluationReasonClient
 		return
 	}
 	ev := model.NewEvaluationDetail(
@@ -494,16 +494,16 @@ func (s *sdk) JSONVariationDetail(
 		evaluation.VariationName,
 		evaluation.FeatureVersion,
 		evaluation.Reason.Type,
-		dst.VariationValue,
+		defaultValue.VariationValue,
 	)
-	dst.FeatureID = ev.FeatureID
-	dst.FeatureVersion = ev.FeatureVersion
-	dst.UserID = ev.UserID
-	dst.VariationID = ev.VariationID
-	dst.Reason = ev.Reason
+	defaultValue.FeatureID = ev.FeatureID
+	defaultValue.FeatureVersion = ev.FeatureVersion
+	defaultValue.UserID = ev.UserID
+	defaultValue.VariationID = ev.VariationID
+	defaultValue.Reason = ev.Reason
 
 	variation := evaluation.VariationValue
-	err = json.Unmarshal([]byte(variation), dst.VariationValue)
+	err = json.Unmarshal([]byte(variation), defaultValue.VariationValue)
 	if err != nil {
 		s.logVariationError(err, "JSONVariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
@@ -779,19 +779,19 @@ func (s *nopSDK) StringVariationDetail(
 	)
 }
 
-func (s *nopSDK) JSONVariation(ctx context.Context, user *user.User, featureID string, dst interface{}) {
+func (s *nopSDK) JSONVariation(ctx context.Context, user *user.User, featureID string, defaultValue interface{}) {
 }
 
 func (s *nopSDK) JSONVariationDetail(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	dst *model.BKTEvaluationDetail[interface{}]) {
-	dst.FeatureID = featureID
-	dst.FeatureVersion = 0
-	dst.UserID = user.ID
-	dst.VariationID = "no-op"
-	dst.Reason = model.EvaluationReasonDefault
+	defaultValue *model.BKTEvaluationDetail[interface{}]) {
+	defaultValue.FeatureID = featureID
+	defaultValue.FeatureVersion = 0
+	defaultValue.UserID = user.ID
+	defaultValue.VariationID = "no-op"
+	defaultValue.Reason = model.EvaluationReasonDefault
 }
 
 func (s *nopSDK) Track(ctx context.Context, user *user.User, GoalID string) {
