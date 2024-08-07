@@ -252,7 +252,7 @@ func (s *sdk) BoolVariationDetail(
 	if err != nil {
 		s.logVariationError(err, "BoolVariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return model.NewEvaluationDetail[bool](
+		return model.NewEvaluationDetail(
 			featureID,
 			user.ID,
 			"",
@@ -267,7 +267,7 @@ func (s *sdk) BoolVariationDetail(
 	if err != nil {
 		s.logVariationError(err, "BoolVariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return model.NewEvaluationDetail[bool](
+		return model.NewEvaluationDetail(
 			featureID,
 			user.ID,
 			evaluation.VariationID,
@@ -278,7 +278,7 @@ func (s *sdk) BoolVariationDetail(
 		)
 	}
 	s.eventProcessor.PushEvaluationEvent(user, evaluation)
-	return model.NewEvaluationDetail[bool](
+	return model.NewEvaluationDetail(
 		featureID,
 		user.ID,
 		evaluation.VariationID,
@@ -302,14 +302,14 @@ func (s *sdk) IntVariationDetail(
 	if err != nil {
 		s.logVariationError(err, "IntVariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return model.NewEvaluationDetail[int](featureID, user.ID, "", "", 0, model.ReasonClient, defaultValue)
+		return model.NewEvaluationDetail(featureID, user.ID, "", "", 0, model.ReasonClient, defaultValue)
 	}
 	variation := evaluation.VariationValue
 	v, err := strconv.ParseInt(variation, 10, 64)
 	if err != nil {
 		s.logVariationError(err, "IntVariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return model.NewEvaluationDetail[int](
+		return model.NewEvaluationDetail(
 			featureID,
 			user.ID,
 			evaluation.VariationID,
@@ -320,7 +320,7 @@ func (s *sdk) IntVariationDetail(
 		)
 	}
 	s.eventProcessor.PushEvaluationEvent(user, evaluation)
-	return model.NewEvaluationDetail[int](
+	return model.NewEvaluationDetail(
 		featureID,
 		user.ID,
 		evaluation.VariationID,
@@ -344,7 +344,7 @@ func (s *sdk) Int64VariationDetail(
 	if err != nil {
 		s.logVariationError(err, "Int64VariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return model.NewEvaluationDetail[int64](
+		return model.NewEvaluationDetail(
 			featureID,
 			user.ID,
 			"",
@@ -359,7 +359,7 @@ func (s *sdk) Int64VariationDetail(
 	if err != nil {
 		s.logVariationError(err, "Int64VariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return model.NewEvaluationDetail[int64](
+		return model.NewEvaluationDetail(
 			featureID,
 			user.ID,
 			evaluation.VariationID,
@@ -370,7 +370,7 @@ func (s *sdk) Int64VariationDetail(
 		)
 	}
 	s.eventProcessor.PushEvaluationEvent(user, evaluation)
-	return model.NewEvaluationDetail[int64](
+	return model.NewEvaluationDetail(
 		featureID,
 		user.ID,
 		evaluation.VariationID,
@@ -394,7 +394,7 @@ func (s *sdk) Float64VariationDetail(
 	if err != nil {
 		s.logVariationError(err, "Float64VariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return model.NewEvaluationDetail[float64](
+		return model.NewEvaluationDetail(
 			featureID,
 			user.ID,
 			"",
@@ -409,7 +409,7 @@ func (s *sdk) Float64VariationDetail(
 	if err != nil {
 		s.logVariationError(err, "Float64VariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return model.NewEvaluationDetail[float64](
+		return model.NewEvaluationDetail(
 			featureID,
 			user.ID,
 			evaluation.VariationID,
@@ -420,7 +420,7 @@ func (s *sdk) Float64VariationDetail(
 		)
 	}
 	s.eventProcessor.PushEvaluationEvent(user, evaluation)
-	return model.NewEvaluationDetail[float64](
+	return model.NewEvaluationDetail(
 		featureID,
 		user.ID,
 		evaluation.VariationID,
@@ -444,7 +444,7 @@ func (s *sdk) StringVariationDetail(
 	if err != nil {
 		s.logVariationError(err, "StringVariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return model.NewEvaluationDetail[string](
+		return model.NewEvaluationDetail(
 			featureID,
 			user.ID,
 			"",
@@ -456,7 +456,7 @@ func (s *sdk) StringVariationDetail(
 	}
 	variation := evaluation.VariationValue
 	s.eventProcessor.PushEvaluationEvent(user, evaluation)
-	return model.NewEvaluationDetail[string](
+	return model.NewEvaluationDetail(
 		featureID,
 		user.ID,
 		evaluation.VariationID,
@@ -672,7 +672,7 @@ func (s *nopSDK) BoolVariationDetail(
 	user *user.User,
 	featureID string,
 	defaultValue bool) model.BKTEvaluationDetail[bool] {
-	return model.NewEvaluationDetail[bool](
+	return model.NewEvaluationDetail(
 		featureID,
 		user.ID,
 		"no-op",
