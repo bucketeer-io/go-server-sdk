@@ -86,15 +86,20 @@ type SDK interface {
 		featureID,
 		defaultValue string) model.BKTEvaluationDetail[string]
 
-	// JSONVariation parses the value of a feature flag (whose variations are jsons) for the given user,
-	// and stores the result in dst.
+	// Deprecated JSONVariation is deprecated. Please use ObjectVariation instead.
 	JSONVariation(ctx context.Context, user *user.User, featureID string, dst interface{})
 
-	JSONVariationDetail(
+	ObjectVariation(
 		ctx context.Context,
 		user *user.User,
 		featureID string,
-		defaultValue *model.BKTEvaluationDetail[interface{}])
+		defaultValue interface{}) model.BKTValue
+
+	ObjectVariationDetail(
+		ctx context.Context,
+		user *user.User,
+		featureID string,
+		defaultValue interface{}) model.BKTEvaluationDetail[model.BKTValue]
 
 	// Track reports that a user has performed a goal event.
 	//
@@ -467,49 +472,77 @@ func (s *sdk) StringVariationDetail(
 	)
 }
 
-func (s *sdk) JSONVariation(ctx context.Context, user *user.User, featureID string, defaultValue interface{}) {
-	s.JSONVariationDetail(ctx, user, featureID, &model.BKTEvaluationDetail[interface{}]{VariationValue: defaultValue})
+func (s *sdk) JSONVariation(ctx context.Context, user *user.User, featureID string, dst interface{}) {
+	evaluation, err := s.getEvaluation(ctx, user, featureID)
+	if err != nil {
+		s.logVariationError(err, "JSONVariation", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+		return
+	}
+	variation := evaluation.VariationValue
+	err = json.Unmarshal([]byte(variation), dst)
+	if err != nil {
+		s.logVariationError(err, "JSONVariation", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+		return
+	}
+	s.eventProcessor.PushEvaluationEvent(user, evaluation)
 }
 
-func (s *sdk) JSONVariationDetail(
+func (s *sdk) ObjectVariation(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue *model.BKTEvaluationDetail[interface{}]) {
+	defaultValue interface{}) model.BKTValue {
+	return s.ObjectVariationDetail(ctx, user, featureID, defaultValue).VariationValue
+}
+
+func (s *sdk) ObjectVariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue interface{}) model.BKTEvaluationDetail[model.BKTValue] {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
-		s.logVariationError(err, "JSONVariationDetail", user.ID, featureID)
+		s.logVariationError(err, "ObjectVariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		defaultValue.FeatureID = featureID
-		defaultValue.FeatureVersion = 0
-		defaultValue.UserID = user.ID
-		defaultValue.VariationID = ""
-		defaultValue.Reason = model.EvaluationReasonClient
-		return
+		return model.NewEvaluationDetail(
+			featureID,
+			user.ID,
+			"",
+			"",
+			0,
+			model.ReasonClient,
+			model.NewValue(defaultValue),
+		)
 	}
-	ev := model.NewEvaluationDetail(
+	var dst interface{}
+	variation := evaluation.VariationValue
+	err = json.Unmarshal([]byte(variation), &dst)
+	if err != nil {
+		s.logVariationError(err, "ObjectVariationDetail", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+		return model.NewEvaluationDetail(
+			featureID,
+			user.ID,
+			evaluation.VariationID,
+			evaluation.VariationName,
+			evaluation.FeatureVersion,
+			evaluation.Reason.Type,
+			model.NewValue(defaultValue),
+		)
+	}
+	s.eventProcessor.PushEvaluationEvent(user, evaluation)
+
+	return model.NewEvaluationDetail(
 		featureID,
 		user.ID,
 		evaluation.VariationID,
 		evaluation.VariationName,
 		evaluation.FeatureVersion,
 		evaluation.Reason.Type,
-		defaultValue.VariationValue,
+		model.NewValue(dst),
 	)
-	defaultValue.FeatureID = ev.FeatureID
-	defaultValue.FeatureVersion = ev.FeatureVersion
-	defaultValue.UserID = ev.UserID
-	defaultValue.VariationID = ev.VariationID
-	defaultValue.Reason = ev.Reason
-
-	variation := evaluation.VariationValue
-	err = json.Unmarshal([]byte(variation), defaultValue.VariationValue)
-	if err != nil {
-		s.logVariationError(err, "JSONVariationDetail", user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return
-	}
-	s.eventProcessor.PushEvaluationEvent(user, evaluation)
 }
 
 func (s *sdk) getEvaluation(ctx context.Context, user *user.User, featureID string) (*model.Evaluation, error) {
@@ -782,16 +815,28 @@ func (s *nopSDK) StringVariationDetail(
 func (s *nopSDK) JSONVariation(ctx context.Context, user *user.User, featureID string, defaultValue interface{}) {
 }
 
-func (s *nopSDK) JSONVariationDetail(
+func (s *nopSDK) ObjectVariation(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue *model.BKTEvaluationDetail[interface{}]) {
-	defaultValue.FeatureID = featureID
-	defaultValue.FeatureVersion = 0
-	defaultValue.UserID = user.ID
-	defaultValue.VariationID = "no-op"
-	defaultValue.Reason = model.EvaluationReasonDefault
+	defaultValue interface{}) model.BKTValue {
+	return model.NewValue(defaultValue)
+}
+
+func (s *nopSDK) ObjectVariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue interface{}) model.BKTEvaluationDetail[model.BKTValue] {
+	return model.NewEvaluationDetail(
+		featureID,
+		user.ID,
+		"no-op",
+		"no-op-name",
+		0,
+		model.ReasonDefault,
+		model.NewValue(defaultValue),
+	)
 }
 
 func (s *nopSDK) Track(ctx context.Context, user *user.User, GoalID string) {

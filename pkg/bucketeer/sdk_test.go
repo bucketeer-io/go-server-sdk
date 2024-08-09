@@ -1162,7 +1162,7 @@ func TestJSONVariation(t *testing.T) {
 	}
 }
 
-func TestJSONVariationDetail(t *testing.T) {
+func TestObjectVariation(t *testing.T) {
 	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -1171,12 +1171,12 @@ func TestJSONVariationDetail(t *testing.T) {
 		Int string `json:"int"`
 	}
 	tests := []struct {
-		desc      string
-		setup     func(context.Context, *sdk, *user.User, string)
-		user      *user.User
-		featureID string
-		dst       *model.BKTEvaluationDetail[interface{}]
-		expected  *model.BKTEvaluationDetail[interface{}]
+		desc         string
+		setup        func(context.Context, *sdk, *user.User, string)
+		user         *user.User
+		featureID    string
+		defaultValue interface{}
+		expected     interface{}
 	}{
 		{
 			desc: "failed to get evaluation",
@@ -1198,16 +1198,15 @@ func TestJSONVariationDetail(t *testing.T) {
 			},
 			user:      newUser(t, sdkUserID),
 			featureID: sdkFeatureID,
-			dst: &model.BKTEvaluationDetail[interface{}]{
-				VariationValue: &DstStruct{},
+			defaultValue: DstStruct{
+				Str: "str1",
+				Int: "int1",
 			},
-			expected: &model.BKTEvaluationDetail[interface{}]{
-				FeatureID:      sdkFeatureID,
-				FeatureVersion: 0,
-				UserID:         sdkUserID,
-				VariationID:    "",
-				Reason:         model.EvaluationReasonClient,
-				VariationValue: &DstStruct{},
+			expected: model.BKTValue{
+				Value: DstStruct{
+					Str: "str1",
+					Int: "int1",
+				},
 			},
 		},
 		{
@@ -1231,20 +1230,19 @@ func TestJSONVariationDetail(t *testing.T) {
 			},
 			user:      newUser(t, sdkUserID),
 			featureID: sdkFeatureID,
-			dst: &model.BKTEvaluationDetail[interface{}]{
-				VariationValue: &DstStruct{},
+			defaultValue: DstStruct{
+				Str: "str1",
+				Int: "int1",
 			},
-			expected: &model.BKTEvaluationDetail[interface{}]{
-				FeatureID:      sdkFeatureID,
-				FeatureVersion: 1,
-				UserID:         sdkUserID,
-				VariationID:    "testVersion",
-				Reason:         model.EvaluationReasonTarget,
-				VariationValue: &DstStruct{},
+			expected: model.BKTValue{
+				Value: DstStruct{
+					Str: "str1",
+					Int: "int1",
+				},
 			},
 		},
 		{
-			desc: "success",
+			desc: "success:map",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
 				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
 				res := newGetEvaluationResponse(t, featureID, `{"str": "str2", "int": "int2"}`)
@@ -1262,18 +1260,110 @@ func TestJSONVariationDetail(t *testing.T) {
 					res.Evaluation,
 				)
 			},
-			user:      newUser(t, sdkUserID),
-			featureID: sdkFeatureID,
-			dst: &model.BKTEvaluationDetail[interface{}]{
-				VariationValue: &DstStruct{},
+			user:         newUser(t, sdkUserID),
+			featureID:    sdkFeatureID,
+			defaultValue: &DstStruct{},
+			expected:     model.BKTValue{Value: map[string]interface{}{"str": "str2", "int": "int2"}},
+		},
+		{
+			desc: "success:bool",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				res := newGetEvaluationResponse(t, featureID, `true`)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), // duration
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
+					100,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
+					user,
+					res.Evaluation,
+				)
 			},
-			expected: &model.BKTEvaluationDetail[interface{}]{
-				FeatureID:      sdkFeatureID,
-				FeatureVersion: 1,
-				UserID:         sdkUserID,
-				VariationID:    "testVersion",
-				Reason:         model.EvaluationReasonTarget,
-				VariationValue: &DstStruct{Str: "str2", Int: "int2"},
+			user:         newUser(t, sdkUserID),
+			featureID:    sdkFeatureID,
+			defaultValue: &DstStruct{},
+			expected:     model.BKTValue{Value: true},
+		},
+		{
+			desc: "success:array of string",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				res := newGetEvaluationResponse(t, featureID, `["str1", "str2"]`)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), // duration
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
+					100,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
+					user,
+					res.Evaluation,
+				)
+			},
+			user:         newUser(t, sdkUserID),
+			featureID:    sdkFeatureID,
+			defaultValue: &DstStruct{},
+			expected:     model.BKTValue{Value: []interface{}{"str1", "str2"}},
+		},
+		{
+			desc: "success:array of float",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				res := newGetEvaluationResponse(t, featureID, `{"str": "str2", "results": [1,2]}`)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), // duration
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
+					100,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
+					user,
+					res.Evaluation,
+				)
+			},
+			user:         newUser(t, sdkUserID),
+			featureID:    sdkFeatureID,
+			defaultValue: &DstStruct{},
+			expected:     model.BKTValue{Value: map[string]interface{}{"str": "str2", "results": []interface{}{float64(1), float64(2)}}},
+		},
+		{
+			desc: "success:array of object",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				res := newGetEvaluationResponse(t, featureID, `[{"str": "str1", "results": [1,2]}, {"str": "str2", "results": [3,4]}]`)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), // duration
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
+					100,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
+					user,
+					res.Evaluation,
+				)
+			},
+			user:         newUser(t, sdkUserID),
+			featureID:    sdkFeatureID,
+			defaultValue: &DstStruct{},
+			expected: model.BKTValue{
+				Value: []interface{}{
+					map[string]interface{}{"str": "str1", "results": []interface{}{float64(1), float64(2)}},
+					map[string]interface{}{"str": "str2", "results": []interface{}{float64(3), float64(4)}},
+				},
 			},
 		},
 	}
@@ -1284,8 +1374,286 @@ func TestJSONVariationDetail(t *testing.T) {
 			if tt.setup != nil {
 				tt.setup(ctx, s, tt.user, tt.featureID)
 			}
-			s.JSONVariationDetail(ctx, tt.user, tt.featureID, tt.dst)
-			assert.Equal(t, tt.expected, tt.dst)
+			value := s.ObjectVariation(ctx, tt.user, tt.featureID, tt.defaultValue)
+			assert.Equal(t, tt.expected, value)
+		})
+	}
+}
+
+func TestObjectVariationDetail(t *testing.T) {
+	t.Parallel()
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	type DstStruct struct {
+		Str string `json:"str"`
+		Int string `json:"int"`
+	}
+	tests := []struct {
+		desc         string
+		setup        func(context.Context, *sdk, *user.User, string)
+		user         *user.User
+		featureID    string
+		defaultValue interface{}
+		expected     model.BKTEvaluationDetail[model.BKTValue]
+	}{
+		{
+			desc: "failed to get evaluation",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				err := api.NewErrStatus(http.StatusInternalServerError)
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(
+					nil,
+					100, err,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+					user,
+					featureID,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
+					err,
+					model.GetEvaluation,
+				)
+			},
+			user:      newUser(t, sdkUserID),
+			featureID: sdkFeatureID,
+			defaultValue: DstStruct{
+				Str: "str1",
+				Int: "int1",
+			},
+			expected: model.BKTEvaluationDetail[model.BKTValue]{
+				FeatureID:      sdkFeatureID,
+				FeatureVersion: 0,
+				UserID:         sdkUserID,
+				VariationID:    "",
+				VariationValue: model.BKTValue{
+					Value: DstStruct{
+						Str: "str1",
+						Int: "int1",
+					},
+				},
+				VariationName: "",
+				Reason:        model.EvaluationReasonClient,
+			},
+		},
+		{
+			desc: "failed to unmarshal variation",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				res := newGetEvaluationResponse(t, featureID, `invalid`)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), // duration
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
+					100,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+					user,
+					featureID,
+				)
+			},
+			user:      newUser(t, sdkUserID),
+			featureID: sdkFeatureID,
+			defaultValue: DstStruct{
+				Str: "str1",
+				Int: "int1",
+			},
+			expected: model.BKTEvaluationDetail[model.BKTValue]{
+				FeatureID:      sdkFeatureID,
+				FeatureVersion: 1,
+				UserID:         sdkUserID,
+				VariationID:    "testVersion",
+				VariationName:  "testVersionName",
+				VariationValue: model.BKTValue{
+					Value: DstStruct{
+						Str: "str1",
+						Int: "int1",
+					},
+				},
+				Reason: model.EvaluationReasonTarget,
+			},
+		},
+		{
+			desc: "success:map",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				res := newGetEvaluationResponse(t, featureID, `{"str": "str2", "int": "int2"}`)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), // duration
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
+					100,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
+					user,
+					res.Evaluation,
+				)
+			},
+			user:         newUser(t, sdkUserID),
+			featureID:    sdkFeatureID,
+			defaultValue: &DstStruct{},
+			expected: model.BKTEvaluationDetail[model.BKTValue]{
+				FeatureID:      sdkFeatureID,
+				FeatureVersion: 1,
+				UserID:         sdkUserID,
+				VariationID:    "testVersion",
+				VariationName:  "testVersionName",
+				VariationValue: model.BKTValue{Value: map[string]interface{}{"str": "str2", "int": "int2"}},
+				Reason:         model.EvaluationReasonTarget,
+			},
+		},
+		{
+			desc: "success:bool",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				res := newGetEvaluationResponse(t, featureID, `true`)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), // duration
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
+					100,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
+					user,
+					res.Evaluation,
+				)
+			},
+			user:         newUser(t, sdkUserID),
+			featureID:    sdkFeatureID,
+			defaultValue: &DstStruct{},
+			expected: model.BKTEvaluationDetail[model.BKTValue]{
+				FeatureID:      sdkFeatureID,
+				FeatureVersion: 1,
+				UserID:         sdkUserID,
+				VariationID:    "testVersion",
+				VariationName:  "testVersionName",
+				VariationValue: model.BKTValue{Value: true},
+				Reason:         model.EvaluationReasonTarget,
+			},
+		},
+		{
+			desc: "success:array of string",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				res := newGetEvaluationResponse(t, featureID, `["str1", "str2"]`)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), // duration
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
+					100,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
+					user,
+					res.Evaluation,
+				)
+			},
+			user:         newUser(t, sdkUserID),
+			featureID:    sdkFeatureID,
+			defaultValue: &DstStruct{},
+			expected: model.BKTEvaluationDetail[model.BKTValue]{
+				FeatureID:      sdkFeatureID,
+				FeatureVersion: 1,
+				UserID:         sdkUserID,
+				VariationID:    "testVersion",
+				VariationName:  "testVersionName",
+				VariationValue: model.BKTValue{Value: []interface{}{"str1", "str2"}},
+				Reason:         model.EvaluationReasonTarget,
+			},
+		},
+		{
+			desc: "success:array of float",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				res := newGetEvaluationResponse(t, featureID, `{"str": "str2", "results": [1,2]}`)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), // duration
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
+					100,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
+					user,
+					res.Evaluation,
+				)
+			},
+			user:         newUser(t, sdkUserID),
+			featureID:    sdkFeatureID,
+			defaultValue: &DstStruct{},
+			expected: model.BKTEvaluationDetail[model.BKTValue]{
+				FeatureID:      sdkFeatureID,
+				FeatureVersion: 1,
+				UserID:         sdkUserID,
+				VariationID:    "testVersion",
+				VariationName:  "testVersionName",
+				VariationValue: model.BKTValue{
+					Value: map[string]interface{}{
+						"str": "str2", "results": []interface{}{float64(1), float64(2)},
+					},
+				},
+				Reason: model.EvaluationReasonTarget,
+			},
+		},
+		{
+			desc: "success:array of object",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				res := newGetEvaluationResponse(t, featureID, `[{"str": "str1", "results": [1,2]}, {"str": "str2", "results": [3,4]}]`)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), // duration
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
+					100,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
+					user,
+					res.Evaluation,
+				)
+			},
+			user:         newUser(t, sdkUserID),
+			featureID:    sdkFeatureID,
+			defaultValue: &DstStruct{},
+			expected: model.BKTEvaluationDetail[model.BKTValue]{
+				FeatureID:      sdkFeatureID,
+				FeatureVersion: 1,
+				UserID:         sdkUserID,
+				VariationID:    "testVersion",
+				VariationName:  "testVersionName",
+				VariationValue: model.BKTValue{
+					Value: []interface{}{
+						map[string]interface{}{"str": "str1", "results": []interface{}{float64(1), float64(2)}},
+						map[string]interface{}{"str": "str2", "results": []interface{}{float64(3), float64(4)}},
+					},
+				},
+				Reason: model.EvaluationReasonTarget,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			s := newSDKWithMock(t, mockCtrl)
+			ctx := context.Background()
+			if tt.setup != nil {
+				tt.setup(ctx, s, tt.user, tt.featureID)
+			}
+			value := s.ObjectVariationDetail(ctx, tt.user, tt.featureID, tt.defaultValue)
+			assert.Equal(t, tt.expected, value)
 		})
 	}
 }
