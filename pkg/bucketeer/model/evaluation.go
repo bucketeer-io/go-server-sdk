@@ -8,4 +8,5 @@ type Evaluation struct {
 	VariationID    string  `json:"variationId,omitempty"`
 	Reason         *Reason `json:"reason,omitempty"`
 	VariationValue string  `json:"variationValue,omitempty"`
+	VariationName  string  `json:"variationName,omitempty"`
 }

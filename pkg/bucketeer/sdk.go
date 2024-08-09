@@ -36,29 +36,70 @@ type SDK interface {
 	// BoolVariation returns defaultValue if an error occurs.
 	BoolVariation(ctx context.Context, user *user.User, featureID string, defaultValue bool) bool
 
+	BoolVariationDetail(
+		ctx context.Context,
+		user *user.User,
+		featureID string,
+		defaultValue bool) model.BKTEvaluationDetail[bool]
+
 	// IntVariation returns the value of a feature flag (whose variations are ints) for the given user.
 	//
 	// IntVariation returns defaultValue if an error occurs.
 	IntVariation(ctx context.Context, user *user.User, featureID string, defaultValue int) int
+
+	IntVariationDetail(
+		ctx context.Context,
+		user *user.User,
+		featureID string,
+		defaultValue int) model.BKTEvaluationDetail[int]
 
 	// Int64Variation returns the value of a feature flag (whose variations are int64s) for the given user.
 	//
 	// Int64Variation returns defaultValue if an error occurs.
 	Int64Variation(ctx context.Context, user *user.User, featureID string, defaultValue int64) int64
 
+	Int64VariationDetail(
+		ctx context.Context,
+		user *user.User,
+		featureID string,
+		defaultValue int64) model.BKTEvaluationDetail[int64]
+
 	// Float64Variation returns the value of a feature flag (whose variations are float64s) for the given user.
 	//
 	// Float64Variation returns defaultValue if an error occurs.
 	Float64Variation(ctx context.Context, user *user.User, featureID string, defaultValue float64) float64
+
+	Float64VariationDetail(
+		ctx context.Context,
+		user *user.User,
+		featureID string,
+		defaultValue float64) model.BKTEvaluationDetail[float64]
 
 	// StringVariation returns the value of a feature flag (whose variations are strings) for the given user.
 	//
 	// StringVariation returns defaultValue if an error occurs.
 	StringVariation(ctx context.Context, user *user.User, featureID, defaultValue string) string
 
-	// JSONVariation parses the value of a feature flag (whose variations are jsons) for the given user,
-	// and stores the result in dst.
+	StringVariationDetail(
+		ctx context.Context,
+		user *user.User,
+		featureID,
+		defaultValue string) model.BKTEvaluationDetail[string]
+
+	// Deprecated JSONVariation is deprecated. Please use ObjectVariation instead.
 	JSONVariation(ctx context.Context, user *user.User, featureID string, dst interface{})
+
+	ObjectVariation(
+		ctx context.Context,
+		user *user.User,
+		featureID string,
+		defaultValue interface{}) model.BKTValue
+
+	ObjectVariationDetail(
+		ctx context.Context,
+		user *user.User,
+		featureID string,
+		defaultValue interface{}) model.BKTEvaluationDetail[model.BKTValue]
 
 	// Track reports that a user has performed a goal event.
 	//
@@ -204,87 +245,231 @@ func newSegmentUserCacheProcessor(
 }
 
 func (s *sdk) BoolVariation(ctx context.Context, user *user.User, featureID string, defaultValue bool) bool {
+	return s.BoolVariationDetail(ctx, user, featureID, defaultValue).VariationValue
+}
+
+func (s *sdk) BoolVariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue bool) model.BKTEvaluationDetail[bool] {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
-		s.logVariationError(err, "BoolVariation", user.ID, featureID)
+		s.logVariationError(err, "BoolVariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return defaultValue
+		return model.NewEvaluationDetail(
+			featureID,
+			user.ID,
+			"",
+			"",
+			0,
+			model.ReasonClient,
+			defaultValue,
+		)
 	}
 	variation := evaluation.VariationValue
 	v, err := strconv.ParseBool(variation)
 	if err != nil {
-		s.logVariationError(err, "BoolVariation", user.ID, featureID)
+		s.logVariationError(err, "BoolVariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return defaultValue
+		return model.NewEvaluationDetail(
+			featureID,
+			user.ID,
+			evaluation.VariationID,
+			evaluation.VariationName,
+			evaluation.FeatureVersion,
+			evaluation.Reason.Type,
+			defaultValue,
+		)
 	}
 	s.eventProcessor.PushEvaluationEvent(user, evaluation)
-	return v
+	return model.NewEvaluationDetail(
+		featureID,
+		user.ID,
+		evaluation.VariationID,
+		evaluation.VariationName,
+		evaluation.FeatureVersion,
+		evaluation.Reason.Type,
+		v,
+	)
 }
 
 func (s *sdk) IntVariation(ctx context.Context, user *user.User, featureID string, defaultValue int) int {
+	return s.IntVariationDetail(ctx, user, featureID, defaultValue).VariationValue
+}
+
+func (s *sdk) IntVariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue int) model.BKTEvaluationDetail[int] {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
-		s.logVariationError(err, "IntVariation", user.ID, featureID)
+		s.logVariationError(err, "IntVariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return defaultValue
+		return model.NewEvaluationDetail(featureID, user.ID, "", "", 0, model.ReasonClient, defaultValue)
 	}
 	variation := evaluation.VariationValue
 	v, err := strconv.ParseInt(variation, 10, 64)
 	if err != nil {
-		s.logVariationError(err, "IntVariation", user.ID, featureID)
+		s.logVariationError(err, "IntVariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return defaultValue
+		return model.NewEvaluationDetail(
+			featureID,
+			user.ID,
+			evaluation.VariationID,
+			evaluation.VariationName,
+			evaluation.FeatureVersion,
+			model.ReasonClient,
+			defaultValue,
+		)
 	}
 	s.eventProcessor.PushEvaluationEvent(user, evaluation)
-	return int(v)
+	return model.NewEvaluationDetail(
+		featureID,
+		user.ID,
+		evaluation.VariationID,
+		evaluation.VariationName,
+		evaluation.FeatureVersion,
+		evaluation.Reason.Type,
+		int(v),
+	)
 }
 
 func (s *sdk) Int64Variation(ctx context.Context, user *user.User, featureID string, defaultValue int64) int64 {
+	return s.Int64VariationDetail(ctx, user, featureID, defaultValue).VariationValue
+}
+
+func (s *sdk) Int64VariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue int64) model.BKTEvaluationDetail[int64] {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
-		s.logVariationError(err, "Int64Variation", user.ID, featureID)
+		s.logVariationError(err, "Int64VariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return defaultValue
+		return model.NewEvaluationDetail(
+			featureID,
+			user.ID,
+			"",
+			"",
+			0,
+			model.ReasonClient,
+			defaultValue,
+		)
 	}
 	variation := evaluation.VariationValue
 	v, err := strconv.ParseInt(variation, 10, 64)
 	if err != nil {
-		s.logVariationError(err, "Int64Variation", user.ID, featureID)
+		s.logVariationError(err, "Int64VariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return defaultValue
+		return model.NewEvaluationDetail(
+			featureID,
+			user.ID,
+			evaluation.VariationID,
+			evaluation.VariationName,
+			evaluation.FeatureVersion,
+			model.ReasonClient,
+			defaultValue,
+		)
 	}
 	s.eventProcessor.PushEvaluationEvent(user, evaluation)
-	return v
+	return model.NewEvaluationDetail(
+		featureID,
+		user.ID,
+		evaluation.VariationID,
+		evaluation.VariationName,
+		evaluation.FeatureVersion,
+		evaluation.Reason.Type,
+		v,
+	)
 }
 
 func (s *sdk) Float64Variation(ctx context.Context, user *user.User, featureID string, defaultValue float64) float64 {
+	return s.Float64VariationDetail(ctx, user, featureID, defaultValue).VariationValue
+}
+
+func (s *sdk) Float64VariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue float64) model.BKTEvaluationDetail[float64] {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
-		s.logVariationError(err, "Float64Variation", user.ID, featureID)
+		s.logVariationError(err, "Float64VariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return defaultValue
+		return model.NewEvaluationDetail(
+			featureID,
+			user.ID,
+			"",
+			"",
+			0,
+			model.ReasonClient,
+			defaultValue,
+		)
 	}
 	variation := evaluation.VariationValue
 	v, err := strconv.ParseFloat(variation, 64)
 	if err != nil {
-		s.logVariationError(err, "Float64Variation", user.ID, featureID)
+		s.logVariationError(err, "Float64VariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return defaultValue
+		return model.NewEvaluationDetail(
+			featureID,
+			user.ID,
+			evaluation.VariationID,
+			evaluation.VariationName,
+			evaluation.FeatureVersion,
+			model.ReasonClient,
+			defaultValue,
+		)
 	}
 	s.eventProcessor.PushEvaluationEvent(user, evaluation)
-	return v
+	return model.NewEvaluationDetail(
+		featureID,
+		user.ID,
+		evaluation.VariationID,
+		evaluation.VariationName,
+		evaluation.FeatureVersion,
+		evaluation.Reason.Type,
+		v,
+	)
 }
 
 func (s *sdk) StringVariation(ctx context.Context, user *user.User, featureID, defaultValue string) string {
+	return s.StringVariationDetail(ctx, user, featureID, defaultValue).VariationValue
+}
+
+func (s *sdk) StringVariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID,
+	defaultValue string) model.BKTEvaluationDetail[string] {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
-		s.logVariationError(err, "StringVariation", user.ID, featureID)
+		s.logVariationError(err, "StringVariationDetail", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-		return defaultValue
+		return model.NewEvaluationDetail(
+			featureID,
+			user.ID,
+			"",
+			"",
+			0,
+			model.ReasonClient,
+			defaultValue,
+		)
 	}
 	variation := evaluation.VariationValue
 	s.eventProcessor.PushEvaluationEvent(user, evaluation)
-	return variation
+	return model.NewEvaluationDetail(
+		featureID,
+		user.ID,
+		evaluation.VariationID,
+		evaluation.VariationName,
+		evaluation.FeatureVersion,
+		evaluation.Reason.Type,
+		variation,
+	)
 }
 
 func (s *sdk) JSONVariation(ctx context.Context, user *user.User, featureID string, dst interface{}) {
@@ -302,6 +487,62 @@ func (s *sdk) JSONVariation(ctx context.Context, user *user.User, featureID stri
 		return
 	}
 	s.eventProcessor.PushEvaluationEvent(user, evaluation)
+}
+
+func (s *sdk) ObjectVariation(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue interface{}) model.BKTValue {
+	return s.ObjectVariationDetail(ctx, user, featureID, defaultValue).VariationValue
+}
+
+func (s *sdk) ObjectVariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue interface{}) model.BKTEvaluationDetail[model.BKTValue] {
+	evaluation, err := s.getEvaluation(ctx, user, featureID)
+	if err != nil {
+		s.logVariationError(err, "ObjectVariationDetail", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+		return model.NewEvaluationDetail(
+			featureID,
+			user.ID,
+			"",
+			"",
+			0,
+			model.ReasonClient,
+			model.NewValue(defaultValue),
+		)
+	}
+	var dst interface{}
+	variation := evaluation.VariationValue
+	err = json.Unmarshal([]byte(variation), &dst)
+	if err != nil {
+		s.logVariationError(err, "ObjectVariationDetail", user.ID, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+		return model.NewEvaluationDetail(
+			featureID,
+			user.ID,
+			evaluation.VariationID,
+			evaluation.VariationName,
+			evaluation.FeatureVersion,
+			evaluation.Reason.Type,
+			model.NewValue(defaultValue),
+		)
+	}
+	s.eventProcessor.PushEvaluationEvent(user, evaluation)
+
+	return model.NewEvaluationDetail(
+		featureID,
+		user.ID,
+		evaluation.VariationID,
+		evaluation.VariationName,
+		evaluation.FeatureVersion,
+		evaluation.Reason.Type,
+		model.NewValue(dst),
+	)
 }
 
 func (s *sdk) getEvaluation(ctx context.Context, user *user.User, featureID string) (*model.Evaluation, error) {
@@ -451,16 +692,72 @@ func NewNopSDK() SDK {
 	return &nopSDK{}
 }
 
-func (s *nopSDK) BoolVariation(ctx context.Context, user *user.User, featureID string, defaultValue bool) bool {
+func (s *nopSDK) BoolVariation(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue bool) bool {
 	return defaultValue
+}
+
+func (s *nopSDK) BoolVariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue bool) model.BKTEvaluationDetail[bool] {
+	return model.NewEvaluationDetail(
+		featureID,
+		user.ID,
+		"no-op",
+		"no-op-name",
+		0,
+		model.ReasonDefault,
+		defaultValue,
+	)
 }
 
 func (s *nopSDK) IntVariation(ctx context.Context, user *user.User, featureID string, defaultValue int) int {
 	return defaultValue
 }
 
-func (s *nopSDK) Int64Variation(ctx context.Context, user *user.User, featureID string, defaultValue int64) int64 {
+func (s *nopSDK) IntVariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue int) model.BKTEvaluationDetail[int] {
+	return model.NewEvaluationDetail(
+		featureID,
+		user.ID,
+		"no-op",
+		"no-op-name",
+		0,
+		model.ReasonDefault,
+		defaultValue,
+	)
+}
+
+func (s *nopSDK) Int64Variation(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue int64) int64 {
 	return defaultValue
+}
+
+func (s *nopSDK) Int64VariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue int64) model.BKTEvaluationDetail[int64] {
+	return model.NewEvaluationDetail(
+		featureID,
+		user.ID,
+		"no-op",
+		"no-op-name",
+		0,
+		model.ReasonDefault,
+		defaultValue,
+	)
 }
 
 func (s *nopSDK) Float64Variation(
@@ -472,6 +769,23 @@ func (s *nopSDK) Float64Variation(
 	return defaultValue
 }
 
+func (s *nopSDK) Float64VariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue float64,
+) model.BKTEvaluationDetail[float64] {
+	return model.NewEvaluationDetail(
+		featureID,
+		user.ID,
+		"no-op",
+		"no-op-name",
+		0,
+		model.ReasonDefault,
+		defaultValue,
+	)
+}
+
 func (s *nopSDK) StringVariation(
 	ctx context.Context,
 	user *user.User,
@@ -481,7 +795,48 @@ func (s *nopSDK) StringVariation(
 	return defaultValue
 }
 
-func (s *nopSDK) JSONVariation(ctx context.Context, user *user.User, featureID string, dst interface{}) {
+func (s *nopSDK) StringVariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID,
+	defaultValue string,
+) model.BKTEvaluationDetail[string] {
+	return model.NewEvaluationDetail(
+		featureID,
+		user.ID,
+		"no-op",
+		"no-op-name",
+		0,
+		model.ReasonDefault,
+		defaultValue,
+	)
+}
+
+func (s *nopSDK) JSONVariation(ctx context.Context, user *user.User, featureID string, defaultValue interface{}) {
+}
+
+func (s *nopSDK) ObjectVariation(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue interface{}) model.BKTValue {
+	return model.NewValue(defaultValue)
+}
+
+func (s *nopSDK) ObjectVariationDetail(
+	ctx context.Context,
+	user *user.User,
+	featureID string,
+	defaultValue interface{}) model.BKTEvaluationDetail[model.BKTValue] {
+	return model.NewEvaluationDetail(
+		featureID,
+		user.ID,
+		"no-op",
+		"no-op-name",
+		0,
+		model.ReasonDefault,
+		model.NewValue(defaultValue),
+	)
 }
 
 func (s *nopSDK) Track(ctx context.Context, user *user.User, GoalID string) {

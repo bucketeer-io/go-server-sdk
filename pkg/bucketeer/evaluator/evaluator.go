@@ -89,6 +89,7 @@ func (e *evaluator) Evaluate(user *user.User, featureID string) (*model.Evaluati
 		UserID:         eval.UserId,
 		VariationID:    eval.VariationId,
 		VariationValue: eval.VariationValue,
+		VariationName:  eval.VariationName,
 		Reason: &model.Reason{
 			Type:   model.ReasonType(eval.Reason.Type.String()),
 			RuleID: eval.Reason.RuleId,
