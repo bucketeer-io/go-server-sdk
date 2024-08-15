@@ -348,7 +348,6 @@ func getEvaluationDetail[T model.EvaluationValue](
 	var err error
 	var value T
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
-	fmt.Printf("kaki evaluation: %v\n", evaluation)
 	if err != nil {
 		s.logVariationError(err, logMethodName, user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
@@ -363,7 +362,6 @@ func getEvaluationDetail[T model.EvaluationValue](
 		)
 	}
 	variation := evaluation.VariationValue
-	fmt.Printf("kaki variation: %v\n", variation)
 	switch any(defaultValue).(type) {
 	case int:
 		var parsedValue int64
