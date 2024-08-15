@@ -1012,6 +1012,76 @@ func TestLocalJSONVariation(t *testing.T) {
 	}
 }
 
+func TestLocalObjectVariation(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	defer controller.Finish()
+	type DstStruct struct {
+		Str string `json:"str"`
+		Int string `json:"int"`
+	}
+	internalErr := errors.New("internal error")
+	patterns := []struct {
+		desc      string
+		setup     func(*sdk, *user.User, string)
+		user      *user.User
+		featureID string
+		expected  interface{}
+	}{
+		{
+			desc: "err: internal error",
+			setup: func(s *sdk, u *user.User, featureID string) {
+				s.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Get(featureID).Return(
+					nil,
+					internalErr,
+				)
+				e := fmt.Errorf("internal error while evaluating user locally: %w", internalErr)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(e, model.SDKGetEvaluation)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID)
+			},
+			user:      &user.User{ID: "user-id-1"},
+			featureID: ftString.Id,
+			expected:  &DstStruct{},
+		},
+		{
+			desc: "success",
+			setup: func(s *sdk, u *user.User, featureID string) {
+				s.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Get(featureID).Return(
+					ftJSON,
+					nil,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), model.SDKGetEvaluation,
+				)
+				eval := &model.Evaluation{
+					ID:             "feature-id-json:0:user-id-1",
+					UserID:         "user-id-1",
+					FeatureID:      ftJSON.Id,
+					FeatureVersion: ftJSON.Version,
+					VariationID:    ftJSON.Variations[0].Id,
+					VariationValue: ftJSON.Variations[0].Value,
+					Reason:         &model.Reason{Type: model.ReasonDefault},
+				}
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(u, eval)
+			},
+			user:      &user.User{ID: "user-id-1"},
+			featureID: ftJSON.Id,
+			expected:  &DstStruct{Str: "str1", Int: "int1"},
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			sdk := newSDKLocalEvaluationWithMock(t, controller)
+			ctx := context.Background()
+			p.setup(sdk, p.user, p.featureID)
+			dst := &DstStruct{}
+			sdk.ObjectVariation(ctx, p.user, p.featureID, dst)
+			assert.Equal(t, p.expected, dst)
+		})
+	}
+}
+
 func TestGetEvaluationLocally(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)

@@ -1208,7 +1208,7 @@ func TestObjectVariation(t *testing.T) {
 			},
 		},
 		{
-			desc: "faled to unmarshal variation",
+			desc: "failed to unmarshal variation",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
 				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
 				res := newGetEvaluationResponse(t, featureID, `invalid`)
@@ -1258,7 +1258,7 @@ func TestObjectVariation(t *testing.T) {
 			},
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
-			defaultValue: &DstStruct{},
+			defaultValue: map[string]interface{}{"str": "str0", "int": "int0"},
 			expected:     map[string]interface{}{"str": "str2", "int": "int2"},
 		},
 		{
@@ -1282,7 +1282,7 @@ func TestObjectVariation(t *testing.T) {
 			},
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
-			defaultValue: &DstStruct{},
+			defaultValue: false,
 			expected:     true,
 		},
 		{
@@ -1306,7 +1306,7 @@ func TestObjectVariation(t *testing.T) {
 			},
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
-			defaultValue: &DstStruct{},
+			defaultValue: []interface{}{"str0", "str0"},
 			expected:     []interface{}{"str1", "str2"},
 		},
 		{
@@ -1330,7 +1330,7 @@ func TestObjectVariation(t *testing.T) {
 			},
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
-			defaultValue: &DstStruct{},
+			defaultValue: map[string]interface{}{"str": "str0", "results": []interface{}{float64(0), float64(0)}},
 			expected:     map[string]interface{}{"str": "str2", "results": []interface{}{float64(1), float64(2)}},
 		},
 		{
@@ -1352,9 +1352,12 @@ func TestObjectVariation(t *testing.T) {
 					res.Evaluation,
 				)
 			},
-			user:         newUser(t, sdkUserID),
-			featureID:    sdkFeatureID,
-			defaultValue: &DstStruct{},
+			user:      newUser(t, sdkUserID),
+			featureID: sdkFeatureID,
+			defaultValue: []interface{}{
+				map[string]interface{}{"str": "str0", "results": []interface{}{float64(0), float64(0)}},
+				map[string]interface{}{"str": "str0", "results": []interface{}{float64(0), float64(0)}},
+			},
 			expected: []interface{}{
 				map[string]interface{}{"str": "str1", "results": []interface{}{float64(1), float64(2)}},
 				map[string]interface{}{"str": "str2", "results": []interface{}{float64(3), float64(4)}},
@@ -1486,7 +1489,7 @@ func TestObjectVariationDetail(t *testing.T) {
 			},
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
-			defaultValue: &DstStruct{},
+			defaultValue: map[string]interface{}{"str": "str0", "int": "int0"},
 			expected: model.BKTEvaluationDetail[interface{}]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
@@ -1518,7 +1521,7 @@ func TestObjectVariationDetail(t *testing.T) {
 			},
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
-			defaultValue: &DstStruct{},
+			defaultValue: false,
 			expected: model.BKTEvaluationDetail[interface{}]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
@@ -1550,7 +1553,7 @@ func TestObjectVariationDetail(t *testing.T) {
 			},
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
-			defaultValue: &DstStruct{},
+			defaultValue: []interface{}{"str0", "str0"},
 			expected: model.BKTEvaluationDetail[interface{}]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
@@ -1582,7 +1585,7 @@ func TestObjectVariationDetail(t *testing.T) {
 			},
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
-			defaultValue: &DstStruct{},
+			defaultValue: map[string]interface{}{"str": "str0", "results": []interface{}{float64(0), float64(0)}},
 			expected: model.BKTEvaluationDetail[interface{}]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
@@ -1614,9 +1617,12 @@ func TestObjectVariationDetail(t *testing.T) {
 					res.Evaluation,
 				)
 			},
-			user:         newUser(t, sdkUserID),
-			featureID:    sdkFeatureID,
-			defaultValue: &DstStruct{},
+			user:      newUser(t, sdkUserID),
+			featureID: sdkFeatureID,
+			defaultValue: []interface{}{
+				map[string]interface{}{"str": "str0", "results": []interface{}{float64(0), float64(0)}},
+				map[string]interface{}{"str": "str0", "results": []interface{}{float64(0), float64(0)}},
+			},
 			expected: model.BKTEvaluationDetail[interface{}]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,

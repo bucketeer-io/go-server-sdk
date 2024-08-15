@@ -501,33 +501,28 @@ func TestJSONVariation(t *testing.T) {
 	}
 }
 
-func TestJSONVariationDetail(t *testing.T) {
+func TestObjectVariation(t *testing.T) {
 	t.Parallel()
-
-	type TestJson struct {
-		Str string `json:"str"`
-		Int string `json:"int"`
-	}
 
 	tests := []struct {
 		desc           string
 		user           *user.User
 		featureID      string
-		expectedValue  *TestJson
+		expectedValue  interface{}
 		expectedReason model.EvaluationReason
 	}{
 		{
 			desc:           "get Variation by Default Strategy",
 			user:           newUser(t, "user-1"),
 			featureID:      featureIDJson,
-			expectedValue:  &TestJson{Str: "str1", Int: "int1"},
+			expectedValue:  map[string]interface{}{"str": "str1", "int": "int1"},
 			expectedReason: model.EvaluationReasonDefault,
 		},
 		{
 			desc:           "get Variation by Targeting Strategy",
 			user:           newUser(t, targetUserID),
 			featureID:      featureIDJson,
-			expectedValue:  &TestJson{Str: "str2", Int: "int2"},
+			expectedValue:  map[string]interface{}{"str": "str2", "int": "int2"},
 			expectedReason: model.EvaluationReasonTarget,
 		},
 	}
@@ -543,14 +538,60 @@ func TestJSONVariationDetail(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			dst := &model.BKTEvaluationDetail[interface{}]{
-				VariationValue: &TestJson{},
+			defaultValue := &model.BKTEvaluationDetail[interface{}]{
+				VariationValue: map[string]interface{}{"str": "str0", "int": "int0"},
 			}
-			sdk.JSONVariationDetail(ctx, tt.user, tt.featureID, dst)
-			assert.Equal(t, tt.expectedValue, dst.VariationValue)
-			assert.Equal(t, tt.expectedReason, dst.Reason)
-			assert.Equal(t, tt.featureID, dst.FeatureID)
-			assert.Equal(t, tt.user.ID, dst.UserID)
+			actual := sdk.ObjectVariation(ctx, tt.user, tt.featureID, defaultValue)
+			assert.Equal(t, tt.expectedValue, actual)
+		})
+	}
+}
+
+func TestObjectVariationDetail(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		desc           string
+		user           *user.User
+		featureID      string
+		expectedValue  interface{}
+		expectedReason model.EvaluationReason
+	}{
+		{
+			desc:           "get Variation by Default Strategy",
+			user:           newUser(t, "user-1"),
+			featureID:      featureIDJson,
+			expectedValue:  map[string]interface{}{"str": "str1", "int": "int1"},
+			expectedReason: model.EvaluationReasonDefault,
+		},
+		{
+			desc:           "get Variation by Targeting Strategy",
+			user:           newUser(t, targetUserID),
+			featureID:      featureIDJson,
+			expectedValue:  map[string]interface{}{"str": "str2", "int": "int2"},
+			expectedReason: model.EvaluationReasonTarget,
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	sdk := newSDK(t, ctx)
+	defer func() {
+		// Close
+		err := sdk.Close(ctx)
+		assert.NoError(t, err)
+	}()
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			defaultValue := &model.BKTEvaluationDetail[interface{}]{
+				VariationValue: map[string]interface{}{"str": "str0", "int": "int0"},
+			}
+			actual := sdk.ObjectVariationDetail(ctx, tt.user, tt.featureID, defaultValue)
+			assert.Equal(t, tt.expectedValue, actual.VariationValue)
+			assert.Equal(t, tt.expectedReason, actual.Reason)
+			assert.Equal(t, tt.featureID, actual.FeatureID)
+			assert.Equal(t, tt.user.ID, actual.UserID)
 		})
 	}
 }
