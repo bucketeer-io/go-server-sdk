@@ -93,13 +93,13 @@ type SDK interface {
 		ctx context.Context,
 		user *user.User,
 		featureID string,
-		defaultValue interface{}) model.BKTValue
+		defaultValue interface{}) interface{}
 
 	ObjectVariationDetail(
 		ctx context.Context,
 		user *user.User,
 		featureID string,
-		defaultValue interface{}) model.BKTEvaluationDetail[model.BKTValue]
+		defaultValue interface{}) model.BKTEvaluationDetail[interface{}]
 
 	// Track reports that a user has performed a goal event.
 	//
@@ -275,10 +275,10 @@ func (s *sdk) BoolVariationDetail(
 		return model.NewEvaluationDetail(
 			featureID,
 			user.ID,
-			evaluation.VariationID,
-			evaluation.VariationName,
-			evaluation.FeatureVersion,
-			evaluation.Reason.Type,
+			"",
+			"",
+			0,
+			model.ReasonClient,
 			defaultValue,
 		)
 	}
@@ -317,9 +317,9 @@ func (s *sdk) IntVariationDetail(
 		return model.NewEvaluationDetail(
 			featureID,
 			user.ID,
-			evaluation.VariationID,
-			evaluation.VariationName,
-			evaluation.FeatureVersion,
+			"",
+			"",
+			0,
 			model.ReasonClient,
 			defaultValue,
 		)
@@ -367,9 +367,9 @@ func (s *sdk) Int64VariationDetail(
 		return model.NewEvaluationDetail(
 			featureID,
 			user.ID,
-			evaluation.VariationID,
-			evaluation.VariationName,
-			evaluation.FeatureVersion,
+			"",
+			"",
+			0,
 			model.ReasonClient,
 			defaultValue,
 		)
@@ -417,9 +417,9 @@ func (s *sdk) Float64VariationDetail(
 		return model.NewEvaluationDetail(
 			featureID,
 			user.ID,
-			evaluation.VariationID,
-			evaluation.VariationName,
-			evaluation.FeatureVersion,
+			"",
+			"",
+			0,
 			model.ReasonClient,
 			defaultValue,
 		)
@@ -493,7 +493,7 @@ func (s *sdk) ObjectVariation(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue interface{}) model.BKTValue {
+	defaultValue interface{}) interface{} {
 	return s.ObjectVariationDetail(ctx, user, featureID, defaultValue).VariationValue
 }
 
@@ -501,7 +501,7 @@ func (s *sdk) ObjectVariationDetail(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue interface{}) model.BKTEvaluationDetail[model.BKTValue] {
+	defaultValue interface{}) model.BKTEvaluationDetail[interface{}] {
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
 		s.logVariationError(err, "ObjectVariationDetail", user.ID, featureID)
@@ -513,7 +513,7 @@ func (s *sdk) ObjectVariationDetail(
 			"",
 			0,
 			model.ReasonClient,
-			model.NewValue(defaultValue),
+			defaultValue,
 		)
 	}
 	var dst interface{}
@@ -525,11 +525,11 @@ func (s *sdk) ObjectVariationDetail(
 		return model.NewEvaluationDetail(
 			featureID,
 			user.ID,
-			evaluation.VariationID,
-			evaluation.VariationName,
-			evaluation.FeatureVersion,
-			evaluation.Reason.Type,
-			model.NewValue(defaultValue),
+			"",
+			"",
+			0,
+			model.ReasonClient,
+			defaultValue,
 		)
 	}
 	s.eventProcessor.PushEvaluationEvent(user, evaluation)
@@ -541,7 +541,7 @@ func (s *sdk) ObjectVariationDetail(
 		evaluation.VariationName,
 		evaluation.FeatureVersion,
 		evaluation.Reason.Type,
-		model.NewValue(dst),
+		dst,
 	)
 }
 
@@ -819,15 +819,15 @@ func (s *nopSDK) ObjectVariation(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue interface{}) model.BKTValue {
-	return model.NewValue(defaultValue)
+	defaultValue interface{}) interface{} {
+	return defaultValue
 }
 
 func (s *nopSDK) ObjectVariationDetail(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue interface{}) model.BKTEvaluationDetail[model.BKTValue] {
+	defaultValue interface{}) model.BKTEvaluationDetail[interface{}] {
 	return model.NewEvaluationDetail(
 		featureID,
 		user.ID,
@@ -835,7 +835,7 @@ func (s *nopSDK) ObjectVariationDetail(
 		"no-op-name",
 		0,
 		model.ReasonDefault,
-		model.NewValue(defaultValue),
+		defaultValue,
 	)
 }
 

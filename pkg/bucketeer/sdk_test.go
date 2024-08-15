@@ -189,12 +189,12 @@ func TestBoolVariationDetail(t *testing.T) {
 			defaultValue: false,
 			expected: model.BKTEvaluationDetail[bool]{
 				FeatureID:      sdkFeatureID,
-				FeatureVersion: 1,
+				FeatureVersion: 0,
 				UserID:         sdkUserID,
-				VariationID:    "testVersion",
+				VariationID:    "",
 				VariationValue: false,
-				VariationName:  "testVersionName",
-				Reason:         model.EvaluationReasonTarget,
+				VariationName:  "",
+				Reason:         model.EvaluationReasonClient,
 			},
 		},
 		{
@@ -279,7 +279,7 @@ func TestIntVariation(t *testing.T) {
 			expected:     1,
 		},
 		{
-			desc: "return default value when faled to parse variation",
+			desc: "return default value when failed to parse variation",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
 				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
 				res := newGetEvaluationResponse(t, featureID, "invalid")
@@ -407,10 +407,10 @@ func TestIntVariationDetail(t *testing.T) {
 			defaultValue: 1,
 			expected: model.BKTEvaluationDetail[int]{
 				FeatureID:      sdkFeatureID,
-				FeatureVersion: 1,
+				FeatureVersion: 0,
 				UserID:         sdkUserID,
-				VariationID:    "testVersion",
-				VariationName:  "testVersionName",
+				VariationID:    "",
+				VariationName:  "",
 				VariationValue: 1,
 				Reason:         model.EvaluationReasonClient,
 			},
@@ -627,11 +627,11 @@ func TestInt64VariationDetail(t *testing.T) {
 			defaultValue: 1,
 			expected: model.BKTEvaluationDetail[int64]{
 				FeatureID:      sdkFeatureID,
-				FeatureVersion: 1,
+				FeatureVersion: 0,
 				UserID:         sdkUserID,
-				VariationID:    "testVersion",
+				VariationID:    "",
 				VariationValue: 1,
-				VariationName:  "testVersionName",
+				VariationName:  "",
 				Reason:         model.EvaluationReasonClient,
 			},
 		},
@@ -822,7 +822,7 @@ func TestFloat64VariationDetail(t *testing.T) {
 			},
 		},
 		{
-			desc: "return default value when faled to parse variation",
+			desc: "return default value when failed to parse variation",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
 				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
 				res := newGetEvaluationResponse(t, featureID, "invalid")
@@ -845,11 +845,11 @@ func TestFloat64VariationDetail(t *testing.T) {
 			defaultValue: 1.1,
 			expected: model.BKTEvaluationDetail[float64]{
 				FeatureID:      sdkFeatureID,
-				FeatureVersion: 1,
+				FeatureVersion: 0,
 				UserID:         sdkUserID,
-				VariationID:    "testVersion",
+				VariationID:    "",
 				VariationValue: 1.1,
-				VariationName:  "testVersionName",
+				VariationName:  "",
 				Reason:         model.EvaluationReasonClient,
 			},
 		},
@@ -1202,11 +1202,9 @@ func TestObjectVariation(t *testing.T) {
 				Str: "str1",
 				Int: "int1",
 			},
-			expected: model.BKTValue{
-				Value: DstStruct{
-					Str: "str1",
-					Int: "int1",
-				},
+			expected: DstStruct{
+				Str: "str1",
+				Int: "int1",
 			},
 		},
 		{
@@ -1234,11 +1232,9 @@ func TestObjectVariation(t *testing.T) {
 				Str: "str1",
 				Int: "int1",
 			},
-			expected: model.BKTValue{
-				Value: DstStruct{
-					Str: "str1",
-					Int: "int1",
-				},
+			expected: DstStruct{
+				Str: "str1",
+				Int: "int1",
 			},
 		},
 		{
@@ -1263,7 +1259,7 @@ func TestObjectVariation(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: &DstStruct{},
-			expected:     model.BKTValue{Value: map[string]interface{}{"str": "str2", "int": "int2"}},
+			expected:     map[string]interface{}{"str": "str2", "int": "int2"},
 		},
 		{
 			desc: "success:bool",
@@ -1287,7 +1283,7 @@ func TestObjectVariation(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: &DstStruct{},
-			expected:     model.BKTValue{Value: true},
+			expected:     true,
 		},
 		{
 			desc: "success:array of string",
@@ -1311,7 +1307,7 @@ func TestObjectVariation(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: &DstStruct{},
-			expected:     model.BKTValue{Value: []interface{}{"str1", "str2"}},
+			expected:     []interface{}{"str1", "str2"},
 		},
 		{
 			desc: "success:array of float",
@@ -1335,7 +1331,7 @@ func TestObjectVariation(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: &DstStruct{},
-			expected:     model.BKTValue{Value: map[string]interface{}{"str": "str2", "results": []interface{}{float64(1), float64(2)}}},
+			expected:     map[string]interface{}{"str": "str2", "results": []interface{}{float64(1), float64(2)}},
 		},
 		{
 			desc: "success:array of object",
@@ -1359,11 +1355,9 @@ func TestObjectVariation(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: &DstStruct{},
-			expected: model.BKTValue{
-				Value: []interface{}{
-					map[string]interface{}{"str": "str1", "results": []interface{}{float64(1), float64(2)}},
-					map[string]interface{}{"str": "str2", "results": []interface{}{float64(3), float64(4)}},
-				},
+			expected: []interface{}{
+				map[string]interface{}{"str": "str1", "results": []interface{}{float64(1), float64(2)}},
+				map[string]interface{}{"str": "str2", "results": []interface{}{float64(3), float64(4)}},
 			},
 		},
 	}
@@ -1394,7 +1388,7 @@ func TestObjectVariationDetail(t *testing.T) {
 		user         *user.User
 		featureID    string
 		defaultValue interface{}
-		expected     model.BKTEvaluationDetail[model.BKTValue]
+		expected     model.BKTEvaluationDetail[interface{}]
 	}{
 		{
 			desc: "failed to get evaluation",
@@ -1420,16 +1414,14 @@ func TestObjectVariationDetail(t *testing.T) {
 				Str: "str1",
 				Int: "int1",
 			},
-			expected: model.BKTEvaluationDetail[model.BKTValue]{
+			expected: model.BKTEvaluationDetail[interface{}]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 0,
 				UserID:         sdkUserID,
 				VariationID:    "",
-				VariationValue: model.BKTValue{
-					Value: DstStruct{
-						Str: "str1",
-						Int: "int1",
-					},
+				VariationValue: DstStruct{
+					Str: "str1",
+					Int: "int1",
 				},
 				VariationName: "",
 				Reason:        model.EvaluationReasonClient,
@@ -1460,19 +1452,17 @@ func TestObjectVariationDetail(t *testing.T) {
 				Str: "str1",
 				Int: "int1",
 			},
-			expected: model.BKTEvaluationDetail[model.BKTValue]{
+			expected: model.BKTEvaluationDetail[interface{}]{
 				FeatureID:      sdkFeatureID,
-				FeatureVersion: 1,
+				FeatureVersion: 0,
 				UserID:         sdkUserID,
-				VariationID:    "testVersion",
-				VariationName:  "testVersionName",
-				VariationValue: model.BKTValue{
-					Value: DstStruct{
-						Str: "str1",
-						Int: "int1",
-					},
+				VariationID:    "",
+				VariationValue: DstStruct{
+					Str: "str1",
+					Int: "int1",
 				},
-				Reason: model.EvaluationReasonTarget,
+				VariationName: "",
+				Reason:        model.EvaluationReasonClient,
 			},
 		},
 		{
@@ -1497,13 +1487,13 @@ func TestObjectVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: &DstStruct{},
-			expected: model.BKTEvaluationDetail[model.BKTValue]{
+			expected: model.BKTEvaluationDetail[interface{}]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
 				VariationID:    "testVersion",
 				VariationName:  "testVersionName",
-				VariationValue: model.BKTValue{Value: map[string]interface{}{"str": "str2", "int": "int2"}},
+				VariationValue: map[string]interface{}{"str": "str2", "int": "int2"},
 				Reason:         model.EvaluationReasonTarget,
 			},
 		},
@@ -1529,13 +1519,13 @@ func TestObjectVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: &DstStruct{},
-			expected: model.BKTEvaluationDetail[model.BKTValue]{
+			expected: model.BKTEvaluationDetail[interface{}]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
 				VariationID:    "testVersion",
 				VariationName:  "testVersionName",
-				VariationValue: model.BKTValue{Value: true},
+				VariationValue: true,
 				Reason:         model.EvaluationReasonTarget,
 			},
 		},
@@ -1561,13 +1551,13 @@ func TestObjectVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: &DstStruct{},
-			expected: model.BKTEvaluationDetail[model.BKTValue]{
+			expected: model.BKTEvaluationDetail[interface{}]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
 				VariationID:    "testVersion",
 				VariationName:  "testVersionName",
-				VariationValue: model.BKTValue{Value: []interface{}{"str1", "str2"}},
+				VariationValue: []interface{}{"str1", "str2"},
 				Reason:         model.EvaluationReasonTarget,
 			},
 		},
@@ -1593,16 +1583,14 @@ func TestObjectVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: &DstStruct{},
-			expected: model.BKTEvaluationDetail[model.BKTValue]{
+			expected: model.BKTEvaluationDetail[interface{}]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
 				VariationID:    "testVersion",
 				VariationName:  "testVersionName",
-				VariationValue: model.BKTValue{
-					Value: map[string]interface{}{
-						"str": "str2", "results": []interface{}{float64(1), float64(2)},
-					},
+				VariationValue: map[string]interface{}{
+					"str": "str2", "results": []interface{}{float64(1), float64(2)},
 				},
 				Reason: model.EvaluationReasonTarget,
 			},
@@ -1629,17 +1617,15 @@ func TestObjectVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: &DstStruct{},
-			expected: model.BKTEvaluationDetail[model.BKTValue]{
+			expected: model.BKTEvaluationDetail[interface{}]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
 				VariationID:    "testVersion",
 				VariationName:  "testVersionName",
-				VariationValue: model.BKTValue{
-					Value: []interface{}{
-						map[string]interface{}{"str": "str1", "results": []interface{}{float64(1), float64(2)}},
-						map[string]interface{}{"str": "str2", "results": []interface{}{float64(3), float64(4)}},
-					},
+				VariationValue: []interface{}{
+					map[string]interface{}{"str": "str1", "results": []interface{}{float64(1), float64(2)}},
+					map[string]interface{}{"str": "str2", "results": []interface{}{float64(3), float64(4)}},
 				},
 				Reason: model.EvaluationReasonTarget,
 			},
