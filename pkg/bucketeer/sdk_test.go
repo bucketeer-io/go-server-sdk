@@ -326,6 +326,30 @@ func TestIntVariation(t *testing.T) {
 			defaultValue: 1,
 			expected:     2,
 		},
+		{
+			desc: "success: value is float",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				res := newGetEvaluationResponse(t, featureID, "2.2")
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 20, nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), // duration
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
+					20,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
+					user,
+					res.Evaluation,
+				)
+			},
+			user:         newUser(t, sdkUserID),
+			featureID:    sdkFeatureID,
+			defaultValue: 1,
+			expected:     2,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
@@ -420,6 +444,38 @@ func TestIntVariationDetail(t *testing.T) {
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
 				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
 				res := newGetEvaluationResponse(t, featureID, "2")
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 20, nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), // duration
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
+					20,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
+					user,
+					res.Evaluation,
+				)
+			},
+			user:         newUser(t, sdkUserID),
+			featureID:    sdkFeatureID,
+			defaultValue: 1,
+			expected: model.BKTEvaluationDetail[int]{
+				FeatureID:      sdkFeatureID,
+				FeatureVersion: 1,
+				UserID:         sdkUserID,
+				VariationID:    "testVersion",
+				VariationValue: 2,
+				VariationName:  "testVersionName",
+				Reason:         model.EvaluationReasonTarget,
+			},
+		},
+		{
+			desc: "success: value is float",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				res := newGetEvaluationResponse(t, featureID, "2.2")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 20, nil)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					gomock.Any(), // duration
@@ -545,6 +601,30 @@ func TestInt64Variation(t *testing.T) {
 			defaultValue: 1,
 			expected:     2,
 		},
+		{
+			desc: "success: value is float",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				res := newGetEvaluationResponse(t, featureID, "2.2")
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 10, nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), // duration
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
+					10,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
+					user,
+					res.Evaluation,
+				)
+			},
+			user:         newUser(t, sdkUserID),
+			featureID:    sdkFeatureID,
+			defaultValue: 1,
+			expected:     2,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
@@ -640,6 +720,38 @@ func TestInt64VariationDetail(t *testing.T) {
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
 				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
 				res := newGetEvaluationResponse(t, featureID, "2")
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 10, nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), // duration
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
+					10,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
+					user,
+					res.Evaluation,
+				)
+			},
+			user:         newUser(t, sdkUserID),
+			featureID:    sdkFeatureID,
+			defaultValue: 1,
+			expected: model.BKTEvaluationDetail[int64]{
+				FeatureID:      sdkFeatureID,
+				FeatureVersion: 1,
+				UserID:         sdkUserID,
+				VariationID:    "testVersion",
+				VariationValue: 2,
+				VariationName:  "testVersionName",
+				Reason:         model.EvaluationReasonTarget,
+			},
+		},
+		{
+			desc: "success: value is float",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				res := newGetEvaluationResponse(t, featureID, "2.2")
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 10, nil)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					gomock.Any(), // duration
@@ -1313,7 +1425,7 @@ func TestObjectVariation(t *testing.T) {
 			desc: "success:array of float",
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
 				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
-				res := newGetEvaluationResponse(t, featureID, `{"str": "str2", "results": [1,2]}`)
+				res := newGetEvaluationResponse(t, featureID, `{"str": "str2", "results": [1.1,2.22]}`)
 				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					gomock.Any(), // duration
@@ -1330,8 +1442,8 @@ func TestObjectVariation(t *testing.T) {
 			},
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
-			defaultValue: map[string]interface{}{"str": "str0", "results": []interface{}{float64(0), float64(0)}},
-			expected:     map[string]interface{}{"str": "str2", "results": []interface{}{float64(1), float64(2)}},
+			defaultValue: map[string]interface{}{"str": "str0", "results": []interface{}{float64(1.5), float64(2.5)}},
+			expected:     map[string]interface{}{"str": "str2", "results": []interface{}{float64(1.1), float64(2.22)}},
 		},
 		{
 			desc: "success:array of object",
@@ -1361,6 +1473,36 @@ func TestObjectVariation(t *testing.T) {
 			expected: []interface{}{
 				map[string]interface{}{"str": "str1", "results": []interface{}{float64(1), float64(2)}},
 				map[string]interface{}{"str": "str2", "results": []interface{}{float64(3), float64(4)}},
+			},
+		},
+		{
+			desc: "success: json",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				res := newGetEvaluationResponse(t, featureID, `{"str": "str1", "int": "int1"}`)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), // duration
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
+					100,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
+					user,
+					res.Evaluation,
+				)
+			},
+			user:      newUser(t, sdkUserID),
+			featureID: sdkFeatureID,
+			defaultValue: &DstStruct{
+				Str: "str0",
+				Int: "int0",
+			},
+			expected: &DstStruct{
+				Str: "str1",
+				Int: "int1",
 			},
 		},
 	}
@@ -1632,6 +1774,44 @@ func TestObjectVariationDetail(t *testing.T) {
 				VariationValue: []interface{}{
 					map[string]interface{}{"str": "str1", "results": []interface{}{float64(1), float64(2)}},
 					map[string]interface{}{"str": "str2", "results": []interface{}{float64(3), float64(4)}},
+				},
+				Reason: model.EvaluationReasonTarget,
+			},
+		},
+		{
+			desc: "success: json",
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				res := newGetEvaluationResponse(t, featureID, `{"str": "str1", "int": "int1"}`)
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), // duration
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
+					100,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
+					user,
+					res.Evaluation,
+				)
+			},
+			user:      newUser(t, sdkUserID),
+			featureID: sdkFeatureID,
+			defaultValue: &DstStruct{
+				Str: "str0",
+				Int: "int0",
+			},
+			expected: model.BKTEvaluationDetail[interface{}]{
+				FeatureID:      sdkFeatureID,
+				FeatureVersion: 1,
+				UserID:         sdkUserID,
+				VariationID:    "testVersion",
+				VariationName:  "testVersionName",
+				VariationValue: &DstStruct{
+					Str: "str1",
+					Int: "int1",
 				},
 				Reason: model.EvaluationReasonTarget,
 			},

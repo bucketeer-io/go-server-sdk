@@ -364,16 +364,17 @@ func getEvaluationDetail[T model.EvaluationValue](
 	variation := evaluation.VariationValue
 	switch any(defaultValue).(type) {
 	case int:
-		var parsedValue int64
-		parsedValue, err = strconv.ParseInt(variation, 10, 64)
+		var parsedValue float64
+		parsedValue, err = strconv.ParseFloat(variation, 64)
 		if err == nil {
 			value = any(int(parsedValue)).(T)
 		}
 	case int64:
-		var parsedValue int64
-		parsedValue, err = strconv.ParseInt(variation, 10, 64)
+		//support to return intValue even when the underlying value is a double
+		var parsedValue float64
+		parsedValue, err = strconv.ParseFloat(variation, 64)
 		if err == nil {
-			value = any(parsedValue).(T)
+			value = any(int64(parsedValue)).(T)
 		}
 	case float64:
 		var parsedValue float64

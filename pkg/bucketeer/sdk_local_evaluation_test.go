@@ -140,11 +140,11 @@ var (
 		Variations: []*ftproto.Variation{
 			{
 				Id:    "variation-float10-id",
-				Value: "10.00",
+				Value: "10.11",
 			},
 			{
 				Id:    "variation-float20-id",
-				Value: "20.00",
+				Value: "20.11",
 			},
 		},
 		DefaultStrategy: &ftproto.Strategy{
@@ -346,7 +346,7 @@ func TestLocalBoolVariationDetail(t *testing.T) {
 			featureID: ftBoolean.Id,
 			expected: model.BKTEvaluationDetail[bool]{
 				FeatureID:      ftBoolean.Id,
-				FeatureVersion: 0,
+				FeatureVersion: ftBoolean.Version,
 				UserID:         "user-id-1",
 				Reason:         model.EvaluationReasonDefault,
 				VariationValue: true,
@@ -416,6 +416,31 @@ func TestLocalIntVariation(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftInt.Id,
+			expected:  10,
+		},
+		{
+			desc: "success: value is float",
+			setup: func(s *sdk, u *user.User, featureID string) {
+				s.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Get(featureID).Return(
+					ftFloat,
+					nil,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), model.SDKGetEvaluation,
+				)
+				eval := &model.Evaluation{
+					ID:             "feature-id-float:0:user-id-1",
+					UserID:         "user-id-1",
+					FeatureID:      ftFloat.Id,
+					FeatureVersion: ftFloat.Version,
+					VariationID:    ftFloat.Variations[0].Id,
+					VariationValue: ftFloat.Variations[0].Value,
+					Reason:         &model.Reason{Type: model.ReasonDefault},
+				}
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(u, eval)
+			},
+			user:      &user.User{ID: "user-id-1"},
+			featureID: ftFloat.Id,
 			expected:  10,
 		},
 	}
@@ -497,6 +522,38 @@ func TestLocalIntVariationDetail(t *testing.T) {
 				VariationID:    ftInt.Variations[0].Id,
 			},
 		},
+		{
+			desc: "success: value is float",
+			setup: func(s *sdk, u *user.User, featureID string) {
+				s.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Get(featureID).Return(
+					ftFloat,
+					nil,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), model.SDKGetEvaluation,
+				)
+				eval := &model.Evaluation{
+					ID:             "feature-id-float:0:user-id-1",
+					UserID:         "user-id-1",
+					FeatureID:      ftFloat.Id,
+					FeatureVersion: ftFloat.Version,
+					VariationID:    ftFloat.Variations[0].Id,
+					VariationValue: ftFloat.Variations[0].Value,
+					Reason:         &model.Reason{Type: model.ReasonDefault},
+				}
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(u, eval)
+			},
+			user:      &user.User{ID: "user-id-1"},
+			featureID: ftFloat.Id,
+			expected: model.BKTEvaluationDetail[int]{
+				FeatureID:      ftFloat.Id,
+				FeatureVersion: 0,
+				UserID:         "user-id-1",
+				Reason:         model.EvaluationReasonDefault,
+				VariationValue: 10,
+				VariationID:    ftFloat.Variations[0].Id,
+			},
+		},
 	}
 
 	for _, p := range patterns {
@@ -560,6 +617,31 @@ func TestLocalInt64Variation(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftInt.Id,
+			expected:  10,
+		},
+		{
+			desc: "success: value is float",
+			setup: func(s *sdk, u *user.User, featureID string) {
+				s.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Get(featureID).Return(
+					ftFloat,
+					nil,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), model.SDKGetEvaluation,
+				)
+				eval := &model.Evaluation{
+					ID:             "feature-id-float:0:user-id-1",
+					UserID:         "user-id-1",
+					FeatureID:      ftFloat.Id,
+					FeatureVersion: ftFloat.Version,
+					VariationID:    ftFloat.Variations[0].Id,
+					VariationValue: ftFloat.Variations[0].Value,
+					Reason:         &model.Reason{Type: model.ReasonDefault},
+				}
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(u, eval)
+			},
+			user:      &user.User{ID: "user-id-1"},
+			featureID: ftFloat.Id,
 			expected:  10,
 		},
 	}
@@ -641,6 +723,38 @@ func TestLocalInt64VariationDetail(t *testing.T) {
 				VariationID:    ftInt.Variations[0].Id,
 			},
 		},
+		{
+			desc: "success: value is float",
+			setup: func(s *sdk, u *user.User, featureID string) {
+				s.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Get(featureID).Return(
+					ftFloat,
+					nil,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), model.SDKGetEvaluation,
+				)
+				eval := &model.Evaluation{
+					ID:             "feature-id-float:0:user-id-1",
+					UserID:         "user-id-1",
+					FeatureID:      ftFloat.Id,
+					FeatureVersion: ftFloat.Version,
+					VariationID:    ftFloat.Variations[0].Id,
+					VariationValue: ftFloat.Variations[0].Value,
+					Reason:         &model.Reason{Type: model.ReasonDefault},
+				}
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(u, eval)
+			},
+			user:      &user.User{ID: "user-id-1"},
+			featureID: ftFloat.Id,
+			expected: model.BKTEvaluationDetail[int64]{
+				FeatureID:      ftFloat.Id,
+				FeatureVersion: 0,
+				UserID:         "user-id-1",
+				Reason:         model.EvaluationReasonDefault,
+				VariationValue: 10,
+				VariationID:    ftFloat.Variations[0].Id,
+			},
+		},
 	}
 
 	for _, p := range patterns {
@@ -704,7 +818,7 @@ func TestLocalFloat64Variation(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftFloat.Id,
-			expected:  10.00,
+			expected:  10.11,
 		},
 	}
 
@@ -781,7 +895,7 @@ func TestLocalFloat64VariationDetail(t *testing.T) {
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
 				Reason:         model.EvaluationReasonDefault,
-				VariationValue: 10.00,
+				VariationValue: 10.11,
 				VariationID:    ftFloat.Variations[0].Id,
 			},
 		},
@@ -1022,11 +1136,12 @@ func TestLocalObjectVariation(t *testing.T) {
 	}
 	internalErr := errors.New("internal error")
 	patterns := []struct {
-		desc      string
-		setup     func(*sdk, *user.User, string)
-		user      *user.User
-		featureID string
-		expected  interface{}
+		desc         string
+		setup        func(*sdk, *user.User, string)
+		user         *user.User
+		featureID    string
+		defaultValue interface{}
+		expected     interface{}
 	}{
 		{
 			desc: "err: internal error",
@@ -1039,9 +1154,10 @@ func TestLocalObjectVariation(t *testing.T) {
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(e, model.SDKGetEvaluation)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID)
 			},
-			user:      &user.User{ID: "user-id-1"},
-			featureID: ftString.Id,
-			expected:  &DstStruct{},
+			user:         &user.User{ID: "user-id-1"},
+			featureID:    ftString.Id,
+			defaultValue: &DstStruct{Str: "str0", Int: "int0"},
+			expected:     &DstStruct{Str: "str0", Int: "int0"},
 		},
 		{
 			desc: "success",
@@ -1064,9 +1180,10 @@ func TestLocalObjectVariation(t *testing.T) {
 				}
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(u, eval)
 			},
-			user:      &user.User{ID: "user-id-1"},
-			featureID: ftJSON.Id,
-			expected:  &DstStruct{Str: "str1", Int: "int1"},
+			user:         &user.User{ID: "user-id-1"},
+			featureID:    ftJSON.Id,
+			defaultValue: &DstStruct{Str: "str0", Int: "int0"},
+			expected:     &DstStruct{Str: "str1", Int: "int1"},
 		},
 	}
 
@@ -1075,9 +1192,94 @@ func TestLocalObjectVariation(t *testing.T) {
 			sdk := newSDKLocalEvaluationWithMock(t, controller)
 			ctx := context.Background()
 			p.setup(sdk, p.user, p.featureID)
-			dst := &DstStruct{}
-			sdk.ObjectVariation(ctx, p.user, p.featureID, dst)
-			assert.Equal(t, p.expected, dst)
+			value := sdk.ObjectVariation(ctx, p.user, p.featureID, p.defaultValue)
+			assert.Equal(t, p.expected, value)
+		})
+	}
+}
+
+func TestLocalObjectVariationDetail(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	defer controller.Finish()
+	type DstStruct struct {
+		Str string `json:"str"`
+		Int string `json:"int"`
+	}
+	internalErr := errors.New("internal error")
+	patterns := []struct {
+		desc         string
+		setup        func(*sdk, *user.User, string)
+		user         *user.User
+		featureID    string
+		defaultValue interface{}
+		expected     interface{}
+	}{
+		{
+			desc: "err: internal error",
+			setup: func(s *sdk, u *user.User, featureID string) {
+				s.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Get(featureID).Return(
+					nil,
+					internalErr,
+				)
+				e := fmt.Errorf("internal error while evaluating user locally: %w", internalErr)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(e, model.SDKGetEvaluation)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID)
+			},
+			user:         &user.User{ID: "user-id-1"},
+			featureID:    ftJSON.Id,
+			defaultValue: &DstStruct{"defaultStr", "defaultInt"},
+			expected: model.BKTEvaluationDetail[interface{}]{
+				FeatureID:      ftJSON.Id,
+				FeatureVersion: 0,
+				UserID:         "user-id-1",
+				Reason:         model.EvaluationReasonDefault,
+				VariationValue: &DstStruct{"defaultStr", "defaultInt"},
+				VariationID:    "",
+			},
+		},
+		{
+			desc: "success",
+			setup: func(s *sdk, u *user.User, featureID string) {
+				s.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Get(featureID).Return(
+					ftJSON,
+					nil,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(), model.SDKGetEvaluation,
+				)
+				eval := &model.Evaluation{
+					ID:             "feature-id-json:0:user-id-1",
+					UserID:         "user-id-1",
+					FeatureID:      ftJSON.Id,
+					FeatureVersion: ftJSON.Version,
+					VariationID:    ftJSON.Variations[0].Id,
+					VariationValue: ftJSON.Variations[0].Value,
+					Reason:         &model.Reason{Type: model.ReasonDefault},
+				}
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(u, eval)
+			},
+			user:         &user.User{ID: "user-id-1"},
+			featureID:    ftJSON.Id,
+			defaultValue: &DstStruct{},
+			expected: model.BKTEvaluationDetail[interface{}]{
+				FeatureID:      ftString.Id,
+				FeatureVersion: 0,
+				UserID:         "user-id-1",
+				Reason:         model.EvaluationReasonDefault,
+				VariationValue: "value 10",
+				VariationID:    ftString.Variations[0].Id,
+			},
+		},
+	}
+
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			sdk := newSDKLocalEvaluationWithMock(t, controller)
+			ctx := context.Background()
+			p.setup(sdk, p.user, p.featureID)
+			value := sdk.ObjectVariationDetail(ctx, p.user, p.featureID, p.defaultValue)
+			assert.Equal(t, p.expected, value)
 		})
 	}
 }
