@@ -343,13 +343,13 @@ func getEvaluationDetail[T model.EvaluationValue](
 	user *user.User,
 	featureID string,
 	defaultValue T,
-	logMethodName string,
+	logFuncName string,
 ) model.BKTEvaluationDetail[T] {
 	var err error
 	var value T
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
-		s.logVariationError(err, logMethodName, user.ID, featureID)
+		s.logVariationError(err, logFuncName, user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
 		return model.NewEvaluationDetail(
 			featureID,
@@ -400,7 +400,7 @@ func getEvaluationDetail[T model.EvaluationValue](
 		err = fmt.Errorf("unsupported type: %T", defaultValue)
 	}
 	if err != nil {
-		s.logVariationError(err, logMethodName, user.ID, featureID)
+		s.logVariationError(err, logFuncName, user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
 
 		return model.NewEvaluationDetail[T](
