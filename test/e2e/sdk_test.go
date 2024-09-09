@@ -58,7 +58,7 @@ func TestStringVariation(t *testing.T) {
 	}
 }
 
-func TestStringVariationDetail(t *testing.T) {
+func TestStringVariationDetails(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -102,7 +102,7 @@ func TestStringVariationDetail(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			actual := sdk.StringVariationDetail(ctx, tt.user, tt.featureID, "default")
+			actual := sdk.StringVariationDetails(ctx, tt.user, tt.featureID, "default")
 			assert.Equal(t, tt.expectedValue, actual.VariationValue)
 			assert.Equal(t, tt.expectedReason, actual.Reason)
 			assert.Equal(t, tt.featureID, actual.FeatureID)
@@ -151,7 +151,7 @@ func TestBoolVariation(t *testing.T) {
 	}
 }
 
-func TestBoolVariationDetail(t *testing.T) {
+func TestBoolVariationDetails(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -188,7 +188,7 @@ func TestBoolVariationDetail(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			actual := sdk.BoolVariationDetail(ctx, tt.user, tt.featureID, false)
+			actual := sdk.BoolVariationDetails(ctx, tt.user, tt.featureID, false)
 			assert.Equal(t, tt.expectedValue, actual.VariationValue)
 			assert.Equal(t, tt.expectedReason, actual.Reason)
 			assert.Equal(t, tt.featureID, actual.FeatureID)
@@ -237,7 +237,7 @@ func TestIntVariation(t *testing.T) {
 	}
 }
 
-func TestIntVariationDetail(t *testing.T) {
+func TestIntVariationDetails(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -274,7 +274,7 @@ func TestIntVariationDetail(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			actual := sdk.IntVariationDetail(ctx, tt.user, tt.featureID, -1)
+			actual := sdk.IntVariationDetails(ctx, tt.user, tt.featureID, -1)
 			assert.Equal(t, tt.expectedValue, actual.VariationValue)
 			assert.Equal(t, tt.expectedReason, actual.Reason)
 			assert.Equal(t, tt.featureID, actual.FeatureID)
@@ -323,7 +323,7 @@ func TestInt64Variation(t *testing.T) {
 	}
 }
 
-func TestInt64VariationDetail(t *testing.T) {
+func TestInt64VariationDetails(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -360,7 +360,7 @@ func TestInt64VariationDetail(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			actual := sdk.Int64VariationDetail(ctx, tt.user, tt.featureID, -1000000000)
+			actual := sdk.Int64VariationDetails(ctx, tt.user, tt.featureID, -1000000000)
 			assert.Equal(t, tt.expectedValue, actual.VariationValue)
 			assert.Equal(t, tt.expectedReason, actual.Reason)
 			assert.Equal(t, tt.featureID, actual.FeatureID)
@@ -409,7 +409,7 @@ func TestFloat64Variation(t *testing.T) {
 	}
 }
 
-func TestFloat64VariationDetail(t *testing.T) {
+func TestFloat64VariationDetails(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -446,7 +446,7 @@ func TestFloat64VariationDetail(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			actual := sdk.Float64VariationDetail(ctx, tt.user, tt.featureID, -1.1)
+			actual := sdk.Float64VariationDetails(ctx, tt.user, tt.featureID, -1.1)
 			assert.Equal(t, tt.expectedValue, actual.VariationValue)
 			assert.Equal(t, tt.expectedReason, actual.Reason)
 			assert.Equal(t, tt.featureID, actual.FeatureID)
@@ -538,7 +538,7 @@ func TestObjectVariation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			defaultValue := &model.BKTEvaluationDetail[interface{}]{
+			defaultValue := &model.BKTEvaluationDetails[interface{}]{
 				VariationValue: map[string]interface{}{"str": "str0", "int": "int0"},
 			}
 			actual := sdk.ObjectVariation(ctx, tt.user, tt.featureID, defaultValue)
@@ -547,7 +547,7 @@ func TestObjectVariation(t *testing.T) {
 	}
 }
 
-func TestObjectVariationDetail(t *testing.T) {
+func TestObjectVariationDetails(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -584,10 +584,10 @@ func TestObjectVariationDetail(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			defaultValue := &model.BKTEvaluationDetail[interface{}]{
+			defaultValue := &model.BKTEvaluationDetails[interface{}]{
 				VariationValue: map[string]interface{}{"str": "str0", "int": "int0"},
 			}
-			actual := sdk.ObjectVariationDetail(ctx, tt.user, tt.featureID, defaultValue)
+			actual := sdk.ObjectVariationDetails(ctx, tt.user, tt.featureID, defaultValue)
 			assert.Equal(t, tt.expectedValue, actual.VariationValue)
 			assert.Equal(t, tt.expectedReason, actual.Reason)
 			assert.Equal(t, tt.featureID, actual.FeatureID)

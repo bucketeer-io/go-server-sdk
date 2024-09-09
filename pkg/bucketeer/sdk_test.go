@@ -122,7 +122,7 @@ func TestBoolVariation(t *testing.T) {
 	}
 }
 
-func TestBoolVariationDetail(t *testing.T) {
+func TestBoolVariationDetails(t *testing.T) {
 	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -132,7 +132,7 @@ func TestBoolVariationDetail(t *testing.T) {
 		user         *user.User
 		featureID    string
 		defaultValue bool
-		expected     model.BKTEvaluationDetail[bool]
+		expected     model.BKTEvaluationDetails[bool]
 	}{
 		{
 			desc: "return default value when failed to get evaluation",
@@ -155,7 +155,7 @@ func TestBoolVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: false,
-			expected: model.BKTEvaluationDetail[bool]{
+			expected: model.BKTEvaluationDetails[bool]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 0,
 				UserID:         sdkUserID,
@@ -187,7 +187,7 @@ func TestBoolVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: false,
-			expected: model.BKTEvaluationDetail[bool]{
+			expected: model.BKTEvaluationDetails[bool]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 0,
 				UserID:         sdkUserID,
@@ -219,7 +219,7 @@ func TestBoolVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: false,
-			expected: model.BKTEvaluationDetail[bool]{
+			expected: model.BKTEvaluationDetails[bool]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
@@ -237,7 +237,7 @@ func TestBoolVariationDetail(t *testing.T) {
 			if tt.setup != nil {
 				tt.setup(ctx, s, tt.user, tt.featureID)
 			}
-			actual := s.BoolVariationDetail(ctx, tt.user, tt.featureID, tt.defaultValue)
+			actual := s.BoolVariationDetails(ctx, tt.user, tt.featureID, tt.defaultValue)
 			assert.Equal(t, tt.expected, actual)
 		})
 	}
@@ -364,7 +364,7 @@ func TestIntVariation(t *testing.T) {
 	}
 }
 
-func TestIntVariationDetail(t *testing.T) {
+func TestIntVariationDetails(t *testing.T) {
 	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -374,7 +374,7 @@ func TestIntVariationDetail(t *testing.T) {
 		user         *user.User
 		featureID    string
 		defaultValue int
-		expected     model.BKTEvaluationDetail[int]
+		expected     model.BKTEvaluationDetails[int]
 	}{
 		{
 			desc: "return default value when failed to get evaluation",
@@ -397,7 +397,7 @@ func TestIntVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: 1,
-			expected: model.BKTEvaluationDetail[int]{
+			expected: model.BKTEvaluationDetails[int]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 0,
 				UserID:         sdkUserID,
@@ -429,7 +429,7 @@ func TestIntVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: 1,
-			expected: model.BKTEvaluationDetail[int]{
+			expected: model.BKTEvaluationDetails[int]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 0,
 				UserID:         sdkUserID,
@@ -461,7 +461,7 @@ func TestIntVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: 1,
-			expected: model.BKTEvaluationDetail[int]{
+			expected: model.BKTEvaluationDetails[int]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
@@ -493,7 +493,7 @@ func TestIntVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: 1,
-			expected: model.BKTEvaluationDetail[int]{
+			expected: model.BKTEvaluationDetails[int]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
@@ -511,7 +511,7 @@ func TestIntVariationDetail(t *testing.T) {
 			if tt.setup != nil {
 				tt.setup(ctx, s, tt.user, tt.featureID)
 			}
-			actual := s.IntVariationDetail(ctx, tt.user, tt.featureID, tt.defaultValue)
+			actual := s.IntVariationDetails(ctx, tt.user, tt.featureID, tt.defaultValue)
 			assert.Equal(t, tt.expected, actual)
 		})
 	}
@@ -639,7 +639,7 @@ func TestInt64Variation(t *testing.T) {
 	}
 }
 
-func TestInt64VariationDetail(t *testing.T) {
+func TestInt64VariationDetails(t *testing.T) {
 	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -649,7 +649,7 @@ func TestInt64VariationDetail(t *testing.T) {
 		user         *user.User
 		featureID    string
 		defaultValue int64
-		expected     model.BKTEvaluationDetail[int64]
+		expected     model.BKTEvaluationDetails[int64]
 	}{
 		{
 			desc: "return default value when failed to get evaluation",
@@ -673,7 +673,7 @@ func TestInt64VariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: 1,
-			expected: model.BKTEvaluationDetail[int64]{
+			expected: model.BKTEvaluationDetails[int64]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 0,
 				UserID:         sdkUserID,
@@ -705,7 +705,7 @@ func TestInt64VariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: 1,
-			expected: model.BKTEvaluationDetail[int64]{
+			expected: model.BKTEvaluationDetails[int64]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 0,
 				UserID:         sdkUserID,
@@ -737,7 +737,7 @@ func TestInt64VariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: 1,
-			expected: model.BKTEvaluationDetail[int64]{
+			expected: model.BKTEvaluationDetails[int64]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
@@ -769,7 +769,7 @@ func TestInt64VariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: 1,
-			expected: model.BKTEvaluationDetail[int64]{
+			expected: model.BKTEvaluationDetails[int64]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
@@ -787,7 +787,7 @@ func TestInt64VariationDetail(t *testing.T) {
 			if tt.setup != nil {
 				tt.setup(ctx, s, tt.user, tt.featureID)
 			}
-			actual := s.Int64VariationDetail(ctx, tt.user, tt.featureID, tt.defaultValue)
+			actual := s.Int64VariationDetails(ctx, tt.user, tt.featureID, tt.defaultValue)
 			assert.Equal(t, tt.expected, actual)
 		})
 	}
@@ -890,7 +890,7 @@ func TestFloat64Variation(t *testing.T) {
 	}
 }
 
-func TestFloat64VariationDetail(t *testing.T) {
+func TestFloat64VariationDetails(t *testing.T) {
 	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -900,7 +900,7 @@ func TestFloat64VariationDetail(t *testing.T) {
 		user         *user.User
 		featureID    string
 		defaultValue float64
-		expected     model.BKTEvaluationDetail[float64]
+		expected     model.BKTEvaluationDetails[float64]
 	}{
 		{
 			desc: "return default value when failed to get evaluation",
@@ -923,7 +923,7 @@ func TestFloat64VariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: 1.1,
-			expected: model.BKTEvaluationDetail[float64]{
+			expected: model.BKTEvaluationDetails[float64]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 0,
 				UserID:         sdkUserID,
@@ -955,7 +955,7 @@ func TestFloat64VariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: 1.1,
-			expected: model.BKTEvaluationDetail[float64]{
+			expected: model.BKTEvaluationDetails[float64]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 0,
 				UserID:         sdkUserID,
@@ -987,7 +987,7 @@ func TestFloat64VariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: 1.1,
-			expected: model.BKTEvaluationDetail[float64]{
+			expected: model.BKTEvaluationDetails[float64]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
@@ -1005,7 +1005,7 @@ func TestFloat64VariationDetail(t *testing.T) {
 			if tt.setup != nil {
 				tt.setup(ctx, s, tt.user, tt.featureID)
 			}
-			actual := s.Float64VariationDetail(ctx, tt.user, tt.featureID, tt.defaultValue)
+			actual := s.Float64VariationDetails(ctx, tt.user, tt.featureID, tt.defaultValue)
 			assert.Equal(t, tt.expected, actual)
 		})
 	}
@@ -1084,7 +1084,7 @@ func TestStringVariation(t *testing.T) {
 	}
 }
 
-func TestStringVariationDetail(t *testing.T) {
+func TestStringVariationDetails(t *testing.T) {
 	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -1094,7 +1094,7 @@ func TestStringVariationDetail(t *testing.T) {
 		user         *user.User
 		featureID    string
 		defaultValue string
-		expected     model.BKTEvaluationDetail[string]
+		expected     model.BKTEvaluationDetails[string]
 	}{
 		{
 			desc: "return default value when failed to get evaluation",
@@ -1117,7 +1117,7 @@ func TestStringVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: "default",
-			expected: model.BKTEvaluationDetail[string]{
+			expected: model.BKTEvaluationDetails[string]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 0,
 				UserID:         sdkUserID,
@@ -1149,7 +1149,7 @@ func TestStringVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: "default",
-			expected: model.BKTEvaluationDetail[string]{
+			expected: model.BKTEvaluationDetails[string]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
@@ -1167,7 +1167,7 @@ func TestStringVariationDetail(t *testing.T) {
 			if tt.setup != nil {
 				tt.setup(ctx, s, tt.user, tt.featureID)
 			}
-			actual := s.StringVariationDetail(ctx, tt.user, tt.featureID, tt.defaultValue)
+			actual := s.StringVariationDetails(ctx, tt.user, tt.featureID, tt.defaultValue)
 			assert.Equal(t, tt.expected, actual)
 		})
 	}
@@ -1519,7 +1519,7 @@ func TestObjectVariation(t *testing.T) {
 	}
 }
 
-func TestObjectVariationDetail(t *testing.T) {
+func TestObjectVariationDetails(t *testing.T) {
 	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
@@ -1533,7 +1533,7 @@ func TestObjectVariationDetail(t *testing.T) {
 		user         *user.User
 		featureID    string
 		defaultValue interface{}
-		expected     model.BKTEvaluationDetail[interface{}]
+		expected     model.BKTEvaluationDetails[interface{}]
 	}{
 		{
 			desc: "failed to get evaluation",
@@ -1559,7 +1559,7 @@ func TestObjectVariationDetail(t *testing.T) {
 				Str: "str1",
 				Int: "int1",
 			},
-			expected: model.BKTEvaluationDetail[interface{}]{
+			expected: model.BKTEvaluationDetails[interface{}]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 0,
 				UserID:         sdkUserID,
@@ -1597,7 +1597,7 @@ func TestObjectVariationDetail(t *testing.T) {
 				Str: "str1",
 				Int: "int1",
 			},
-			expected: model.BKTEvaluationDetail[interface{}]{
+			expected: model.BKTEvaluationDetails[interface{}]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 0,
 				UserID:         sdkUserID,
@@ -1632,7 +1632,7 @@ func TestObjectVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: map[string]interface{}{"str": "str0", "int": "int0"},
-			expected: model.BKTEvaluationDetail[interface{}]{
+			expected: model.BKTEvaluationDetails[interface{}]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
@@ -1664,7 +1664,7 @@ func TestObjectVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: false,
-			expected: model.BKTEvaluationDetail[interface{}]{
+			expected: model.BKTEvaluationDetails[interface{}]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
@@ -1696,7 +1696,7 @@ func TestObjectVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: []interface{}{"str0", "str0"},
-			expected: model.BKTEvaluationDetail[interface{}]{
+			expected: model.BKTEvaluationDetails[interface{}]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
@@ -1728,7 +1728,7 @@ func TestObjectVariationDetail(t *testing.T) {
 			user:         newUser(t, sdkUserID),
 			featureID:    sdkFeatureID,
 			defaultValue: map[string]interface{}{"str": "str0", "results": []interface{}{float64(0), float64(0)}},
-			expected: model.BKTEvaluationDetail[interface{}]{
+			expected: model.BKTEvaluationDetails[interface{}]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
@@ -1765,7 +1765,7 @@ func TestObjectVariationDetail(t *testing.T) {
 				map[string]interface{}{"str": "str0", "results": []interface{}{float64(0), float64(0)}},
 				map[string]interface{}{"str": "str0", "results": []interface{}{float64(0), float64(0)}},
 			},
-			expected: model.BKTEvaluationDetail[interface{}]{
+			expected: model.BKTEvaluationDetails[interface{}]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
@@ -1803,7 +1803,7 @@ func TestObjectVariationDetail(t *testing.T) {
 				Str: "str0",
 				Int: "int0",
 			},
-			expected: model.BKTEvaluationDetail[interface{}]{
+			expected: model.BKTEvaluationDetails[interface{}]{
 				FeatureID:      sdkFeatureID,
 				FeatureVersion: 1,
 				UserID:         sdkUserID,
@@ -1824,7 +1824,7 @@ func TestObjectVariationDetail(t *testing.T) {
 			if tt.setup != nil {
 				tt.setup(ctx, s, tt.user, tt.featureID)
 			}
-			value := s.ObjectVariationDetail(ctx, tt.user, tt.featureID, tt.defaultValue)
+			value := s.ObjectVariationDetails(ctx, tt.user, tt.featureID, tt.defaultValue)
 			assert.Equal(t, tt.expected, value)
 		})
 	}

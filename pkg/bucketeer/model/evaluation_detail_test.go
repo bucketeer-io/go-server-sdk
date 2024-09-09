@@ -21,12 +21,12 @@ func TestNewEvaluationDetail(t *testing.T) {
 	tests := []struct {
 		desc          string
 		value         interface{}
-		expectedValue BKTEvaluationDetail[interface{}]
+		expectedValue BKTEvaluationDetails[interface{}]
 	}{
 		{
 			desc:  "valueType: bool",
 			value: true,
-			expectedValue: BKTEvaluationDetail[interface{}]{
+			expectedValue: BKTEvaluationDetails[interface{}]{
 				FeatureID:      featureID,
 				FeatureVersion: featureVersion,
 				UserID:         userID,
@@ -39,7 +39,7 @@ func TestNewEvaluationDetail(t *testing.T) {
 		{
 			desc:  "valueType: int",
 			value: 100,
-			expectedValue: BKTEvaluationDetail[interface{}]{
+			expectedValue: BKTEvaluationDetails[interface{}]{
 				FeatureID:      featureID,
 				FeatureVersion: featureVersion,
 				UserID:         userID,
@@ -52,7 +52,7 @@ func TestNewEvaluationDetail(t *testing.T) {
 		{
 			desc:  "valueType: string",
 			value: "value",
-			expectedValue: BKTEvaluationDetail[interface{}]{
+			expectedValue: BKTEvaluationDetails[interface{}]{
 				FeatureID:      featureID,
 				FeatureVersion: featureVersion,
 				UserID:         userID,
@@ -65,7 +65,7 @@ func TestNewEvaluationDetail(t *testing.T) {
 		{
 			desc:  "valueType: json",
 			value: &DstStruct{Str: "str", Int: "int"},
-			expectedValue: BKTEvaluationDetail[interface{}]{
+			expectedValue: BKTEvaluationDetails[interface{}]{
 				FeatureID:      featureID,
 				FeatureVersion: featureVersion,
 				UserID:         userID,
@@ -78,7 +78,7 @@ func TestNewEvaluationDetail(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			actual := NewEvaluationDetail(featureID, userID, variationID, variationName, featureVersion, reasonType, tt.value)
+			actual := NewEvaluationDetails(featureID, userID, variationID, variationName, featureVersion, reasonType, tt.value)
 			assert.Equal(t, tt.expectedValue.VariationValue, actual.VariationValue)
 			assert.Equal(t, featureID, actual.FeatureID)
 			assert.Equal(t, featureVersion, actual.FeatureVersion)
@@ -136,7 +136,7 @@ func TestConvertEvaluationReason(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
 			//
-			actual := NewEvaluationDetail(featureID, userID, variationID, variationName, featureVersion, tt.reasonType, value)
+			actual := NewEvaluationDetails(featureID, userID, variationID, variationName, featureVersion, tt.reasonType, value)
 			assert.Equal(t, tt.expectedReason, actual.Reason)
 		})
 	}

@@ -297,7 +297,7 @@ func TestLocalBoolVariationDetail(t *testing.T) {
 		setup     func(*sdk, *user.User, string)
 		user      *user.User
 		featureID string
-		expected  model.BKTEvaluationDetail[bool]
+		expected  model.BKTEvaluationDetails[bool]
 	}{
 		{
 			desc: "err: internal error",
@@ -312,7 +312,7 @@ func TestLocalBoolVariationDetail(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftBoolean.Id,
-			expected: model.BKTEvaluationDetail[bool]{
+			expected: model.BKTEvaluationDetails[bool]{
 				FeatureID:      ftBoolean.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
@@ -344,7 +344,7 @@ func TestLocalBoolVariationDetail(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftBoolean.Id,
-			expected: model.BKTEvaluationDetail[bool]{
+			expected: model.BKTEvaluationDetails[bool]{
 				FeatureID:      ftBoolean.Id,
 				FeatureVersion: ftBoolean.Version,
 				UserID:         "user-id-1",
@@ -360,7 +360,7 @@ func TestLocalBoolVariationDetail(t *testing.T) {
 			sdk := newSDKLocalEvaluationWithMock(t, controller)
 			ctx := context.Background()
 			p.setup(sdk, p.user, p.featureID)
-			variation := sdk.BoolVariationDetail(ctx, p.user, p.featureID, false)
+			variation := sdk.BoolVariationDetails(ctx, p.user, p.featureID, false)
 			assert.Equal(t, p.expected, variation)
 		})
 	}
@@ -466,7 +466,7 @@ func TestLocalIntVariationDetail(t *testing.T) {
 		setup     func(*sdk, *user.User, string)
 		user      *user.User
 		featureID string
-		expected  model.BKTEvaluationDetail[int]
+		expected  model.BKTEvaluationDetails[int]
 	}{
 		{
 			desc: "err: internal error",
@@ -481,7 +481,7 @@ func TestLocalIntVariationDetail(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftInt.Id,
-			expected: model.BKTEvaluationDetail[int]{
+			expected: model.BKTEvaluationDetails[int]{
 				FeatureID:      ftInt.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
@@ -513,7 +513,7 @@ func TestLocalIntVariationDetail(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftInt.Id,
-			expected: model.BKTEvaluationDetail[int]{
+			expected: model.BKTEvaluationDetails[int]{
 				FeatureID:      ftInt.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
@@ -545,7 +545,7 @@ func TestLocalIntVariationDetail(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftFloat.Id,
-			expected: model.BKTEvaluationDetail[int]{
+			expected: model.BKTEvaluationDetails[int]{
 				FeatureID:      ftFloat.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
@@ -561,7 +561,7 @@ func TestLocalIntVariationDetail(t *testing.T) {
 			sdk := newSDKLocalEvaluationWithMock(t, controller)
 			ctx := context.Background()
 			p.setup(sdk, p.user, p.featureID)
-			variation := sdk.IntVariationDetail(ctx, p.user, p.featureID, 0)
+			variation := sdk.IntVariationDetails(ctx, p.user, p.featureID, 0)
 			assert.Equal(t, p.expected, variation)
 		})
 	}
@@ -667,7 +667,7 @@ func TestLocalInt64VariationDetail(t *testing.T) {
 		setup     func(*sdk, *user.User, string)
 		user      *user.User
 		featureID string
-		expected  model.BKTEvaluationDetail[int64]
+		expected  model.BKTEvaluationDetails[int64]
 	}{
 		{
 			desc: "err: internal error",
@@ -682,7 +682,7 @@ func TestLocalInt64VariationDetail(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftInt.Id,
-			expected: model.BKTEvaluationDetail[int64]{
+			expected: model.BKTEvaluationDetails[int64]{
 				FeatureID:      ftInt.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
@@ -714,7 +714,7 @@ func TestLocalInt64VariationDetail(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftInt.Id,
-			expected: model.BKTEvaluationDetail[int64]{
+			expected: model.BKTEvaluationDetails[int64]{
 				FeatureID:      ftInt.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
@@ -746,7 +746,7 @@ func TestLocalInt64VariationDetail(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftFloat.Id,
-			expected: model.BKTEvaluationDetail[int64]{
+			expected: model.BKTEvaluationDetails[int64]{
 				FeatureID:      ftFloat.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
@@ -762,7 +762,7 @@ func TestLocalInt64VariationDetail(t *testing.T) {
 			sdk := newSDKLocalEvaluationWithMock(t, controller)
 			ctx := context.Background()
 			p.setup(sdk, p.user, p.featureID)
-			variation := sdk.Int64VariationDetail(ctx, p.user, p.featureID, 0)
+			variation := sdk.Int64VariationDetails(ctx, p.user, p.featureID, 0)
 			assert.Equal(t, p.expected, variation)
 		})
 	}
@@ -843,7 +843,7 @@ func TestLocalFloat64VariationDetail(t *testing.T) {
 		setup     func(*sdk, *user.User, string)
 		user      *user.User
 		featureID string
-		expected  model.BKTEvaluationDetail[float64]
+		expected  model.BKTEvaluationDetails[float64]
 	}{
 		{
 			desc: "err: internal error",
@@ -858,7 +858,7 @@ func TestLocalFloat64VariationDetail(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftFloat.Id,
-			expected: model.BKTEvaluationDetail[float64]{
+			expected: model.BKTEvaluationDetails[float64]{
 				FeatureID:      ftFloat.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
@@ -890,7 +890,7 @@ func TestLocalFloat64VariationDetail(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftFloat.Id,
-			expected: model.BKTEvaluationDetail[float64]{
+			expected: model.BKTEvaluationDetails[float64]{
 				FeatureID:      ftFloat.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
@@ -906,7 +906,7 @@ func TestLocalFloat64VariationDetail(t *testing.T) {
 			sdk := newSDKLocalEvaluationWithMock(t, controller)
 			ctx := context.Background()
 			p.setup(sdk, p.user, p.featureID)
-			variation := sdk.Float64VariationDetail(ctx, p.user, p.featureID, 0)
+			variation := sdk.Float64VariationDetails(ctx, p.user, p.featureID, 0)
 			assert.Equal(t, p.expected, variation)
 		})
 	}
@@ -987,7 +987,7 @@ func TestLocalStringVariationDetail(t *testing.T) {
 		setup     func(*sdk, *user.User, string)
 		user      *user.User
 		featureID string
-		expected  model.BKTEvaluationDetail[string]
+		expected  model.BKTEvaluationDetails[string]
 	}{
 		{
 			desc: "err: internal error",
@@ -1002,7 +1002,7 @@ func TestLocalStringVariationDetail(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftString.Id,
-			expected: model.BKTEvaluationDetail[string]{
+			expected: model.BKTEvaluationDetails[string]{
 				FeatureID:      ftString.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
@@ -1034,7 +1034,7 @@ func TestLocalStringVariationDetail(t *testing.T) {
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftString.Id,
-			expected: model.BKTEvaluationDetail[string]{
+			expected: model.BKTEvaluationDetails[string]{
 				FeatureID:      ftString.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
@@ -1050,7 +1050,7 @@ func TestLocalStringVariationDetail(t *testing.T) {
 			sdk := newSDKLocalEvaluationWithMock(t, controller)
 			ctx := context.Background()
 			p.setup(sdk, p.user, p.featureID)
-			variation := sdk.StringVariationDetail(ctx, p.user, p.featureID, "value default")
+			variation := sdk.StringVariationDetails(ctx, p.user, p.featureID, "value default")
 			assert.Equal(t, p.expected, variation)
 		})
 	}
@@ -1229,7 +1229,7 @@ func TestLocalObjectVariationDetail(t *testing.T) {
 			user:         &user.User{ID: "user-id-1"},
 			featureID:    ftJSON.Id,
 			defaultValue: &DstStruct{"defaultStr", "defaultInt"},
-			expected: model.BKTEvaluationDetail[interface{}]{
+			expected: model.BKTEvaluationDetails[interface{}]{
 				FeatureID:      ftJSON.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
@@ -1262,7 +1262,7 @@ func TestLocalObjectVariationDetail(t *testing.T) {
 			user:         &user.User{ID: "user-id-1"},
 			featureID:    ftJSON.Id,
 			defaultValue: &DstStruct{},
-			expected: model.BKTEvaluationDetail[interface{}]{
+			expected: model.BKTEvaluationDetails[interface{}]{
 				FeatureID:      ftJSON.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
@@ -1278,7 +1278,7 @@ func TestLocalObjectVariationDetail(t *testing.T) {
 			sdk := newSDKLocalEvaluationWithMock(t, controller)
 			ctx := context.Background()
 			p.setup(sdk, p.user, p.featureID)
-			value := sdk.ObjectVariationDetail(ctx, p.user, p.featureID, p.defaultValue)
+			value := sdk.ObjectVariationDetails(ctx, p.user, p.featureID, p.defaultValue)
 			assert.Equal(t, p.expected, value)
 		})
 	}

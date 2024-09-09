@@ -1,6 +1,6 @@
 package model
 
-type BKTEvaluationDetail[T EvaluationValue] struct {
+type BKTEvaluationDetails[T EvaluationValue] struct {
 	FeatureID      string
 	FeatureVersion int32
 	UserID         string
@@ -25,13 +25,13 @@ const (
 	EvaluationReasonPrerequisite EvaluationReason = "PREREQUISITE"
 )
 
-func NewEvaluationDetail[T EvaluationValue](
+func NewEvaluationDetails[T EvaluationValue](
 	featureID, userID, variationID, variationName string,
 	featureVersion int32,
 	reasonType ReasonType,
 	value T,
-) BKTEvaluationDetail[T] {
-	return BKTEvaluationDetail[T]{
+) BKTEvaluationDetails[T] {
+	return BKTEvaluationDetails[T]{
 		FeatureID:      featureID,
 		FeatureVersion: featureVersion,
 		UserID:         userID,
