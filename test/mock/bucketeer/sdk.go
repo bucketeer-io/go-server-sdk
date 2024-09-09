@@ -101,10 +101,10 @@ func (m *MockSDK) Float64VariationDetails(ctx context.Context, user *user.User, 
 	return ret0
 }
 
-// Float64VariationDetail indicates an expected call of Float64VariationDetail.
-func (mr *MockSDKMockRecorder) Float64VariationDetail(ctx, user, featureID, defaultValue any) *gomock.Call {
+// Float64VariationDetails indicates an expected call of Float64VariationDetails.
+func (mr *MockSDKMockRecorder) Float64VariationDetails(ctx, user, featureID, defaultValue any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Float64VariationDetail", reflect.TypeOf((*MockSDK)(nil).Float64VariationDetail), ctx, user, featureID, defaultValue)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Float64VariationDetails", reflect.TypeOf((*MockSDK)(nil).Float64VariationDetails), ctx, user, featureID, defaultValue)
 }
 
 // Int64Variation mocks base method.
