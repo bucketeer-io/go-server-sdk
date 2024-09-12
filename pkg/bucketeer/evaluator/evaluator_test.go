@@ -30,10 +30,12 @@ var (
 		Variations: []*ftproto.Variation{
 			{
 				Id:    "variation-true-id",
+				Name:  "true-name",
 				Value: "true",
 			},
 			{
 				Id:    "variation-false-id",
+				Name:  "false-name",
 				Value: "false",
 			},
 		},
@@ -52,10 +54,12 @@ var (
 		Variations: []*ftproto.Variation{
 			{
 				Id:    "variation-true-id",
+				Name:  "true-name",
 				Value: "true",
 			},
 			{
 				Id:    "variation-false-id",
+				Name:  "false-name",
 				Value: "false",
 			},
 		},
@@ -94,10 +98,12 @@ var (
 		Variations: []*ftproto.Variation{
 			{
 				Id:    "variation-true-id",
+				Name:  "true-name",
 				Value: "true",
 			},
 			{
 				Id:    "variation-false-id",
+				Name:  "false-name",
 				Value: "false",
 			},
 		},
@@ -116,10 +122,12 @@ var (
 		Variations: []*ftproto.Variation{
 			{
 				Id:    "variation-true-id",
+				Name:  "true-name",
 				Value: "true",
 			},
 			{
 				Id:    "variation-false-id",
+				Name:  "false-name",
 				Value: "false",
 			},
 		},
@@ -138,10 +146,12 @@ var (
 		Variations: []*ftproto.Variation{
 			{
 				Id:    "variation-true-id",
+				Name:  "true-name",
 				Value: "true",
 			},
 			{
 				Id:    "variation-false-id",
+				Name:  "false-name",
 				Value: "false",
 			},
 		},
@@ -199,7 +209,7 @@ var (
 	user2 = &user.User{ID: "user-id-2"}
 )
 
-func TestEvalute(t *testing.T) {
+func TestEvaluate(t *testing.T) {
 	t.Parallel()
 	controller := gomock.NewController(t)
 	defer controller.Finish()
@@ -260,6 +270,7 @@ func TestEvalute(t *testing.T) {
 				VariationID:    "variation-true-id",
 				Reason:         &model.Reason{Type: model.ReasonDefault},
 				VariationValue: "true",
+				VariationName:  "true-name",
 			},
 			expectedErr: nil,
 		},
@@ -281,6 +292,7 @@ func TestEvalute(t *testing.T) {
 				VariationID:    "variation-false-id",
 				Reason:         &model.Reason{Type: model.ReasonPrerequisite},
 				VariationValue: "false",
+				VariationName:  "false-name",
 			},
 			expectedErr: nil,
 		},
@@ -301,6 +313,7 @@ func TestEvalute(t *testing.T) {
 				VariationID:    "variation-true-id",
 				Reason:         &model.Reason{Type: model.ReasonDefault},
 				VariationValue: "true",
+				VariationName:  "true-name",
 			},
 			expectedErr: nil,
 		},
@@ -321,6 +334,7 @@ func TestEvalute(t *testing.T) {
 				VariationID:    "variation-true-id",
 				Reason:         &model.Reason{Type: model.ReasonRule},
 				VariationValue: "true",
+				VariationName:  "true-name",
 			},
 			expectedErr: nil,
 		},
