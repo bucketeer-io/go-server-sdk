@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.0](https://github.com/bucketeer-io/go-server-sdk/compare/v1.4.1...v1.5.0) (2024-09-17)
+
+
+### Features
+
+* get variation details by variation type ([#136](https://github.com/bucketeer-io/go-server-sdk/issues/136)) ([3fb2301](https://github.com/bucketeer-io/go-server-sdk/commit/3fb2301990ccf846d5e0a9a71e84d4e0439c4dbf))
+
+
+### Build System
+
+* **deps:** update dependencies ([#140](https://github.com/bucketeer-io/go-server-sdk/issues/140)) ([9a32609](https://github.com/bucketeer-io/go-server-sdk/commit/9a326094aa887f209d5069d9361da49c2f4b7d8f))
+
 ## [1.4.1](https://github.com/bucketeer-io/go-server-sdk/compare/v1.4.0...v1.4.1) (2024-06-13)
 
 
