@@ -4,7 +4,7 @@ package evaluator
 import (
 	"errors"
 
-	evaluation "github.com/bucketeer-io/bucketeer/evaluation"
+	evaluation "github.com/bucketeer-io/bucketeer/evaluation/go"
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/proto/user"
 
