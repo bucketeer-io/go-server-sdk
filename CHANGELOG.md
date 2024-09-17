@@ -10,7 +10,6 @@
 
 ### Build System
 
-* **deps:** update bucketeer 0.4.6 ([#137](https://github.com/bucketeer-io/go-server-sdk/issues/137)) ([09fa041](https://github.com/bucketeer-io/go-server-sdk/commit/09fa0415a267392c5cc175207e6b2f1d3986bac3))
 * **deps:** update dependencies ([#140](https://github.com/bucketeer-io/go-server-sdk/issues/140)) ([9a32609](https://github.com/bucketeer-io/go-server-sdk/commit/9a326094aa887f209d5069d9361da49c2f4b7d8f))
 
 ## [1.4.1](https://github.com/bucketeer-io/go-server-sdk/compare/v1.4.0...v1.4.1) (2024-06-13)
