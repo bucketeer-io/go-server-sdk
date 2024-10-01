@@ -538,10 +538,7 @@ func TestObjectVariation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			defaultValue := &model.BKTEvaluationDetails[interface{}]{
-				VariationValue: map[string]interface{}{"str": "str0", "int": "int0"},
-			}
-			actual := sdk.ObjectVariation(ctx, tt.user, tt.featureID, defaultValue)
+			actual := sdk.ObjectVariation(ctx, tt.user, tt.featureID, map[string]interface{}{"str": "str0", "int": "int0"})
 			assert.Equal(t, tt.expectedValue, actual)
 		})
 	}
@@ -584,10 +581,7 @@ func TestObjectVariationDetails(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			defaultValue := &model.BKTEvaluationDetails[interface{}]{
-				VariationValue: map[string]interface{}{"str": "str0", "int": "int0"},
-			}
-			actual := sdk.ObjectVariationDetails(ctx, tt.user, tt.featureID, defaultValue)
+			actual := sdk.ObjectVariationDetails(ctx, tt.user, tt.featureID, map[string]interface{}{"str": "str0", "int": "int0"})
 			assert.Equal(t, tt.expectedValue, actual.VariationValue)
 			assert.Equal(t, tt.expectedReason, actual.Reason)
 			assert.Equal(t, tt.featureID, actual.FeatureID)
