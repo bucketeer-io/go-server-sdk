@@ -296,10 +296,11 @@ func (p *processor) pushErrorStatusCodeMetricsEvent(api model.APIID, code int, e
 		evt = model.NewRedirectionRequestErrorMetricsEvent(p.tag, api, code)
 	case code == http.StatusBadRequest:
 		evt = model.NewBadRequestErrorMetricsEvent(p.tag, api)
-	case code == http.StatusUnauthorized:
-		evt = model.NewUnauthorizedErrorMetricsEvent(p.tag, api)
-	case code == http.StatusForbidden:
-		evt = model.NewForbiddenErrorMetricsEvent(p.tag, api)
+		// We don't generate error events for unaturothized and forbidden errors
+		// because they can't be reported using an invalid API key, so we only log them.
+	case code == http.StatusUnauthorized || code == http.StatusForbidden:
+		p.loggers.Errorf("bucketeer/event: failed to request (err: %v, tag: %s, api: %d)", err, p.tag, api)
+		return
 	case code == http.StatusNotFound:
 		evt = model.NewNotFoundErrorMetricsEvent(p.tag, api)
 	case code == http.StatusMethodNotAllowed:

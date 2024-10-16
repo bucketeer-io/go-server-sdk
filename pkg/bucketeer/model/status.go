@@ -32,36 +32,6 @@ func NewBadRequestErrorMetricsEvent(tag string, api APIID) *BadRequestErrorMetri
 	}
 }
 
-// HTTP Mapping: 401 Unauthorized
-type UnauthorizedErrorMetricsEvent struct {
-	APIID  APIID                `json:"apiId,omitempty"`
-	Labels map[string]string    `json:"labels,omitempty"`
-	Type   errorStatusEventType `json:"@type,omitempty"`
-}
-
-func NewUnauthorizedErrorMetricsEvent(tag string, api APIID) *UnauthorizedErrorMetricsEvent {
-	return &UnauthorizedErrorMetricsEvent{
-		APIID:  api,
-		Labels: map[string]string{"tag": tag},
-		Type:   UnauthorizedErrorMetricsEventType,
-	}
-}
-
-// HTTP Mapping: 403 Forbidden
-type ForbiddenErrorMetricsEvent struct {
-	APIID  APIID                `json:"apiId,omitempty"`
-	Labels map[string]string    `json:"labels,omitempty"`
-	Type   errorStatusEventType `json:"@type,omitempty"`
-}
-
-func NewForbiddenErrorMetricsEvent(tag string, api APIID) *ForbiddenErrorMetricsEvent {
-	return &ForbiddenErrorMetricsEvent{
-		APIID:  api,
-		Labels: map[string]string{"tag": tag},
-		Type:   ForbiddenErrorMetricsEventType,
-	}
-}
-
 // HTTP Mapping: 404 Not Found
 type NotFoundErrorMetricsEvent struct {
 	APIID  APIID                `json:"apiId,omitempty"`

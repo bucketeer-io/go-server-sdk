@@ -15,22 +15,6 @@ func TestNewBadRequestErrorMetricsEvent(t *testing.T) {
 	assert.Equal(t, BadRequestErrorMetricsEventType, e.Type)
 }
 
-func TestNewUnauthorizedErrorMetricsEvent(t *testing.T) {
-	t.Parallel()
-	e := NewUnauthorizedErrorMetricsEvent(tag, GetEvaluation)
-	assert.IsType(t, &UnauthorizedErrorMetricsEvent{}, e)
-	assert.Equal(t, tag, e.Labels["tag"])
-	assert.Equal(t, UnauthorizedErrorMetricsEventType, e.Type)
-}
-
-func TestNewForbiddenErrorMetricsEvent(t *testing.T) {
-	t.Parallel()
-	e := NewForbiddenErrorMetricsEvent(tag, GetEvaluation)
-	assert.IsType(t, &ForbiddenErrorMetricsEvent{}, e)
-	assert.Equal(t, tag, e.Labels["tag"])
-	assert.Equal(t, ForbiddenErrorMetricsEventType, e.Type)
-}
-
 func TestNewNotFoundErrorMetricsEvent(t *testing.T) {
 	t.Parallel()
 	e := NewNotFoundErrorMetricsEvent(tag, GetEvaluation)
