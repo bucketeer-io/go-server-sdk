@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1](https://github.com/bucketeer-io/go-server-sdk/compare/v1.5.0...v1.5.1) (2024-10-18)
+
+
+### Bug Fixes
+
+* skip event generation for unauthorized and forbidden errors ([#143](https://github.com/bucketeer-io/go-server-sdk/issues/143)) ([f68875e](https://github.com/bucketeer-io/go-server-sdk/commit/f68875e6d62209f676521891a69f830c95272b54))
+
 ## [1.5.0](https://github.com/bucketeer-io/go-server-sdk/compare/v1.4.1...v1.5.0) (2024-09-17)
 
 
