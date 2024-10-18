@@ -155,6 +155,32 @@ func TestPushInternalSDKErrorMetricsEvent(t *testing.T) {
 	assert.Equal(t, model.InternalSDKErrorMetricsEventType, iecMetricsEvt.Type)
 }
 
+func TestUnauthorizedError(t *testing.T) {
+	t.Parallel()
+	p := newProcessorForTestPushEvent(t, 10)
+	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, http.StatusUnauthorized, errors.New("StatusUnauthorized"))
+	select {
+	case evt := <-p.evtQueue.eventCh():
+		// If we receive an event, the test should fail
+		t.Errorf("Expected no event for unauthorized error, but got: %v", evt)
+	case <-time.After(time.Millisecond * 300):
+		// No event received
+	}
+}
+
+func TestStatusForbiddenError(t *testing.T) {
+	t.Parallel()
+	p := newProcessorForTestPushEvent(t, 10)
+	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, http.StatusForbidden, errors.New("StatusForbidden"))
+	select {
+	case evt := <-p.evtQueue.eventCh():
+		// If we receive an event, the test should fail
+		t.Errorf("Expected no event for forbidden error, but got: %v", evt)
+	case <-time.After(time.Millisecond * 300):
+		// No event received
+	}
+}
+
 func TestPushErrorStatusCodeMetricsEventInternalServerError(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
