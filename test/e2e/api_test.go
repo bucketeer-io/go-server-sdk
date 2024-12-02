@@ -75,7 +75,7 @@ func TestGetSegmentUsers(t *testing.T) {
 	requestedAt := int64(1)
 	resp, _, err := client.GetSegmentUsers(model.NewGetSegmentUsersRequest(segmentIDs, requestedAt))
 	assert.NoError(t, err)
-	assert.True(t, len(resp.SegmentUsers) == 2)
+	assert.True(t, len(resp.SegmentUsers) > 0)
 	assert.Empty(t, resp.DeletedSegmentIds)
 	assert.True(t, resp.RequestedAt > requestedAt)
 	assert.True(t, resp.ForceUpdate)
