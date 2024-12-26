@@ -19,3 +19,6 @@ vendor/
 
 # proto
 proto_output
+
+# jetbrains
+.idea
