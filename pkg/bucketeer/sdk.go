@@ -350,10 +350,14 @@ func getEvaluationDetails[T model.EvaluationValue](
 
 	err = validateGetEvaluationRequest(user, featureID)
 	if err != nil {
-		s.logVariationError(err, logFuncName, user.ID, featureID)
+		var userID string
+		if user.Valid() {
+			userID = user.ID
+		}
+		s.logVariationError(err, logFuncName, userID, featureID)
 		return model.NewEvaluationDetails[T](
 			featureID,
-			user.ID,
+			userID,
 			"",
 			"",
 			0,

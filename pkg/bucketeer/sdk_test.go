@@ -2166,6 +2166,45 @@ func TestClose(t *testing.T) {
 	}
 }
 
+func TestValidateGetEvaluationRequest(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		desc      string
+		user      *user.User
+		featureID string
+		isErr     bool
+	}{
+		{
+			desc:      "invalid user",
+			user:      newUser(t, ""),
+			featureID: sdkFeatureID,
+			isErr:     true,
+		},
+		{
+			desc:      "invalid featureId",
+			user:      newUser(t, sdkUserID),
+			featureID: "",
+			isErr:     true,
+		},
+		{
+			desc:      "valid user & featureId",
+			user:      newUser(t, sdkUserID),
+			featureID: sdkFeatureID,
+			isErr:     false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			err := validateGetEvaluationRequest(tt.user, tt.featureID)
+			if tt.isErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func newSDKWithMock(t *testing.T, mockCtrl *gomock.Controller) *sdk {
 	t.Helper()
 	return &sdk{
