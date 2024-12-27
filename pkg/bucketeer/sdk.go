@@ -351,7 +351,6 @@ func getEvaluationDetails[T model.EvaluationValue](
 	err = validateGetEvaluationRequest(user, featureID)
 	if err != nil {
 		s.logVariationError(err, logFuncName, user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
 		return model.NewEvaluationDetails[T](
 			featureID,
 			user.ID,
@@ -469,6 +468,12 @@ func (s *sdk) getEvaluationLocally(
 	user *user.User,
 	featureID string,
 ) (*model.Evaluation, error) {
+	err := validateGetEvaluationRequest(user, featureID)
+	if err != nil {
+		s.logVariationError(err, "getEvaluationLocally", user.ID, featureID)
+		return nil, err
+	}
+
 	reqStart := time.Now()
 	eval := evaluator.NewEvaluator(s.tag, s.featureFlagsCache, s.segmentUsersCache)
 	evaluation, err := eval.Evaluate(user, featureID)
