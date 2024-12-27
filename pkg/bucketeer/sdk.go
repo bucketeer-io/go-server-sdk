@@ -347,6 +347,25 @@ func getEvaluationDetails[T model.EvaluationValue](
 ) model.BKTEvaluationDetails[T] {
 	var err error
 	var value T
+
+	err = validateGetEvaluationRequest(user, featureID)
+	if err != nil {
+		var userID string
+		if user.Valid() {
+			userID = user.ID
+		}
+		s.logVariationError(err, logFuncName, userID, featureID)
+		return model.NewEvaluationDetails[T](
+			featureID,
+			userID,
+			"",
+			"",
+			0,
+			model.ReasonClient,
+			defaultValue,
+		)
+	}
+
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
 		s.logVariationError(err, logFuncName, user.ID, featureID)
@@ -424,6 +443,16 @@ func getEvaluationDetails[T model.EvaluationValue](
 		evaluation.Reason.Type,
 		value,
 	)
+}
+
+func validateGetEvaluationRequest(user *user.User, featureID string) error {
+	if !user.Valid() {
+		return fmt.Errorf("invalid user: %v", user)
+	}
+	if featureID == "" {
+		return errors.New("featureID is empty")
+	}
+	return nil
 }
 
 func (s *sdk) getEvaluation(ctx context.Context, user *user.User, featureID string) (*model.Evaluation, error) {

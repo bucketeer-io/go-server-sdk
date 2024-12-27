@@ -2166,6 +2166,148 @@ func TestClose(t *testing.T) {
 	}
 }
 
+func TestGetEvaluationDetails(t *testing.T) {
+	t.Parallel()
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	tests := []struct {
+		desc         string
+		user         *user.User
+		featureID    string
+		setup        func(context.Context, *sdk, *user.User, string)
+		defaultValue interface{}
+		expected     model.BKTEvaluationDetails[interface{}]
+	}{
+		{
+			desc:         "return default value when featureID is empty",
+			user:         newUser(t, sdkUserID),
+			featureID:    "",
+			defaultValue: "default",
+			expected: model.NewEvaluationDetails[interface{}](
+				"",
+				sdkUserID,
+				"",
+				"",
+				0,
+				model.ReasonClient,
+				"default",
+			),
+		},
+		{
+			desc:         "return default value when user is nil",
+			user:         nil,
+			featureID:    sdkFeatureID,
+			defaultValue: "default",
+			expected: model.NewEvaluationDetails[interface{}](
+				sdkFeatureID,
+				"",
+				"",
+				"",
+				0,
+				model.ReasonClient,
+				"default",
+			),
+		},
+		{
+			desc:         "return default value when user ID is empty",
+			user:         newUser(t, ""),
+			featureID:    sdkFeatureID,
+			defaultValue: "default",
+			expected: model.NewEvaluationDetails[interface{}](
+				sdkFeatureID,
+				"",
+				"",
+				"",
+				0,
+				model.ReasonClient,
+				"default",
+			),
+		},
+		{
+			desc:      "success validation",
+			user:      newUser(t, sdkUserID),
+			featureID: sdkFeatureID,
+			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
+				req := model.NewGetEvaluationRequest(sdkTag, featureID, user)
+				res := newGetEvaluationResponse(t, featureID, "true")
+				s.apiClient.(*mockapi.MockClient).EXPECT().GetEvaluation(req).Return(res, 100, nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
+					gomock.Any(),
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushSizeMetricsEvent(
+					100,
+					model.GetEvaluation,
+				)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushEvaluationEvent(
+					user,
+					res.Evaluation,
+				)
+			},
+			defaultValue: "default",
+			expected: model.NewEvaluationDetails[interface{}](
+				sdkFeatureID,
+				sdkUserID,
+				"testVersion",
+				"testVersionName",
+				1,
+				model.ReasonTarget,
+				"true",
+			),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			s := newSDKWithMock(t, mockCtrl)
+			ctx := context.Background()
+			if tt.setup != nil {
+				tt.setup(ctx, s, tt.user, tt.featureID)
+			}
+			actual := getEvaluationDetails(ctx, s, tt.user, tt.featureID, tt.defaultValue, "func")
+			assert.Equal(t, tt.expected, actual)
+		})
+	}
+}
+
+func TestValidateGetEvaluationRequest(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		desc      string
+		user      *user.User
+		featureID string
+		isErr     bool
+	}{
+		{
+			desc:      "invalid user",
+			user:      newUser(t, ""),
+			featureID: sdkFeatureID,
+			isErr:     true,
+		},
+		{
+			desc:      "invalid featureId",
+			user:      newUser(t, sdkUserID),
+			featureID: "",
+			isErr:     true,
+		},
+		{
+			desc:      "valid user & featureId",
+			user:      newUser(t, sdkUserID),
+			featureID: sdkFeatureID,
+			isErr:     false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			err := validateGetEvaluationRequest(tt.user, tt.featureID)
+			if tt.isErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
 func newSDKWithMock(t *testing.T, mockCtrl *gomock.Controller) *sdk {
 	t.Helper()
 	return &sdk{
