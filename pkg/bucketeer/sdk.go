@@ -468,12 +468,6 @@ func (s *sdk) getEvaluationLocally(
 	user *user.User,
 	featureID string,
 ) (*model.Evaluation, error) {
-	err := validateGetEvaluationRequest(user, featureID)
-	if err != nil {
-		s.logVariationError(err, "getEvaluationLocally", user.ID, featureID)
-		return nil, err
-	}
-
 	reqStart := time.Now()
 	eval := evaluator.NewEvaluator(s.tag, s.featureFlagsCache, s.segmentUsersCache)
 	evaluation, err := eval.Evaluate(user, featureID)
