@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.3](https://github.com/bucketeer-io/go-server-sdk/compare/v1.5.2...v1.5.3) (2024-12-27)
+
+
+### Bug Fixes
+
+* evaluation event being reported with no user ID ([#149](https://github.com/bucketeer-io/go-server-sdk/issues/149)) ([948a5d3](https://github.com/bucketeer-io/go-server-sdk/commit/948a5d30139f12d3231e6ea61eafa50178d9dbc4))
+
 ## [1.5.2](https://github.com/bucketeer-io/go-server-sdk/compare/v1.5.1...v1.5.2) (2024-12-02)
 
 
