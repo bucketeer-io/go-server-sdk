@@ -76,9 +76,14 @@ func (c *client) GetFeatureFlags(req *model.GetFeatureFlagsRequest) (*gwproto.Ge
 		return nil, 0, err
 	}
 	var gfr gwproto.GetFeatureFlagsResponse
-	if err := protojson.Unmarshal(resp, &gfr); err != nil {
+	option := protojson.UnmarshalOptions{
+		DiscardUnknown: true,
+	}
+
+	if err := option.Unmarshal(resp, &gfr); err != nil {
 		return nil, 0, err
 	}
+
 	return &gfr, size, nil
 }
 
