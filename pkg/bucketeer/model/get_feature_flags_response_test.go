@@ -125,7 +125,6 @@ func TestConvertFeatureFlagsResponse(t *testing.T) {
 							FixedStrategy: &ftproto.FixedStrategy{
 								Variation: "variation-1",
 							},
-							RolloutStrategy: &ftproto.RolloutStrategy{},
 						},
 						Clauses: []*ftproto.Clause{
 							{
@@ -142,7 +141,6 @@ func TestConvertFeatureFlagsResponse(t *testing.T) {
 					FixedStrategy: &ftproto.FixedStrategy{
 						Variation: "variation-1",
 					},
-					RolloutStrategy: &ftproto.RolloutStrategy{},
 				},
 				OffVariation:  "variation-1",
 				Tags:          []string{"tag-1"},

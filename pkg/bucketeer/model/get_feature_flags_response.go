@@ -85,15 +85,13 @@ func convertFeatureModel(f Feature) *ftproto.Feature {
 }
 
 func convertStrategyModel(s *Strategy) *ftproto.Strategy {
-	pbStrategy := &ftproto.Strategy{
-		FixedStrategy:   &ftproto.FixedStrategy{},
-		RolloutStrategy: &ftproto.RolloutStrategy{},
-	}
 	if s == nil {
-		return pbStrategy
+		return nil
 	}
 
-	pbStrategy.Type = ftproto.Strategy_Type(ftproto.Strategy_Type_value[s.Type])
+	pbStrategy := &ftproto.Strategy{
+		Type: ftproto.Strategy_Type(ftproto.Strategy_Type_value[s.Type]),
+	}
 
 	if s.FixedStrategy != nil {
 		pbStrategy.FixedStrategy = &ftproto.FixedStrategy{
