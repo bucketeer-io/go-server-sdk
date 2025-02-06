@@ -75,16 +75,12 @@ func (c *client) GetFeatureFlags(req *model.GetFeatureFlagsRequest) (*gwproto.Ge
 	if err != nil {
 		return nil, 0, err
 	}
-	var gfr gwproto.GetFeatureFlagsResponse
-	option := protojson.UnmarshalOptions{
-		DiscardUnknown: true,
-	}
-
-	if err := option.Unmarshal(resp, &gfr); err != nil {
+	var jsonResp GetFeatureFlagsResponse
+	if err := json.Unmarshal(resp, &jsonResp); err != nil {
 		return nil, 0, err
 	}
 
-	return &gfr, size, nil
+	return TransformFeatureFlagResponseDTO(jsonResp), size, nil
 }
 
 // We convert the response to the proto message because it uses less memory in the cache,
