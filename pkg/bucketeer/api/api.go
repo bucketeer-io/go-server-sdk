@@ -60,10 +60,7 @@ func (c *client) RegisterEvents(req *model.RegisterEventsRequest) (*model.Regist
 	return &rer, size, nil
 }
 
-// We convert the response to the proto message because it uses less memory in the cache,
-// and the evaluation module uses proto messages.
-// We are considering to use gRPC again to avoid converting.
-func (c *client) GetFeatureFlags(req *model.GetFeatureFlagsRequest) (*gwproto.GetFeatureFlagsResponse, int, error) {
+func (c *client) GetFeatureFlags(req *model.GetFeatureFlagsRequest) (*model.GetFeatureFlagsResponse, int, error) {
 	url := fmt.Sprintf("https://%s%s",
 		c.host,
 		featureFlagsAPI,
@@ -75,12 +72,12 @@ func (c *client) GetFeatureFlags(req *model.GetFeatureFlagsRequest) (*gwproto.Ge
 	if err != nil {
 		return nil, 0, err
 	}
-	var jsonResp GetFeatureFlagsResponse
-	if err := json.Unmarshal(resp, &jsonResp); err != nil {
+	var getFeatureFlagResp *model.GetFeatureFlagsResponse
+	if err := json.Unmarshal(resp, &getFeatureFlagResp); err != nil {
 		return nil, 0, err
 	}
 
-	return TransformFeatureFlagResponseDTO(jsonResp), size, nil
+	return getFeatureFlagResp, size, nil
 }
 
 // We convert the response to the proto message because it uses less memory in the cache,
