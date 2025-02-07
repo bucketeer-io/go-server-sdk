@@ -12,7 +12,6 @@ package api
 import (
 	reflect "reflect"
 
-	gateway "github.com/bucketeer-io/bucketeer/proto/gateway"
 	gomock "go.uber.org/mock/gomock"
 
 	model "github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
@@ -74,10 +73,10 @@ func (mr *MockClientMockRecorder) GetFeatureFlags(req any) *gomock.Call {
 }
 
 // GetSegmentUsers mocks base method.
-func (m *MockClient) GetSegmentUsers(req *model.GetSegmentUsersRequest) (*gateway.GetSegmentUsersResponse, int, error) {
+func (m *MockClient) GetSegmentUsers(req *model.GetSegmentUsersRequest) (*model.GetSegmentUsersResponse, int, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetSegmentUsers", req)
-	ret0, _ := ret[0].(*gateway.GetSegmentUsersResponse)
+	ret0, _ := ret[0].(*model.GetSegmentUsersResponse)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2

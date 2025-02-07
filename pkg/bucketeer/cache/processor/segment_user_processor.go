@@ -149,20 +149,23 @@ func (p *segmentUserProcessor) updateCache() error {
 		p.pushErrorEvent(p.newInternalError(err), model.GetSegmentUsers)
 		return err
 	}
+	// We convert the response to the proto message because it uses less memory in the cache,
+	// and the evaluation module uses proto messages.
+	pbResp := model.ConvertSegmentUsersResponse(resp)
 	p.pushLatencyMetricsEvent(time.Since(reqStart), model.GetSegmentUsers)
 	p.pushSizeMetricsEvent(size, model.GetSegmentUsers)
 
 	p.loggers.Debugf("bucketeer/cache: GetSegmentUsers response: %v, size: %d", resp, size)
 	// Delete all the local cache and save the new one
 	if resp.ForceUpdate {
-		if err := p.deleteAllAndSaveLocalCache(resp.RequestedAt, resp.SegmentUsers); err != nil {
+		if err := p.deleteAllAndSaveLocalCache(pbResp.RequestedAt, pbResp.SegmentUsers); err != nil {
 			p.pushErrorEvent(p.newInternalError(err), model.GetSegmentUsers)
 			return err
 		}
 		return nil
 	}
 	// Update only the updated segment users
-	if err := p.updateLocalCache(resp.RequestedAt, resp.SegmentUsers, resp.DeletedSegmentIds); err != nil {
+	if err := p.updateLocalCache(pbResp.RequestedAt, pbResp.SegmentUsers, pbResp.DeletedSegmentIds); err != nil {
 		p.pushErrorEvent(p.newInternalError(err), model.GetSegmentUsers)
 		return err
 	}

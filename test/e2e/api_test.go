@@ -37,7 +37,7 @@ func TestGetFeatureFlags(t *testing.T) {
 	assert.True(t, resp.FeatureFlagsID != featureFlagsID)
 	assert.NoError(t, err)
 
-	ra, err := strconv.ParseInt(resp.FeatureFlagsID, 10, 64)
+	ra, err := strconv.ParseInt(resp.RequestedAt, 10, 64)
 	assert.True(t, ra > requestedAt)
 	assert.True(t, resp.ForceUpdate)
 	assert.True(t, findFeature(t, resp.Features, featureIDString))
@@ -82,22 +82,27 @@ func TestGetSegmentUsers(t *testing.T) {
 	resp, _, err := client.GetSegmentUsers(model.NewGetSegmentUsersRequest(segmentIDs, requestedAt))
 	assert.NoError(t, err)
 	assert.True(t, len(resp.SegmentUsers) > 0)
-	assert.Empty(t, resp.DeletedSegmentIds)
-	assert.True(t, resp.RequestedAt > requestedAt)
+	assert.Empty(t, resp.DeletedSegmentIDs)
+	ra, err := strconv.ParseInt(resp.RequestedAt, 10, 64)
+	assert.NoError(t, err)
+	assert.True(t, ra > requestedAt)
 	assert.True(t, resp.ForceUpdate)
 
 	time.Sleep(time.Second)
 
 	// Use the `segmentIDs` and `requestedAt` to get an empty response
 	randomID := "random-id"
-	segmentIDs = []string{resp.SegmentUsers[0].SegmentId, randomID}
-	requestedAt = resp.RequestedAt
-	resp, _, err = client.GetSegmentUsers(model.NewGetSegmentUsersRequest(segmentIDs, requestedAt))
+	segmentIDs = []string{resp.SegmentUsers[0].SegmentID, randomID}
+	ra, err = strconv.ParseInt(resp.RequestedAt, 10, 64)
+	assert.NoError(t, err)
+	resp, _, err = client.GetSegmentUsers(model.NewGetSegmentUsersRequest(segmentIDs, ra))
 	assert.NoError(t, err)
 	assert.Empty(t, resp.SegmentUsers)
-	assert.NotEmpty(t, resp.DeletedSegmentIds)
-	assert.Contains(t, resp.DeletedSegmentIds, randomID)
-	assert.True(t, resp.RequestedAt > requestedAt)
+	assert.NotEmpty(t, resp.DeletedSegmentIDs)
+	assert.Contains(t, resp.DeletedSegmentIDs, randomID)
+	ra, err = strconv.ParseInt(resp.RequestedAt, 10, 64)
+	assert.NoError(t, err)
+	assert.True(t, ra > requestedAt)
 	assert.False(t, resp.ForceUpdate)
 }
 
