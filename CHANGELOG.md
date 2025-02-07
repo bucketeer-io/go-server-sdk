@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.4](https://github.com/bucketeer-io/go-server-sdk/compare/v1.5.3...v1.5.4) (2025-02-07)
+
+
+### Bug Fixes
+
+* unknow field error when changing the proto message on the backend ([#152](https://github.com/bucketeer-io/go-server-sdk/issues/152)) ([0373080](https://github.com/bucketeer-io/go-server-sdk/commit/0373080aa8cc84e339185681de324be274fe8d0d))
+
+
+### Build System
+
+* **deps:** update dependencies ([#153](https://github.com/bucketeer-io/go-server-sdk/issues/153)) ([40c1eeb](https://github.com/bucketeer-io/go-server-sdk/commit/40c1eebbbeb763664f7001466dda66584e0d8644))
+
 ## [1.5.3](https://github.com/bucketeer-io/go-server-sdk/compare/v1.5.2...v1.5.3) (2024-12-27)
 
 
