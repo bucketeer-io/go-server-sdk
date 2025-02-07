@@ -69,12 +69,11 @@ func (c *client) GetFeatureFlags(req *model.GetFeatureFlagsRequest) (*model.GetF
 	if err != nil {
 		return nil, 0, err
 	}
-	var getFeatureFlagResp *model.GetFeatureFlagsResponse
-	if err := json.Unmarshal(resp, &getFeatureFlagResp); err != nil {
+	var gfr *model.GetFeatureFlagsResponse
+	if err := json.Unmarshal(resp, &gfr); err != nil {
 		return nil, 0, err
 	}
-
-	return getFeatureFlagResp, size, nil
+	return gfr, size, nil
 }
 
 func (c *client) GetSegmentUsers(req *model.GetSegmentUsersRequest) (*model.GetSegmentUsersResponse, int, error) {
