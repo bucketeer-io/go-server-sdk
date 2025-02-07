@@ -152,10 +152,13 @@ func (p *processor) updateCache() error {
 	p.pushLatencyMetricsEvent(time.Since(reqStart), model.GetFeatureFlags)
 	p.pushSizeMetricsEvent(size, model.GetFeatureFlags)
 
-	p.loggers.Debugf("bucketeer/cache: GetFeatureFlags response: %v, size: %d", resp, size)
+	// We convert the response to the proto message because it uses less memory in the cache,
+	// and the evaluation module uses proto messages.
+	pbResp := model.ConvertFeatureFlagsResponse(resp)
+	p.loggers.Debugf("bucketeer/cache: GetFeatureFlags response: %+v, size: %d", pbResp, size)
 	// Delete all the local cache and save the new one
-	if resp.ForceUpdate {
-		if err := p.deleteAllAndSaveLocalCache(resp.FeatureFlagsId, resp.RequestedAt, resp.Features); err != nil {
+	if pbResp.ForceUpdate {
+		if err := p.deleteAllAndSaveLocalCache(pbResp.FeatureFlagsId, pbResp.RequestedAt, pbResp.Features); err != nil {
 			p.pushErrorEvent(p.newInternalError(err), model.GetFeatureFlags)
 			return err
 		}
@@ -163,10 +166,10 @@ func (p *processor) updateCache() error {
 	}
 	// Update only the updated flags
 	err = p.updateLocalCache(
-		resp.FeatureFlagsId,
-		resp.RequestedAt,
-		resp.Features,
-		resp.ArchivedFeatureFlagIds,
+		pbResp.FeatureFlagsId,
+		pbResp.RequestedAt,
+		pbResp.Features,
+		pbResp.ArchivedFeatureFlagIds,
 	)
 	if err != nil {
 		p.pushErrorEvent(p.newInternalError(err), model.GetFeatureFlags)

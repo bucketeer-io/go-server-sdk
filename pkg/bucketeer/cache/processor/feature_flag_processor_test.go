@@ -20,7 +20,6 @@ import (
 	"time"
 
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
@@ -52,7 +51,7 @@ func TestPollingInterval(t *testing.T) {
 	p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsRequestedAtKey, int64(0), cacheTTL).Return(nil).Times(maxTimes)
 
 	p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(gomock.Any()).Return(
-		&gwproto.GetFeatureFlagsResponse{},
+		&model.GetFeatureFlagsResponse{},
 		1,
 		nil,
 	).Times(maxTimes)
@@ -80,7 +79,7 @@ func TestUpdateCache(t *testing.T) {
 		"feature-flags-id-3",
 		"feature-flags-id-4",
 	}
-	singleFeature := &ftproto.Feature{Id: "feature-flag-id-2"}
+	singleFeature := model.Feature{ID: "feature-flag-id-2"}
 	internalErr := errors.New("internal error")
 
 	patterns := []struct {
@@ -139,12 +138,12 @@ func TestUpdateCache(t *testing.T) {
 
 				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", int64(10))
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
-					&gwproto.GetFeatureFlagsResponse{
-						FeatureFlagsId:         "feature-flags-id-2",
-						RequestedAt:            int64(20),
-						Features:               []*ftproto.Feature{singleFeature},
+					&model.GetFeatureFlagsResponse{
+						FeatureFlagsID:         "feature-flags-id-2",
+						RequestedAt:            "20",
+						Features:               []model.Feature{singleFeature},
 						ForceUpdate:            true,
-						ArchivedFeatureFlagIds: make([]string, 0),
+						ArchivedFeatureFlagIDs: make([]string, 0),
 					},
 					1,
 					nil,
@@ -154,7 +153,11 @@ func TestUpdateCache(t *testing.T) {
 
 				// Call in the feature flag cache
 				p.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().DeleteAll().Return(nil)
-				p.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Put(singleFeature).Return(nil)
+				p.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Put(
+					gomock.Cond(func(x any) bool {
+						f := x.(*ftproto.Feature)
+						return f.Id == "feature-flag-id-2"
+					})).Return(nil)
 
 				p.MockProcessor.EXPECT().PushErrorEvent(p.newInternalError(internalErr), model.GetFeatureFlags)
 			},
@@ -170,12 +173,12 @@ func TestUpdateCache(t *testing.T) {
 
 				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", int64(10))
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
-					&gwproto.GetFeatureFlagsResponse{
-						FeatureFlagsId:         "feature-flags-id-2",
-						RequestedAt:            int64(20),
-						Features:               []*ftproto.Feature{singleFeature},
+					&model.GetFeatureFlagsResponse{
+						FeatureFlagsID:         "feature-flags-id-2",
+						RequestedAt:            "20",
+						Features:               []model.Feature{singleFeature},
 						ForceUpdate:            true,
-						ArchivedFeatureFlagIds: make([]string, 0),
+						ArchivedFeatureFlagIDs: make([]string, 0),
 					},
 					1,
 					nil,
@@ -185,7 +188,11 @@ func TestUpdateCache(t *testing.T) {
 
 				// Call in the feature flag cache
 				p.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().DeleteAll().Return(nil)
-				p.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Put(singleFeature).Return(nil)
+				p.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Put(
+					gomock.Cond(func(x any) bool {
+						f := x.(*ftproto.Feature)
+						return f.Id == "feature-flag-id-2"
+					})).Return(nil)
 
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsIDKey, "feature-flags-id-2", cacheTTL).Return(nil)
@@ -205,12 +212,12 @@ func TestUpdateCache(t *testing.T) {
 
 				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", int64(10))
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
-					&gwproto.GetFeatureFlagsResponse{
-						FeatureFlagsId:         "feature-flags-id-2",
-						RequestedAt:            int64(20),
-						Features:               []*ftproto.Feature{singleFeature},
+					&model.GetFeatureFlagsResponse{
+						FeatureFlagsID:         "feature-flags-id-2",
+						RequestedAt:            "20",
+						Features:               []model.Feature{singleFeature},
 						ForceUpdate:            false,
-						ArchivedFeatureFlagIds: archivedFlagIDs,
+						ArchivedFeatureFlagIDs: archivedFlagIDs,
 					},
 					1,
 					nil,
@@ -219,7 +226,10 @@ func TestUpdateCache(t *testing.T) {
 				p.MockProcessor.EXPECT().PushSizeMetricsEvent(1, model.GetFeatureFlags)
 
 				// Call in the feature flag cache
-				p.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Put(singleFeature).Return(nil)
+				p.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Put(gomock.Cond(func(x any) bool {
+					f := x.(*ftproto.Feature)
+					return f.Id == "feature-flag-id-2"
+				})).Return(nil)
 				p.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Delete(archivedFlagIDs[0])
 				p.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Delete(archivedFlagIDs[1])
 
@@ -240,12 +250,12 @@ func TestUpdateCache(t *testing.T) {
 
 				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", int64(10))
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
-					&gwproto.GetFeatureFlagsResponse{
-						FeatureFlagsId:         "feature-flags-id-2",
-						RequestedAt:            int64(20),
-						Features:               []*ftproto.Feature{singleFeature},
+					&model.GetFeatureFlagsResponse{
+						FeatureFlagsID:         "feature-flags-id-2",
+						RequestedAt:            "20",
+						Features:               []model.Feature{singleFeature},
 						ForceUpdate:            false,
-						ArchivedFeatureFlagIds: archivedFlagIDs,
+						ArchivedFeatureFlagIDs: archivedFlagIDs,
 					},
 					1,
 					nil,
@@ -254,7 +264,10 @@ func TestUpdateCache(t *testing.T) {
 				p.MockProcessor.EXPECT().PushSizeMetricsEvent(1, model.GetFeatureFlags)
 
 				// Call in the feature flag cache
-				p.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Put(singleFeature).Return(nil)
+				p.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Put(gomock.Cond(func(x any) bool {
+					f := x.(*ftproto.Feature)
+					return f.Id == "feature-flag-id-2"
+				})).Return(nil)
 				p.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Delete(archivedFlagIDs[0])
 				p.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Delete(archivedFlagIDs[1])
 
@@ -277,7 +290,7 @@ func TestUpdateCache(t *testing.T) {
 
 				req := model.NewGetFeatureFlagsRequest(tag, "", int64(10))
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
-					&gwproto.GetFeatureFlagsResponse{},
+					&model.GetFeatureFlagsResponse{},
 					1,
 					nil,
 				)
@@ -298,7 +311,7 @@ func TestUpdateCache(t *testing.T) {
 
 				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", int64(0))
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
-					&gwproto.GetFeatureFlagsResponse{},
+					&model.GetFeatureFlagsResponse{},
 					1,
 					nil,
 				)
@@ -318,7 +331,10 @@ func TestUpdateCache(t *testing.T) {
 
 				// Call in the feature flag cache
 				p.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().DeleteAll().Return(nil)
-				p.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Put(singleFeature).Return(nil)
+				p.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Put(gomock.Cond(func(x any) bool {
+					f := x.(*ftproto.Feature)
+					return f.Id == "feature-flag-id-2"
+				})).Return(nil)
 
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsIDKey, "feature-flags-id-2", cacheTTL).Return(nil)
@@ -326,12 +342,12 @@ func TestUpdateCache(t *testing.T) {
 
 				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", int64(10))
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
-					&gwproto.GetFeatureFlagsResponse{
-						FeatureFlagsId:         "feature-flags-id-2",
-						RequestedAt:            int64(20),
-						Features:               []*ftproto.Feature{singleFeature},
+					&model.GetFeatureFlagsResponse{
+						FeatureFlagsID:         "feature-flags-id-2",
+						RequestedAt:            "20",
+						Features:               []model.Feature{singleFeature},
 						ForceUpdate:            true,
-						ArchivedFeatureFlagIds: make([]string, 0),
+						ArchivedFeatureFlagIDs: make([]string, 0),
 					},
 					1,
 					nil,
@@ -352,12 +368,12 @@ func TestUpdateCache(t *testing.T) {
 
 				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", int64(10))
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
-					&gwproto.GetFeatureFlagsResponse{
-						FeatureFlagsId:         "feature-flags-id-2",
-						RequestedAt:            int64(20),
-						Features:               []*ftproto.Feature{singleFeature},
+					&model.GetFeatureFlagsResponse{
+						FeatureFlagsID:         "feature-flags-id-2",
+						RequestedAt:            "20",
+						Features:               []model.Feature{singleFeature},
 						ForceUpdate:            false,
-						ArchivedFeatureFlagIds: archivedFlagIDs,
+						ArchivedFeatureFlagIDs: archivedFlagIDs,
 					},
 					1,
 					nil,
@@ -367,7 +383,10 @@ func TestUpdateCache(t *testing.T) {
 				p.MockProcessor.EXPECT().PushSizeMetricsEvent(1, model.GetFeatureFlags)
 
 				// Call in the feature flag cache
-				p.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Put(singleFeature).Return(nil)
+				p.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Put(gomock.Cond(func(x any) bool {
+					f := x.(*ftproto.Feature)
+					return f.Id == "feature-flag-id-2"
+				})).Return(nil)
 				p.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Delete(archivedFlagIDs[0])
 				p.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Delete(archivedFlagIDs[1])
 

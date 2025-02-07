@@ -2,10 +2,10 @@ package e2e
 
 import (
 	"encoding/json"
+	"strconv"
 	"testing"
 	"time"
 
-	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/api"
@@ -34,8 +34,11 @@ func TestGetFeatureFlags(t *testing.T) {
 	resp, _, err := client.GetFeatureFlags(model.NewGetFeatureFlagsRequest(tag, featureFlagsID, requestedAt))
 	assert.NoError(t, err)
 	assert.True(t, len(resp.Features) >= 1)
-	assert.True(t, resp.FeatureFlagsId != featureFlagsID)
-	assert.True(t, resp.RequestedAt > requestedAt)
+	assert.True(t, resp.FeatureFlagsID != featureFlagsID)
+	assert.NoError(t, err)
+
+	ra, err := strconv.ParseInt(resp.RequestedAt, 10, 64)
+	assert.True(t, ra > requestedAt)
 	assert.True(t, resp.ForceUpdate)
 	assert.True(t, findFeature(t, resp.Features, featureIDString))
 	assert.True(t, findFeature(t, resp.Features, featureIDBoolean))
@@ -47,20 +50,23 @@ func TestGetFeatureFlags(t *testing.T) {
 	time.Sleep(time.Second)
 
 	// Use the `featureFlagsID` and `requestedAt` to get an empty response
-	featureFlagsID = resp.FeatureFlagsId
-	requestedAt = resp.RequestedAt
+	featureFlagsID = resp.FeatureFlagsID
+	requestedAt, err = strconv.ParseInt(resp.RequestedAt, 10, 64)
+	assert.NoError(t, err)
 	resp, _, err = client.GetFeatureFlags(model.NewGetFeatureFlagsRequest(tag, featureFlagsID, requestedAt))
 	assert.NoError(t, err)
 	assert.Empty(t, resp.Features)
-	assert.True(t, resp.FeatureFlagsId == featureFlagsID)
-	assert.True(t, resp.RequestedAt > requestedAt)
+	assert.True(t, resp.FeatureFlagsID == featureFlagsID)
+
+	ra, err = strconv.ParseInt(resp.FeatureFlagsID, 10, 64)
+	assert.True(t, ra > requestedAt)
 	assert.False(t, resp.ForceUpdate)
 }
 
-func findFeature(t *testing.T, features []*ftproto.Feature, featureID string) bool {
+func findFeature(t *testing.T, features []model.Feature, featureID string) bool {
 	t.Helper()
 	for _, f := range features {
-		if f.Id == featureID {
+		if f.ID == featureID {
 			return true
 		}
 	}
@@ -76,22 +82,27 @@ func TestGetSegmentUsers(t *testing.T) {
 	resp, _, err := client.GetSegmentUsers(model.NewGetSegmentUsersRequest(segmentIDs, requestedAt))
 	assert.NoError(t, err)
 	assert.True(t, len(resp.SegmentUsers) > 0)
-	assert.Empty(t, resp.DeletedSegmentIds)
-	assert.True(t, resp.RequestedAt > requestedAt)
+	assert.Empty(t, resp.DeletedSegmentIDs)
+	ra, err := strconv.ParseInt(resp.RequestedAt, 10, 64)
+	assert.NoError(t, err)
+	assert.True(t, ra > requestedAt)
 	assert.True(t, resp.ForceUpdate)
 
 	time.Sleep(time.Second)
 
 	// Use the `segmentIDs` and `requestedAt` to get an empty response
 	randomID := "random-id"
-	segmentIDs = []string{resp.SegmentUsers[0].SegmentId, randomID}
-	requestedAt = resp.RequestedAt
-	resp, _, err = client.GetSegmentUsers(model.NewGetSegmentUsersRequest(segmentIDs, requestedAt))
+	segmentIDs = []string{resp.SegmentUsers[0].SegmentID, randomID}
+	ra, err = strconv.ParseInt(resp.RequestedAt, 10, 64)
+	assert.NoError(t, err)
+	resp, _, err = client.GetSegmentUsers(model.NewGetSegmentUsersRequest(segmentIDs, ra))
 	assert.NoError(t, err)
 	assert.Empty(t, resp.SegmentUsers)
-	assert.NotEmpty(t, resp.DeletedSegmentIds)
-	assert.Contains(t, resp.DeletedSegmentIds, randomID)
-	assert.True(t, resp.RequestedAt > requestedAt)
+	assert.NotEmpty(t, resp.DeletedSegmentIDs)
+	assert.Contains(t, resp.DeletedSegmentIDs, randomID)
+	ra, err = strconv.ParseInt(resp.RequestedAt, 10, 64)
+	assert.NoError(t, err)
+	assert.True(t, ra > requestedAt)
 	assert.False(t, resp.ForceUpdate)
 }
 

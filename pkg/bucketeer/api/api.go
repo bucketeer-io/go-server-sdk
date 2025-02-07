@@ -8,9 +8,6 @@ import (
 	"net/http"
 	"time"
 
-	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
-	"google.golang.org/protobuf/encoding/protojson"
-
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 )
 
@@ -60,10 +57,7 @@ func (c *client) RegisterEvents(req *model.RegisterEventsRequest) (*model.Regist
 	return &rer, size, nil
 }
 
-// We convert the response to the proto message because it uses less memory in the cache,
-// and the evaluation module uses proto messages.
-// We are considering to use gRPC again to avoid converting.
-func (c *client) GetFeatureFlags(req *model.GetFeatureFlagsRequest) (*gwproto.GetFeatureFlagsResponse, int, error) {
+func (c *client) GetFeatureFlags(req *model.GetFeatureFlagsRequest) (*model.GetFeatureFlagsResponse, int, error) {
 	url := fmt.Sprintf("https://%s%s",
 		c.host,
 		featureFlagsAPI,
@@ -75,17 +69,14 @@ func (c *client) GetFeatureFlags(req *model.GetFeatureFlagsRequest) (*gwproto.Ge
 	if err != nil {
 		return nil, 0, err
 	}
-	var gfr gwproto.GetFeatureFlagsResponse
-	if err := protojson.Unmarshal(resp, &gfr); err != nil {
+	var gfr *model.GetFeatureFlagsResponse
+	if err := json.Unmarshal(resp, &gfr); err != nil {
 		return nil, 0, err
 	}
-	return &gfr, size, nil
+	return gfr, size, nil
 }
 
-// We convert the response to the proto message because it uses less memory in the cache,
-// and the evaluation module uses proto messages.
-// We are considering to use gRPC again to avoid converting.
-func (c *client) GetSegmentUsers(req *model.GetSegmentUsersRequest) (*gwproto.GetSegmentUsersResponse, int, error) {
+func (c *client) GetSegmentUsers(req *model.GetSegmentUsersRequest) (*model.GetSegmentUsersResponse, int, error) {
 	url := fmt.Sprintf("https://%s%s",
 		c.host,
 		segmentUsersAPI,
@@ -97,8 +88,8 @@ func (c *client) GetSegmentUsers(req *model.GetSegmentUsersRequest) (*gwproto.Ge
 	if err != nil {
 		return nil, 0, err
 	}
-	var gfr gwproto.GetSegmentUsersResponse
-	if err := protojson.Unmarshal(resp, &gfr); err != nil {
+	var gfr model.GetSegmentUsersResponse
+	if err := json.Unmarshal(resp, &gfr); err != nil {
 		return nil, 0, err
 	}
 	return &gfr, size, nil

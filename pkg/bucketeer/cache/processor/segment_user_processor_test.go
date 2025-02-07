@@ -19,11 +19,10 @@ import (
 	"testing"
 	"time"
 
-	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
+	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/cache"
 	mockcache "github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/cache/mock"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/log"
@@ -50,7 +49,7 @@ func TestSegmentUsersPollingInterval(t *testing.T) {
 	p.cache.(*mockcache.MockCache).EXPECT().Put(segmentUsersRequestedAtKey, int64(0), segmentUserCacheTTL).Return(nil).Times(maxTimes)
 
 	p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(gomock.Any()).Return(
-		&gwproto.GetSegmentUsersResponse{},
+		&model.GetSegmentUsersResponse{},
 		10,
 		nil,
 	).Times(maxTimes)
@@ -86,6 +85,34 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 		},
 		UpdatedAt: 20,
 	}
+	modelSegmentUser := model.SegmentUsers{
+		SegmentID: "segment-id",
+		Users: []model.SegmentUser{
+			{
+				ID: "user-id",
+			},
+		},
+		UpdatedAt: "20",
+	}
+
+	compareSegmentUsers := func(su1 *ftproto.SegmentUsers, su2 *ftproto.SegmentUsers) bool {
+		if su1.SegmentId != su2.SegmentId {
+			return false
+		}
+		if su1.UpdatedAt != su2.UpdatedAt {
+			return false
+		}
+		if len(su1.Users) != len(su2.Users) {
+			return false
+		}
+		for i, u := range su1.Users {
+			if u.Id != su2.Users[i].Id {
+				return false
+			}
+		}
+		return true
+	}
+
 	internalErr := errors.New("internal error")
 
 	patterns := []struct {
@@ -141,11 +168,11 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 
 				req := model.NewGetSegmentUsersRequest([]string{"segment-id"}, int64(10))
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(req).Return(
-					&gwproto.GetSegmentUsersResponse{
-						SegmentUsers:      []*ftproto.SegmentUsers{singleSegmentUser},
-						RequestedAt:       int64(20),
+					&model.GetSegmentUsersResponse{
+						SegmentUsers:      []model.SegmentUsers{modelSegmentUser},
+						RequestedAt:       "20",
 						ForceUpdate:       true,
-						DeletedSegmentIds: make([]string, 0),
+						DeletedSegmentIDs: make([]string, 0),
 					},
 					1,
 					nil,
@@ -155,7 +182,11 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 
 				// Call in the segment users cache
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().DeleteAll().Return(nil)
-				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().Put(singleSegmentUser).Return(nil)
+				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().Put(
+					gomock.Cond(func(x any) bool {
+						su := x.(*ftproto.SegmentUsers)
+						return compareSegmentUsers(singleSegmentUser, su)
+					})).Return(nil)
 
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Put(segmentUsersRequestedAtKey, int64(20), segmentUserCacheTTL).
@@ -177,11 +208,11 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 
 				req := model.NewGetSegmentUsersRequest([]string{"segment-id"}, int64(10))
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(req).Return(
-					&gwproto.GetSegmentUsersResponse{
-						SegmentUsers:      []*ftproto.SegmentUsers{singleSegmentUser},
-						RequestedAt:       int64(20),
+					&model.GetSegmentUsersResponse{
+						SegmentUsers:      []model.SegmentUsers{modelSegmentUser},
+						RequestedAt:       "20",
 						ForceUpdate:       false,
-						DeletedSegmentIds: make([]string, 0),
+						DeletedSegmentIDs: make([]string, 0),
 					},
 					1,
 					nil,
@@ -190,7 +221,11 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				p.MockProcessor.EXPECT().PushSizeMetricsEvent(1, model.GetSegmentUsers)
 
 				// Call in the segment users cache
-				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().Put(singleSegmentUser).Return(nil)
+				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().Put(
+					gomock.Cond(func(x any) bool {
+						su := x.(*ftproto.SegmentUsers)
+						return compareSegmentUsers(singleSegmentUser, su)
+					})).Return(nil)
 
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Put(segmentUsersRequestedAtKey, int64(20), segmentUserCacheTTL).
@@ -211,11 +246,11 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 
 				req := model.NewGetSegmentUsersRequest(make([]string, 0), int64(10))
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(req).Return(
-					&gwproto.GetSegmentUsersResponse{
-						SegmentUsers:      []*ftproto.SegmentUsers{singleSegmentUser},
-						RequestedAt:       int64(20),
+					&model.GetSegmentUsersResponse{
+						SegmentUsers:      []model.SegmentUsers{modelSegmentUser},
+						RequestedAt:       "20",
 						ForceUpdate:       false,
-						DeletedSegmentIds: make([]string, 0),
+						DeletedSegmentIDs: make([]string, 0),
 					},
 					1,
 					nil,
@@ -224,7 +259,11 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				p.MockProcessor.EXPECT().PushSizeMetricsEvent(1, model.GetSegmentUsers)
 
 				// Call in the segment users cache
-				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().Put(singleSegmentUser).Return(nil)
+				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().Put(
+					gomock.Cond(func(x any) bool {
+						su := x.(*ftproto.SegmentUsers)
+						return compareSegmentUsers(singleSegmentUser, su)
+					})).Return(nil)
 
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Put(segmentUsersRequestedAtKey, int64(20), segmentUserCacheTTL).
@@ -243,11 +282,11 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 
 				req := model.NewGetSegmentUsersRequest(make([]string, 0), int64(0))
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(req).Return(
-					&gwproto.GetSegmentUsersResponse{
-						SegmentUsers:      []*ftproto.SegmentUsers{singleSegmentUser},
-						RequestedAt:       int64(20),
+					&model.GetSegmentUsersResponse{
+						SegmentUsers:      []model.SegmentUsers{modelSegmentUser},
+						RequestedAt:       "20",
 						ForceUpdate:       false,
-						DeletedSegmentIds: make([]string, 0),
+						DeletedSegmentIDs: make([]string, 0),
 					},
 					1,
 					nil,
@@ -257,7 +296,11 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				p.MockProcessor.EXPECT().PushSizeMetricsEvent(1, model.GetSegmentUsers)
 
 				// Call in the segment users cache
-				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().Put(singleSegmentUser).Return(nil)
+				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().Put(
+					gomock.Cond(func(x any) bool {
+						su := x.(*ftproto.SegmentUsers)
+						return compareSegmentUsers(singleSegmentUser, su)
+					})).Return(nil)
 
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Put(segmentUsersRequestedAtKey, int64(20), segmentUserCacheTTL).
@@ -277,11 +320,11 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 
 				req := model.NewGetSegmentUsersRequest([]string{"segment-id"}, int64(10))
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(req).Return(
-					&gwproto.GetSegmentUsersResponse{
-						SegmentUsers:      []*ftproto.SegmentUsers{singleSegmentUser},
-						RequestedAt:       int64(20),
+					&model.GetSegmentUsersResponse{
+						SegmentUsers:      []model.SegmentUsers{modelSegmentUser},
+						RequestedAt:       "20",
 						ForceUpdate:       true,
-						DeletedSegmentIds: make([]string, 0),
+						DeletedSegmentIDs: make([]string, 0),
 					},
 					1,
 					nil,
@@ -292,7 +335,11 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 
 				// Call in the segment users cache
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().DeleteAll().Return(nil)
-				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().Put(singleSegmentUser).Return(nil)
+				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().Put(
+					gomock.Cond(func(x any) bool {
+						su := x.(*ftproto.SegmentUsers)
+						return compareSegmentUsers(singleSegmentUser, su)
+					})).Return(nil)
 
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Put(segmentUsersRequestedAtKey, int64(20), segmentUserCacheTTL).
@@ -316,11 +363,11 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 
 				req := model.NewGetSegmentUsersRequest([]string{"segment-id"}, int64(10))
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(req).Return(
-					&gwproto.GetSegmentUsersResponse{
-						SegmentUsers:      []*ftproto.SegmentUsers{singleSegmentUser},
-						RequestedAt:       int64(20),
+					&model.GetSegmentUsersResponse{
+						SegmentUsers:      []model.SegmentUsers{modelSegmentUser},
+						RequestedAt:       "20",
 						ForceUpdate:       false,
-						DeletedSegmentIds: deletedSegmentIDs,
+						DeletedSegmentIDs: deletedSegmentIDs,
 					},
 					1,
 					nil,
@@ -330,7 +377,11 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				p.MockProcessor.EXPECT().PushSizeMetricsEvent(1, model.GetSegmentUsers)
 
 				// Call in the segment users cache
-				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().Put(singleSegmentUser).Return(nil)
+				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().Put(
+					gomock.Cond(func(x any) bool {
+						su := x.(*ftproto.SegmentUsers)
+						return compareSegmentUsers(singleSegmentUser, su)
+					})).Return(nil)
 
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Put(segmentUsersRequestedAtKey, int64(20), segmentUserCacheTTL).
