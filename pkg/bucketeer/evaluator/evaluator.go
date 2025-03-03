@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	evaluation "github.com/bucketeer-io/bucketeer/evaluation/go"
+	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
 	userproto "github.com/bucketeer-io/bucketeer/proto/user"
 
@@ -99,10 +100,14 @@ func (e *evaluator) Evaluate(user *user.User, featureID string) (*model.Evaluati
 }
 
 func (e *evaluator) getTargetFeatures(feature *ftproto.Feature) ([]*ftproto.Feature, error) {
-	if len(feature.Prerequisites) == 0 {
+	// Check if the flag depends on other flags.
+	// If not, we return only the target flag
+	df := &ftdomain.Feature{Feature: feature}
+	preFlagIDs := df.FeatureIDsDependsOn()
+	if len(preFlagIDs) == 0 {
 		return []*ftproto.Feature{feature}, nil
 	}
-	preFeatures, err := e.getPrerequisiteFeatures(feature)
+	preFeatures, err := e.getPrerequisiteFeaturesFromCache(preFlagIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -110,21 +115,16 @@ func (e *evaluator) getTargetFeatures(feature *ftproto.Feature) ([]*ftproto.Feat
 }
 
 // Gets the features specified as prerequisite
-func (e *evaluator) getPrerequisiteFeatures(feature *ftproto.Feature) ([]*ftproto.Feature, error) {
+func (e *evaluator) getPrerequisiteFeaturesFromCache(preFlagIDs []string) ([]*ftproto.Feature, error) {
 	prerequisites := make(map[string]*ftproto.Feature)
-	queue := append([]*ftproto.Feature{}, feature)
-	for len(queue) > 0 {
-		f := queue[0]
-		for _, p := range f.Prerequisites {
-			preFeature, err := e.featuresCache.Get(p.FeatureId)
-			if err != nil {
-				return nil, err
-			}
-			prerequisites[preFeature.Id] = preFeature
-			queue = append(queue, preFeature)
+	for _, id := range preFlagIDs {
+		preFeature, err := e.featuresCache.Get(id)
+		if err != nil {
+			return nil, err
 		}
-		queue = queue[1:]
+		prerequisites[preFeature.Id] = preFeature
 	}
+
 	ftList := make([]*ftproto.Feature, 0, len(prerequisites))
 	for _, v := range prerequisites {
 		ftList = append(ftList, v)
