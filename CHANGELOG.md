@@ -8,9 +8,9 @@
 * flag not found when using dependency flag in targeting rule ([#157](https://github.com/bucketeer-io/go-server-sdk/issues/157)) ([623594d](https://github.com/bucketeer-io/go-server-sdk/commit/623594d663ccd175291cdb8dbca943a809b1755c))
 
 
-### Build System
+### Miscellaneous
 
-* update bucketeer dependency to 1.3.0 ([#155](https://github.com/bucketeer-io/go-server-sdk/issues/155)) ([4af5f4c](https://github.com/bucketeer-io/go-server-sdk/commit/4af5f4c4eac6ebb60477ae40e6d8cd3d94a03da7))
+* chore: improve bucket hash algorithm using murmurHash3 instead of md5 (Bucketeer 1.3.0) ([#155](https://github.com/bucketeer-io/go-server-sdk/issues/155)) ([4af5f4c](https://github.com/bucketeer-io/go-server-sdk/commit/4af5f4c4eac6ebb60477ae40e6d8cd3d94a03da7))
 
 ## [1.5.4](https://github.com/bucketeer-io/go-server-sdk/compare/v1.5.3...v1.5.4) (2025-02-07)
 
