@@ -5,7 +5,7 @@ go 1.22
 toolchain go1.22.9
 
 require (
-	github.com/bucketeer-io/bucketeer v1.2.0
+	github.com/bucketeer-io/bucketeer v1.3.0
 	github.com/stretchr/testify v1.10.0
 	go.opencensus.io v0.24.0
 	go.uber.org/mock v0.5.0
@@ -20,6 +20,7 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
+	github.com/spaolacci/murmur3 v1.1.0 // indirect
 	golang.org/x/exp v0.0.0-20240529005216-23cca8864a10 // indirect
 	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
