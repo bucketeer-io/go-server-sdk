@@ -94,6 +94,15 @@ var (
 					},
 				},
 			},
+			{
+				Clauses: []*ftproto.Clause{
+					{
+						Operator:  ftproto.Clause_FEATURE_FLAG,
+						Values:    []string{ft5.Variations[0].Id},
+						Attribute: ft5.Id,
+					},
+				},
+			},
 		},
 		Variations: []*ftproto.Variation{
 			{
@@ -279,6 +288,7 @@ func TestEvaluate(t *testing.T) {
 			setup: func(e *evaluator) {
 				e.featuresCache.(*mock.MockFeaturesCache).EXPECT().Get(ft3.Id).Return(ft3, nil)
 				e.featuresCache.(*mock.MockFeaturesCache).EXPECT().Get(ft4.Id).Return(ft4, nil)
+				e.featuresCache.(*mock.MockFeaturesCache).EXPECT().Get(ft5.Id).Return(ft5, nil)
 				e.segmentUsersCache.(*mock.MockSegmentUsersCache).EXPECT().Get(segment1.SegmentId).Return(segment1, nil)
 				e.segmentUsersCache.(*mock.MockSegmentUsersCache).EXPECT().Get(segment2.SegmentId).Return(segment2, nil)
 			},
@@ -378,9 +388,13 @@ func TestGetTargetFeatures(t *testing.T) {
 					ft4,
 					nil,
 				)
+				e.featuresCache.(*mock.MockFeaturesCache).EXPECT().Get(ft5.Id).Return(
+					ft5,
+					nil,
+				)
 			},
 			feature:     ft3,
-			expected:    []*ftproto.Feature{ft3, ft4},
+			expected:    []*ftproto.Feature{ft3, ft4, ft5},
 			expectedErr: nil,
 		},
 	}
@@ -390,50 +404,6 @@ func TestGetTargetFeatures(t *testing.T) {
 			evaluator := newEvaluator(t, "tag", controller)
 			p.setup(evaluator)
 			features, err := evaluator.getTargetFeatures(p.feature)
-			assert.Equal(t, p.expected, features)
-			assert.Equal(t, p.expectedErr, err)
-		})
-	}
-}
-
-func TestGetPrerequisiteFeatures(t *testing.T) {
-	t.Parallel()
-	controller := gomock.NewController(t)
-	patterns := []struct {
-		desc        string
-		setup       func(*evaluator)
-		feature     *ftproto.Feature
-		expected    []*ftproto.Feature
-		expectedErr error
-	}{
-		{
-			desc: "err: failed to get feature flag from cache",
-			setup: func(e *evaluator) {
-				e.featuresCache.(*mock.MockFeaturesCache).EXPECT().Get(ft4.Id).Return(nil, internalErr)
-			},
-			feature:     ft3,
-			expected:    nil,
-			expectedErr: internalErr,
-		},
-		{
-			desc: "success",
-			setup: func(e *evaluator) {
-				e.featuresCache.(*mock.MockFeaturesCache).EXPECT().Get(ft4.Id).Return(
-					ft4,
-					nil,
-				)
-			},
-			feature:     ft3,
-			expected:    []*ftproto.Feature{ft4},
-			expectedErr: nil,
-		},
-	}
-
-	for _, p := range patterns {
-		t.Run(p.desc, func(t *testing.T) {
-			evaluator := newEvaluator(t, "tag", controller)
-			p.setup(evaluator)
-			features, err := evaluator.getPrerequisiteFeatures(p.feature)
 			assert.Equal(t, p.expected, features)
 			assert.Equal(t, p.expectedErr, err)
 		})
