@@ -15,6 +15,7 @@ func TestWithOptions(t *testing.T) {
 	cachePollingInterval := 30 * time.Second
 	tag := "go-server"
 	apiKey := "apiKey"
+	scheme := "http"
 	host := "host"
 	port := 8443
 	eventQueueCapacity := 100
@@ -29,6 +30,7 @@ func TestWithOptions(t *testing.T) {
 		WithCachePollingInterval(cachePollingInterval),
 		WithTag(tag),
 		WithAPIKey(apiKey),
+		WithScheme(scheme),
 		WithHost(host),
 		WithPort(port),
 		WithEventQueueCapacity(eventQueueCapacity),
@@ -47,6 +49,7 @@ func TestWithOptions(t *testing.T) {
 	assert.Equal(t, cachePollingInterval, dopts.cachePollingInterval)
 	assert.Equal(t, tag, dopts.tag)
 	assert.Equal(t, apiKey, dopts.apiKey)
+	assert.Equal(t, scheme, dopts.scheme)
 	assert.Equal(t, host, dopts.host)
 	assert.Equal(t, port, dopts.port)
 	assert.Equal(t, eventQueueCapacity, dopts.eventQueueCapacity)

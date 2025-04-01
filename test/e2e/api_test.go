@@ -222,6 +222,7 @@ func newAPIClient(t *testing.T, apiKey string) api.Client {
 	conf := &api.ClientConfig{
 		APIKey: apiKey,
 		Host:   *host,
+		Scheme: *scheme,
 	}
 	client, err := api.NewClient(conf)
 	assert.NoError(t, err)
