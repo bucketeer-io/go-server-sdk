@@ -147,7 +147,11 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		ErrorLogger:    dopts.errorLogger,
 	}
 	loggers := log.NewLoggers(loggerConf)
-	client, err := api.NewClient(&api.ClientConfig{APIKey: dopts.apiKey, Host: dopts.host})
+	client, err := api.NewClient(&api.ClientConfig{
+		APIKey: dopts.apiKey,
+		Scheme: dopts.scheme,
+		Host:   dopts.host,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("bucketeer: failed to new api client: %w", err)
 	}

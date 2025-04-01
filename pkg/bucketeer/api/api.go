@@ -2,6 +2,7 @@ package api
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -20,10 +21,13 @@ const (
 )
 
 func (c *client) GetEvaluation(req *model.GetEvaluationRequest) (*model.GetEvaluationResponse, int, error) {
-	url := fmt.Sprintf("https://%s%s",
+	url := fmt.Sprintf(
+		"%s://%s%s",
+		c.scheme,
 		c.host,
 		evaluationAPI,
 	)
+
 	resp, size, err := c.sendHTTPRequest(
 		url,
 		req,
@@ -39,7 +43,9 @@ func (c *client) GetEvaluation(req *model.GetEvaluationRequest) (*model.GetEvalu
 }
 
 func (c *client) RegisterEvents(req *model.RegisterEventsRequest) (*model.RegisterEventsResponse, int, error) {
-	url := fmt.Sprintf("https://%s%s",
+	url := fmt.Sprintf(
+		"%s://%s%s",
+		c.scheme,
 		c.host,
 		registerEventAPI,
 	)
@@ -58,7 +64,9 @@ func (c *client) RegisterEvents(req *model.RegisterEventsRequest) (*model.Regist
 }
 
 func (c *client) GetFeatureFlags(req *model.GetFeatureFlagsRequest) (*model.GetFeatureFlagsResponse, int, error) {
-	url := fmt.Sprintf("https://%s%s",
+	url := fmt.Sprintf(
+		"%s://%s%s",
+		c.scheme,
 		c.host,
 		featureFlagsAPI,
 	)
@@ -77,7 +85,9 @@ func (c *client) GetFeatureFlags(req *model.GetFeatureFlagsRequest) (*model.GetF
 }
 
 func (c *client) GetSegmentUsers(req *model.GetSegmentUsersRequest) (*model.GetSegmentUsersResponse, int, error) {
-	url := fmt.Sprintf("https://%s%s",
+	url := fmt.Sprintf(
+		"%s://%s%s",
+		c.scheme,
 		c.host,
 		segmentUsersAPI,
 	)
@@ -95,7 +105,7 @@ func (c *client) GetSegmentUsers(req *model.GetSegmentUsersRequest) (*model.GetS
 	return &gfr, size, nil
 }
 
-func (c *client) sendHTTPRequest(url string, body interface{}) ([]byte, int, error) {
+func (c *client) sendHTTPRequest(url string, body any) ([]byte, int, error) {
 	encoded, err := json.Marshal(body)
 	if err != nil {
 		return nil, 0, err
@@ -108,6 +118,13 @@ func (c *client) sendHTTPRequest(url string, body interface{}) ([]byte, int, err
 	req.Header.Add("Content-Type", "application/json")
 	client := &http.Client{
 		Timeout: 60 * time.Second,
+	}
+	if c.scheme == "http" {
+		client.Transport = &http.Transport{
+			// This setting is for developing on local machines.
+			// In production, it's not recommended to specify c.scheme as "http".
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
+		}
 	}
 	resp, err := client.Do(req)
 	if err != nil {

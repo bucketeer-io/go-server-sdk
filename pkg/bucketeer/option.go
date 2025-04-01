@@ -14,6 +14,7 @@ type options struct {
 	cachePollingInterval  time.Duration
 	tag                   string
 	apiKey                string
+	scheme                string
 	host                  string
 	port                  int
 	eventQueueCapacity    int
@@ -29,6 +30,7 @@ var defaultOptions = options{
 	cachePollingInterval:  1 * time.Minute,
 	tag:                   "",
 	apiKey:                "",
+	scheme:                "https",
 	host:                  "",
 	port:                  443,
 	eventQueueCapacity:    100_000,
@@ -69,6 +71,13 @@ func WithTag(tag string) Option {
 func WithAPIKey(apiKey string) Option {
 	return func(opts *options) {
 		opts.apiKey = apiKey
+	}
+}
+
+// WithScheme sets scheme to use Bucketeer service. (Default: "https")
+func WithScheme(scheme string) Option {
+	return func(opts *options) {
+		opts.scheme = scheme
 	}
 }
 
