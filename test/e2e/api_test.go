@@ -116,7 +116,7 @@ func TestRegisterEvents(t *testing.T) {
 		Tag:            tag,
 		FeatureID:      featureID,
 		FeatureVersion: 0,
-		VariationID:    "",
+		VariationID:    variationID,
 		User:           user,
 		Reason:         &model.Reason{Type: model.ReasonClient},
 		Type:           model.EvaluationEventType,

@@ -13,6 +13,7 @@ const (
 	featureID           = "feature-go-server-e2e-string"
 	featureIDVariation1 = "value-1"
 	featureIDVariation2 = "value-2"
+	variationID         = "variation-id"
 	goalID              = "goal-go-server-e2e-1"
 
 	// Sdk Test
