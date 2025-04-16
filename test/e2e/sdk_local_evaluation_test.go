@@ -278,6 +278,7 @@ func newLocalSDK(t *testing.T, ctx context.Context) bucketeer.SDK {
 		bucketeer.WithTag(tag),
 		bucketeer.WithAPIKey(*apiKeyServer),
 		bucketeer.WithHost(*host),
+		bucketeer.WithScheme(*scheme),
 		bucketeer.WithPort(*port),
 		bucketeer.WithEventQueueCapacity(100),
 		bucketeer.WithNumEventFlushWorkers(3),
