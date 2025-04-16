@@ -27,4 +27,4 @@ jobs:
       - name: Download vendor
         run: go mod vendor
       - name: E2E Test
-        run: API_KEY=${{ secrets.API_KEY_FOR_E2E }} API_KEY_SERVER=${{ secrets.API_KEY_SERVER_FOR_E2E }} HOST=${{ secrets.HOST_FOR_E2E }} PORT=443 make e2e
+        run: API_KEY=${{ secrets.API_KEY_FOR_E2E }} API_KEY_SERVER=${{ secrets.API_KEY_SERVER_FOR_E2E }} HOST=${{ secrets.HOST_FOR_E2E }} PORT=443 SCHEME=https make e2e
