@@ -23,8 +23,7 @@ start:
 	./main \
 		-bucketeer-tag=${TAG} \
 		-bucketeer-api-key=${API_KEY} \
-		-bucketeer-host=${HOST} \
-		-bucketeer-port=${PORT} \
+		-bucketeer-api-endpoint=${API_ENDPOINT} \
 		-bucketeer-enable-debug-log=${ENABLE_DEBUG_LOG} \
 		-bucketeer-feature-id=${FEATURE_ID} \
 		-bucketeer-goal-id=${GOAL_ID}
