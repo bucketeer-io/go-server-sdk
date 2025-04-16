@@ -148,7 +148,7 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 	}
 	loggers := log.NewLoggers(loggerConf)
 
-	//The `host` is deprecated and it will be removed soon.
+	// The `host` is deprecated and it will be removed soon.
 	apiEndpoint := dopts.apiEndpoint
 	if apiEndpoint == "" {
 		apiEndpoint = dopts.host
