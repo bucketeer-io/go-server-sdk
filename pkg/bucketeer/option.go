@@ -14,6 +14,7 @@ type options struct {
 	cachePollingInterval  time.Duration
 	tag                   string
 	apiKey                string
+	apiEndpoint           string
 	scheme                string
 	host                  string
 	port                  int
@@ -30,6 +31,7 @@ var defaultOptions = options{
 	cachePollingInterval:  1 * time.Minute,
 	tag:                   "",
 	apiKey:                "",
+	apiEndpoint:           "",
 	scheme:                "https",
 	host:                  "",
 	port:                  443,
@@ -74,6 +76,13 @@ func WithAPIKey(apiKey string) Option {
 	}
 }
 
+// WithAPIEndpoint sets apiEndpoint for the Bucketeer service. (Default: "")
+func WithAPIEndpoint(apiEndpoint string) Option {
+	return func(opts *options) {
+		opts.apiEndpoint = apiEndpoint
+	}
+}
+
 // WithScheme sets scheme to use Bucketeer service. (Default: "https")
 func WithScheme(scheme string) Option {
 	return func(opts *options) {
@@ -81,6 +90,7 @@ func WithScheme(scheme string) Option {
 	}
 }
 
+// Deprecated: Use `WithAPIEndpoint` instead. This will be removed soon.
 // WithHost sets host name for the Bucketeer service. (Default: "")
 func WithHost(host string) Option {
 	return func(opts *options) {
@@ -88,6 +98,7 @@ func WithHost(host string) Option {
 	}
 }
 
+// Deprecated: Use `WithScheme` instead. This will be removed soon.
 // WithPort sets port for the Bucketeer service. (Default: 443)
 func WithPort(port int) Option {
 	return func(opts *options) {

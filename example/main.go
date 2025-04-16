@@ -42,7 +42,6 @@ func main() {
 		bucketeer.WithTag(*bucketeerTag),
 		bucketeer.WithAPIKey(*bucketeerAPIKey),
 		bucketeer.WithHost(*bucketeerHost),
-		bucketeer.WithPort(*bucketeerPort),
 		bucketeer.WithEnableDebugLog(*bucketeerEnableDebugLog),
 	)
 	if err != nil {
