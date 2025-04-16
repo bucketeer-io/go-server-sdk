@@ -220,9 +220,9 @@ func TestRegisterEvents(t *testing.T) {
 func newAPIClient(t *testing.T, apiKey string) api.Client {
 	t.Helper()
 	conf := &api.ClientConfig{
-		APIKey: apiKey,
-		Host:   *host,
-		Scheme: *scheme,
+		APIKey:      apiKey,
+		APIEndpoint: *apiEndpoint,
+		Scheme:      *scheme,
 	}
 	client, err := api.NewClient(conf)
 	assert.NoError(t, err)
