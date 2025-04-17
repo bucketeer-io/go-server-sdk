@@ -38,7 +38,6 @@ func NewEvaluator(
 
 var (
 	errEvaluationNotFound = errors.New("evaluation not found")
-	errFlagNotFound       = errors.New("flag not found")
 )
 
 func (e *evaluator) Evaluate(user *user.User, featureID string) (*model.Evaluation, error) {
@@ -119,24 +118,19 @@ func (e *evaluator) getTargetFeatures(feature *ftproto.Feature) ([]*ftproto.Feat
 func (e *evaluator) getPrerequisiteFeaturesFromCache(preFlagIDs []string) ([]*ftproto.Feature, error) {
 	// Prerequisites contain dependent flags, which could also contain the same flags.
 	// So, it uses a map to deduplicate the flags if needed.
-	prerequisites := make(map[string]*ftproto.Feature)
+	deduplicateFlagIDs := make(map[string]struct{})
 	for _, id := range preFlagIDs {
+		deduplicateFlagIDs[id] = struct{}{}
+	}
+	prerequisites := make([]*ftproto.Feature, 0, len(deduplicateFlagIDs))
+	for id := range deduplicateFlagIDs {
 		preFeature, err := e.featuresCache.Get(id)
 		if err != nil {
 			return nil, err
 		}
-		prerequisites[preFeature.Id] = preFeature
+		prerequisites = append(prerequisites, preFeature)
 	}
-	// Restore the original order
-	ftList := make([]*ftproto.Feature, 0, len(prerequisites))
-	for _, preFlagID := range preFlagIDs {
-		value, ok := prerequisites[preFlagID]
-		if !ok {
-			return nil, errFlagNotFound
-		}
-		ftList = append(ftList, value)
-	}
-	return ftList, nil
+	return prerequisites, nil
 }
 
 func (e *evaluator) findEvaluation(evals []*ftproto.Evaluation, id string) (*ftproto.Evaluation, error) {
