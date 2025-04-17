@@ -219,6 +219,7 @@ var (
 )
 
 func TestEvaluate(t *testing.T) {
+	t.Parallel()
 	controller := gomock.NewController(t)
 	defer controller.Finish()
 	patterns := []struct {
@@ -362,6 +363,7 @@ func TestEvaluate(t *testing.T) {
 }
 
 func TestGetTargetFeatures(t *testing.T) {
+	t.Parallel()
 	controller := gomock.NewController(t)
 	defer controller.Finish()
 	patterns := []struct {
@@ -412,6 +414,7 @@ func TestGetTargetFeatures(t *testing.T) {
 }
 
 func TestFindEvaluation(t *testing.T) {
+	t.Parallel()
 	eval := &ftproto.Evaluation{
 		FeatureId: "feature-id-1",
 	}
