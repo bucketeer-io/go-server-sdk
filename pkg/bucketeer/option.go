@@ -62,7 +62,10 @@ func WithCachePollingInterval(interval time.Duration) Option {
 	}
 }
 
-// WithTag sets tag specified in getting evaluation. (Default: "")
+// WithTag sets the specified tag when the flag is created. (Default: "")
+//
+// When empty, it will get all the flags in the environment.
+// Tags are recommended for better response time and lower network traffic.
 func WithTag(tag string) Option {
 	return func(opts *options) {
 		opts.tag = tag
