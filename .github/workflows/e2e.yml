@@ -12,19 +12,16 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
-env:
-  GO_VERSION: 1.21.10
-
 jobs:
   e2e:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5.4.0
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: 'go.mod'
           cache: true
       - name: Download vendor
         run: go mod vendor
       - name: E2E Test
-        run: API_KEY=${{ secrets.API_KEY_FOR_E2E }} API_KEY_SERVER=${{ secrets.API_KEY_SERVER_FOR_E2E }} HOST=${{ secrets.HOST_FOR_E2E }} PORT=443 SCHEME=https make e2e
+        run: API_KEY=${{ secrets.API_KEY_FOR_E2E }} API_KEY_SERVER=${{ secrets.API_KEY_SERVER_FOR_E2E }} API_ENDPOINT=${{ secrets.API_ENDPOINT_FOR_E2E }} SCHEME=https make e2e

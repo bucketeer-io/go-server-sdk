@@ -46,4 +46,4 @@ coverage:
 .PHONY: e2e
 e2e:
 	go test -v -race ./test/e2e/... \
-		-args -api-key=${API_KEY} -api-key-server=${API_KEY_SERVER} -host=${HOST} -port=${PORT} -scheme=${SCHEME}
+		-args -api-key=${API_KEY} -api-key-server=${API_KEY_SERVER} -api-endpoint=${API_ENDPOINT} -scheme=${SCHEME}

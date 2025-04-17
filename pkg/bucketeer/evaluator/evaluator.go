@@ -116,20 +116,21 @@ func (e *evaluator) getTargetFeatures(feature *ftproto.Feature) ([]*ftproto.Feat
 
 // Gets the features specified as prerequisite
 func (e *evaluator) getPrerequisiteFeaturesFromCache(preFlagIDs []string) ([]*ftproto.Feature, error) {
-	prerequisites := make(map[string]*ftproto.Feature)
+	// Prerequisites contain dependent flags, which could also contain the same flags.
+	// So, it uses a map to deduplicate the flags if needed.
+	deduplicateFlagIDs := make(map[string]struct{})
 	for _, id := range preFlagIDs {
+		deduplicateFlagIDs[id] = struct{}{}
+	}
+	prerequisites := make([]*ftproto.Feature, 0, len(deduplicateFlagIDs))
+	for id := range deduplicateFlagIDs {
 		preFeature, err := e.featuresCache.Get(id)
 		if err != nil {
 			return nil, err
 		}
-		prerequisites[preFeature.Id] = preFeature
+		prerequisites = append(prerequisites, preFeature)
 	}
-
-	ftList := make([]*ftproto.Feature, 0, len(prerequisites))
-	for _, v := range prerequisites {
-		ftList = append(ftList, v)
-	}
-	return ftList, nil
+	return prerequisites, nil
 }
 
 func (e *evaluator) findEvaluation(evals []*ftproto.Evaluation, id string) (*ftproto.Evaluation, error) {

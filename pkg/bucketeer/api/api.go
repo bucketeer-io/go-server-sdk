@@ -24,7 +24,7 @@ func (c *client) GetEvaluation(req *model.GetEvaluationRequest) (*model.GetEvalu
 	url := fmt.Sprintf(
 		"%s://%s%s",
 		c.scheme,
-		c.host,
+		c.apiEndpoint,
 		evaluationAPI,
 	)
 
@@ -46,7 +46,7 @@ func (c *client) RegisterEvents(req *model.RegisterEventsRequest) (*model.Regist
 	url := fmt.Sprintf(
 		"%s://%s%s",
 		c.scheme,
-		c.host,
+		c.apiEndpoint,
 		registerEventAPI,
 	)
 	resp, size, err := c.sendHTTPRequest(
@@ -67,7 +67,7 @@ func (c *client) GetFeatureFlags(req *model.GetFeatureFlagsRequest) (*model.GetF
 	url := fmt.Sprintf(
 		"%s://%s%s",
 		c.scheme,
-		c.host,
+		c.apiEndpoint,
 		featureFlagsAPI,
 	)
 	resp, size, err := c.sendHTTPRequest(
@@ -88,7 +88,7 @@ func (c *client) GetSegmentUsers(req *model.GetSegmentUsersRequest) (*model.GetS
 	url := fmt.Sprintf(
 		"%s://%s%s",
 		c.scheme,
-		c.host,
+		c.apiEndpoint,
 		segmentUsersAPI,
 	)
 	resp, size, err := c.sendHTTPRequest(

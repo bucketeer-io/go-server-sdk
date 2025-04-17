@@ -147,10 +147,16 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		ErrorLogger:    dopts.errorLogger,
 	}
 	loggers := log.NewLoggers(loggerConf)
+
+	// The `host` is deprecated and it will be removed soon.
+	apiEndpoint := dopts.apiEndpoint
+	if apiEndpoint == "" {
+		apiEndpoint = dopts.host
+	}
 	client, err := api.NewClient(&api.ClientConfig{
-		APIKey: dopts.apiKey,
-		Scheme: dopts.scheme,
-		Host:   dopts.host,
+		APIKey:      dopts.apiKey,
+		APIEndpoint: apiEndpoint,
+		Scheme:      dopts.scheme,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("bucketeer: failed to new api client: %w", err)
