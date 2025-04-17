@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.6.0](https://github.com/bucketeer-io/go-server-sdk/compare/v1.5.5...v1.6.0) (2025-04-17)
+
+
+### Features
+
+* add scheme configuration ([#159](https://github.com/bucketeer-io/go-server-sdk/issues/159)) ([3ca01d3](https://github.com/bucketeer-io/go-server-sdk/commit/3ca01d3255818811c781769298bd2f0f97f06c36))
+
+
+### Miscellaneous
+
+* deprecate host and port configs ([#162](https://github.com/bucketeer-io/go-server-sdk/issues/162)) ([6af938e](https://github.com/bucketeer-io/go-server-sdk/commit/6af938e0c5347b7d31e535bf75577df345f72db3))
+
 ## [1.5.5](https://github.com/bucketeer-io/go-server-sdk/compare/v1.5.4...v1.5.5) (2025-03-03)
 
 
