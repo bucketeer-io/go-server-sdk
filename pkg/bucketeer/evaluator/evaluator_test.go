@@ -219,7 +219,6 @@ var (
 )
 
 func TestEvaluate(t *testing.T) {
-	t.Parallel()
 	controller := gomock.NewController(t)
 	defer controller.Finish()
 	patterns := []struct {
@@ -352,6 +351,7 @@ func TestEvaluate(t *testing.T) {
 
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
 			evaluator := newEvaluator(t, p.tag, controller)
 			p.setup(evaluator)
 			features, err := evaluator.Evaluate(p.user, p.featureID)
@@ -362,7 +362,6 @@ func TestEvaluate(t *testing.T) {
 }
 
 func TestGetTargetFeatures(t *testing.T) {
-	t.Parallel()
 	controller := gomock.NewController(t)
 	defer controller.Finish()
 	patterns := []struct {
@@ -375,9 +374,10 @@ func TestGetTargetFeatures(t *testing.T) {
 		{
 			desc: "err: failed to get feature flag from cache",
 			setup: func(e *evaluator) {
+				// The `ft4` is the prerequisite flag configured in the `ft3`
 				e.featuresCache.(*mock.MockFeaturesCache).EXPECT().Get(ft4.Id).Return(nil, internalErr)
 			},
-			feature:     ft3,
+			feature:     ft3, // Contains the `ft4` as prerequite
 			expected:    nil,
 			expectedErr: internalErr,
 		},
@@ -401,6 +401,7 @@ func TestGetTargetFeatures(t *testing.T) {
 
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
 			evaluator := newEvaluator(t, "tag", controller)
 			p.setup(evaluator)
 			features, err := evaluator.getTargetFeatures(p.feature)
@@ -411,7 +412,6 @@ func TestGetTargetFeatures(t *testing.T) {
 }
 
 func TestFindEvaluation(t *testing.T) {
-	t.Parallel()
 	eval := &ftproto.Evaluation{
 		FeatureId: "feature-id-1",
 	}
@@ -441,6 +441,7 @@ func TestFindEvaluation(t *testing.T) {
 
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
 			eval := &evaluator{}
 			evaluation, err := eval.findEvaluation(p.evaluations, p.featureID)
 			assert.Equal(t, p.expected, evaluation)

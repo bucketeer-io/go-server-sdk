@@ -38,6 +38,7 @@ func NewEvaluator(
 
 var (
 	errEvaluationNotFound = errors.New("evaluation not found")
+	errFlagNotFound       = errors.New("flag not found")
 )
 
 func (e *evaluator) Evaluate(user *user.User, featureID string) (*model.Evaluation, error) {
@@ -124,10 +125,14 @@ func (e *evaluator) getPrerequisiteFeaturesFromCache(preFlagIDs []string) ([]*ft
 		}
 		prerequisites[preFeature.Id] = preFeature
 	}
-
+	// Restore the original order
 	ftList := make([]*ftproto.Feature, 0, len(prerequisites))
-	for _, v := range prerequisites {
-		ftList = append(ftList, v)
+	for _, preFlagID := range preFlagIDs {
+		value, ok := prerequisites[preFlagID]
+		if !ok {
+			return nil, errFlagNotFound
+		}
+		ftList = append(ftList, value)
 	}
 	return ftList, nil
 }
