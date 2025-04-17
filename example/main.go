@@ -24,7 +24,6 @@ var (
 	bucketeerTag            = flag.String("bucketeer-tag", "", "Bucketeer tag")
 	bucketeerAPIKey         = flag.String("bucketeer-api-key", "", "Bucketeer api key")
 	bucketeerAPIEndpoint    = flag.String("bucketeer-api-endpoint", "", "Bucketeer api endpoint, e.g. api.example.com")
-	bucketeerPort           = flag.Int("bucketeer-port", 443, "Bucketeer port number, e.g. 443")
 	bucketeerEnableDebugLog = flag.Bool("bucketeer-enable-debug-log", false, "Outpus sdk debug logs or not")
 	bucketerFeatureID       = flag.String("bucketeer-feature-id", "", "Target feature id")
 	bucketerGoalID          = flag.String("bucketeer-goal-id", "", "Target goal id")
