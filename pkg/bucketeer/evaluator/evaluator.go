@@ -117,6 +117,8 @@ func (e *evaluator) getTargetFeatures(feature *ftproto.Feature) ([]*ftproto.Feat
 
 // Gets the features specified as prerequisite
 func (e *evaluator) getPrerequisiteFeaturesFromCache(preFlagIDs []string) ([]*ftproto.Feature, error) {
+	// Prerequisites contain dependent flags, which could also contain the same flags.
+	// So, it uses a map to deduplicate the flags if needed.
 	prerequisites := make(map[string]*ftproto.Feature)
 	for _, id := range preFlagIDs {
 		preFeature, err := e.featuresCache.Get(id)
