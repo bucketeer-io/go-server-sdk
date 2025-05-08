@@ -35,6 +35,7 @@ type processor struct {
 	pushSizeMetricsEvent    func(sizeByte int, api model.APIID)
 	pushErrorEvent          func(err error, api model.APIID)
 	tag                     string
+	sdkVersion              string
 	closeCh                 chan struct{}
 	loggers                 *log.Loggers
 }
@@ -140,6 +141,7 @@ func (p *processor) updateCache() error {
 	req := model.NewGetFeatureFlagsRequest(
 		p.tag,
 		ftsID,
+		p.sdkVersion,
 		requestedAt,
 	)
 	// Get the latest cache from the server

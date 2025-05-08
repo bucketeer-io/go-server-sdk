@@ -3,8 +3,6 @@ package model
 import (
 	"encoding/json"
 	"time"
-
-	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/version"
 )
 
 type MetricsEvent struct {
@@ -16,12 +14,15 @@ type MetricsEvent struct {
 	Type       EventType         `json:"@type,omitempty"`
 }
 
-func NewMetricsEvent(encoded json.RawMessage) *MetricsEvent {
+func NewMetricsEvent(
+	encoded json.RawMessage,
+	sdkVersion string,
+) *MetricsEvent {
 	return &MetricsEvent{
 		Timestamp:  time.Now().Unix(),
 		Event:      encoded,
 		SourceID:   SourceIDGoServer,
-		SDKVersion: version.SDKVersion,
+		SDKVersion: sdkVersion,
 		Metadata:   map[string]string{},
 		Type:       MetricsEventType,
 	}

@@ -1,9 +1,5 @@
 package model
 
-import (
-	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/version"
-)
-
 type GetFeatureFlagsRequest struct {
 	Tag            string       `json:"tag"`
 	FeatureFlagsID string       `json:"featureFlagsId"`
@@ -12,12 +8,15 @@ type GetFeatureFlagsRequest struct {
 	SDKVersion     string       `json:"sdkVersion"`
 }
 
-func NewGetFeatureFlagsRequest(tag, featureFlagsID string, requestedAt int64) *GetFeatureFlagsRequest {
+func NewGetFeatureFlagsRequest(
+	tag, featureFlagsID, sdkVersion string,
+	requestedAt int64,
+) *GetFeatureFlagsRequest {
 	return &GetFeatureFlagsRequest{
 		Tag:            tag,
 		FeatureFlagsID: featureFlagsID,
 		RequestedAt:    requestedAt,
 		SourceID:       SourceIDGoServer,
-		SDKVersion:     version.SDKVersion,
+		SDKVersion:     sdkVersion,
 	}
 }

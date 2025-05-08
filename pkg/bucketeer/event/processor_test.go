@@ -27,11 +27,6 @@ const (
 	processorGoalID      = "goal-id"
 )
 
-type registerEventsResponseError struct {
-	Retriable bool   `json:"retriable,omitempty"`
-	Message   string `json:"message,omitempty"`
-}
-
 func TestPushEvaluationEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
@@ -39,7 +34,7 @@ func TestPushEvaluationEvent(t *testing.T) {
 	evaluation := newEvaluation(t, processorFeatureID, processorVariationID)
 	p.PushEvaluationEvent(user, evaluation)
 	evt := <-p.evtQueue.eventCh()
-	e := &model.EvaluationEvent{}
+	e := model.NewEvaluationEvent(p.tag, processorFeatureID, "", version.SDKVersion, 0, user, &model.Reason{Type: model.ReasonClient})
 	err := json.Unmarshal(evt.Event, e)
 	assert.NoError(t, err)
 	assert.Equal(t, p.tag, e.Tag)
@@ -59,7 +54,7 @@ func TestPushDefaultEvaluationEvent(t *testing.T) {
 	user := newUser(t, processorUserID)
 	p.PushDefaultEvaluationEvent(user, processorFeatureID)
 	evt := <-p.evtQueue.eventCh()
-	e := &model.EvaluationEvent{}
+	e := model.NewEvaluationEvent(p.tag, processorFeatureID, "", version.SDKVersion, 0, user, &model.Reason{Type: model.ReasonClient})
 	err := json.Unmarshal(evt.Event, e)
 	assert.NoError(t, err)
 	assert.Equal(t, p.tag, e.Tag)
@@ -79,7 +74,7 @@ func TestPushGoalEvent(t *testing.T) {
 	user := newUser(t, processorUserID)
 	p.PushGoalEvent(user, processorGoalID, 1.1)
 	evt := <-p.evtQueue.eventCh()
-	e := &model.GoalEvent{}
+	e := model.NewGoalEvent(p.tag, processorGoalID, version.SDKVersion, 1.1, user)
 	err := json.Unmarshal(evt.Event, e)
 	assert.NoError(t, err)
 	assert.Equal(t, p.tag, e.Tag)

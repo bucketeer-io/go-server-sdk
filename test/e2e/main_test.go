@@ -9,6 +9,7 @@ const (
 	timeout = 20 * time.Second
 
 	tag                 = "go-server"
+	sdkVersion          = "1.0.0"
 	userID              = "bucketeer-go-server-user-id-1"
 	featureID           = "feature-go-server-e2e-string"
 	featureIDVariation1 = "value-1"

@@ -127,6 +127,7 @@ var (
 type sdk struct {
 	enableLocalEvaluation     bool
 	tag                       string
+	version                   string
 	apiClient                 api.Client
 	eventProcessor            event.Processor
 	featureFlagCacheProcessor cacheprocessor.FeatureFlagProcessor
@@ -169,6 +170,7 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		APIClient:       client,
 		Loggers:         loggers,
 		Tag:             dopts.tag,
+		SDKVersion:      dopts.sdkVersion,
 	}
 	processor := event.NewProcessor(ctx, processorConf)
 	if !dopts.enableLocalEvaluation {
@@ -176,6 +178,7 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		return &sdk{
 			enableLocalEvaluation: dopts.enableLocalEvaluation,
 			tag:                   dopts.tag,
+			version:               dopts.sdkVersion,
 			apiClient:             client,
 			eventProcessor:        processor,
 			loggers:               loggers,
@@ -206,6 +209,7 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 	return &sdk{
 		enableLocalEvaluation:     dopts.enableLocalEvaluation,
 		tag:                       dopts.tag,
+		version:                   dopts.sdkVersion,
 		apiClient:                 client,
 		eventProcessor:            processor,
 		featureFlagCacheProcessor: fcp,
@@ -504,7 +508,7 @@ func (s *sdk) getEvaluationRemotely(
 ) (*model.Evaluation, error) {
 	reqStart := time.Now()
 	res, size, err := s.apiClient.GetEvaluation(model.NewGetEvaluationRequest(
-		s.tag, featureID,
+		s.tag, featureID, s.version,
 		user,
 	))
 	if err != nil {

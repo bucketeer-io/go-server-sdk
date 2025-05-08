@@ -4,8 +4,6 @@ import (
 	"time"
 
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"
-
-	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/version"
 )
 
 type GoalEvent struct {
@@ -21,7 +19,11 @@ type GoalEvent struct {
 	Type       EventType         `json:"@type,omitempty"`
 }
 
-func NewGoalEvent(tag, goalID string, value float64, user *user.User) *GoalEvent {
+func NewGoalEvent(
+	tag, goalID, sdkVersion string,
+	value float64,
+	user *user.User,
+) *GoalEvent {
 	return &GoalEvent{
 		Tag:        tag,
 		Timestamp:  time.Now().Unix(),
@@ -30,7 +32,7 @@ func NewGoalEvent(tag, goalID string, value float64, user *user.User) *GoalEvent
 		Value:      value,
 		User:       user,
 		SourceID:   SourceIDGoServer,
-		SDKVersion: version.SDKVersion,
+		SDKVersion: sdkVersion,
 		Metadata:   map[string]string{},
 		Type:       GoalEventType,
 	}
