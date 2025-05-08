@@ -378,6 +378,8 @@ func TestGetTargetFeatures(t *testing.T) {
 			setup: func(e *evaluator) {
 				// The `ft4` is the prerequisite flag configured in the `ft3`
 				e.featuresCache.(*mock.MockFeaturesCache).EXPECT().Get(ft4.Id).Return(nil, internalErr)
+				// The `ft5` is referenced in the `ft3` clauses
+				e.featuresCache.(*mock.MockFeaturesCache).EXPECT().Get(ft5.Id).Return(ft5, nil)
 			},
 			feature:     ft3, // Contains the `ft4` as prerequite
 			expected:    nil,
@@ -407,7 +409,7 @@ func TestGetTargetFeatures(t *testing.T) {
 			evaluator := newEvaluator(t, "tag", controller)
 			p.setup(evaluator)
 			features, err := evaluator.getTargetFeatures(p.feature)
-			assert.Equal(t, p.expected, features)
+			assert.ElementsMatch(t, p.expected, features)
 			assert.Equal(t, p.expectedErr, err)
 		})
 	}
