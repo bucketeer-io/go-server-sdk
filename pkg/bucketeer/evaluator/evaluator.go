@@ -36,7 +36,7 @@ func NewEvaluator(
 	}
 }
 
-var errEvaluationNotFound = errors.New("evaluation not found")
+var ErrEvaluationNotFound = errors.New("evaluation not found")
 
 func (e *evaluator) Evaluate(user *user.User, featureID string) (*model.Evaluation, error) {
 	// Get the target feature
@@ -137,5 +137,5 @@ func (e *evaluator) findEvaluation(evals []*ftproto.Evaluation, id string) (*ftp
 			return e, nil
 		}
 	}
-	return nil, errEvaluationNotFound
+	return nil, ErrEvaluationNotFound
 }
