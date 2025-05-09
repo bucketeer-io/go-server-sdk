@@ -8,11 +8,10 @@ type Reason struct {
 type ReasonType string
 
 const (
-	ReasonTarget  ReasonType = "TARGET"
-	ReasonRule    ReasonType = "RULE"
-	ReasonDefault ReasonType = "DEFAULT"
-	// Deprecated: Do not use.
-	ReasonClient                         ReasonType = "CLIENT"
+	ReasonTarget                         ReasonType = "TARGET"
+	ReasonRule                           ReasonType = "RULE"
+	ReasonDefault                        ReasonType = "DEFAULT"
+	ReasonClient                         ReasonType = "CLIENT" // Deprecated
 	ReasonOffVariation                   ReasonType = "OFF_VARIATION"
 	ReasonPrerequisite                   ReasonType = "PREREQUISITE"
 	ReasonErrorNoEvaluations             ReasonType = "ERROR_NO_EVALUATIONS"

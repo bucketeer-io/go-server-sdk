@@ -36,9 +36,7 @@ func NewEvaluator(
 	}
 }
 
-var (
-	errEvaluationNotFound = errors.New("evaluation not found")
-)
+var errEvaluationNotFound = errors.New("evaluation not found")
 
 func (e *evaluator) Evaluate(user *user.User, featureID string) (*model.Evaluation, error) {
 	// Get the target feature
