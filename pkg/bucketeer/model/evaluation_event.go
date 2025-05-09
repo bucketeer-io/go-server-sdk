@@ -4,8 +4,6 @@ import (
 	"time"
 
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"
-
-	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/version"
 )
 
 type EvaluationEvent struct {
@@ -23,7 +21,7 @@ type EvaluationEvent struct {
 }
 
 func NewEvaluationEvent(
-	tag, featureID, variationID string,
+	tag, featureID, variationID, sdkVersion string,
 	featureVersion int32,
 	user *user.User,
 	reason *Reason,
@@ -37,7 +35,7 @@ func NewEvaluationEvent(
 		User:           user,
 		Reason:         reason,
 		SourceID:       SourceIDGoServer,
-		SDKVersion:     version.SDKVersion,
+		SDKVersion:     sdkVersion,
 		Metadata:       map[string]string{},
 		Type:           EvaluationEventType,
 	}

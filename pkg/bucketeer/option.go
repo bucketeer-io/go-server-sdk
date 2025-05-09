@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/log"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/version"
 )
 
 // Option is the functional options type (Functional Options Pattern) to set sdk options.
@@ -18,6 +19,7 @@ type options struct {
 	scheme                string
 	host                  string
 	port                  int
+	sdkVersion            string
 	eventQueueCapacity    int
 	numEventFlushWorkers  int
 	eventFlushInterval    time.Duration
@@ -35,6 +37,7 @@ var defaultOptions = options{
 	scheme:                "https",
 	host:                  "",
 	port:                  443,
+	sdkVersion:            version.SDKVersion,
 	eventQueueCapacity:    100_000,
 	numEventFlushWorkers:  50,
 	eventFlushInterval:    1 * time.Minute,
@@ -106,6 +109,13 @@ func WithHost(host string) Option {
 func WithPort(port int) Option {
 	return func(opts *options) {
 		opts.port = port
+	}
+}
+
+// WithSDKVersion sets the SDK version. (Default: version.SDKVersion)
+func WithSDKVersion(sdkVersion string) Option {
+	return func(opts *options) {
+		opts.sdkVersion = sdkVersion
 	}
 }
 
