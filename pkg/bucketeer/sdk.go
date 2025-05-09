@@ -371,26 +371,24 @@ func getEvaluationDetails[T model.EvaluationValue](
 	var err error
 	var value T
 
-	err = validateGetEvaluationRequest(user, featureID)
-	if err != nil {
-		var userID string
-		if user.Valid() {
-			userID = user.ID
-		}
-		s.logVariationError(err, logFuncName, userID, featureID)
-		return model.NewEvaluationDetails(
-			featureID,
-			userID,
-			"",
-			"",
-			0,
-			model.ReasonClient,
-			defaultValue,
-		)
+	if details, ok := validateGetEvaluationRequest(s, user, featureID, defaultValue, logFuncName); !ok {
+		return details
 	}
 
 	evaluation, err := s.getEvaluation(ctx, user, featureID)
 	if err != nil {
+		if errors.Is(err, evaluator.ErrEvaluationNotFound) {
+			s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+			return model.NewEvaluationDetails(
+				featureID,
+				user.ID,
+				"",
+				"",
+				0,
+				model.ReasonErrorNoEvaluations,
+				defaultValue,
+			)
+		}
 		s.logVariationError(err, logFuncName, user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
 		return model.NewEvaluationDetails(
@@ -399,7 +397,7 @@ func getEvaluationDetails[T model.EvaluationValue](
 			"",
 			"",
 			0,
-			model.ReasonClient,
+			model.ReasonErrorException,
 			defaultValue,
 		)
 	}
@@ -451,7 +449,7 @@ func getEvaluationDetails[T model.EvaluationValue](
 			"",
 			"",
 			0,
-			model.ReasonClient,
+			model.ReasonErrorWrongType,
 			defaultValue,
 		)
 	}
@@ -468,14 +466,32 @@ func getEvaluationDetails[T model.EvaluationValue](
 	)
 }
 
-func validateGetEvaluationRequest(user *user.User, featureID string) error {
+func validateGetEvaluationRequest[T model.EvaluationValue](s *sdk, user *user.User, featureID string, defaultValue T, logFuncName string) (model.BKTEvaluationDetails[T], bool) {
 	if !user.Valid() {
-		return fmt.Errorf("invalid user: %v", user)
+		s.logVariationError(errors.New("invalid user"), logFuncName, "", featureID)
+		return model.NewEvaluationDetails(
+			featureID,
+			"",
+			"",
+			"",
+			0,
+			model.ReasonErrorUserIDNotSpecified,
+			defaultValue,
+		), false
 	}
 	if featureID == "" {
-		return errors.New("featureID is empty")
+		s.logVariationError(errors.New("featureID is empty"), logFuncName, user.ID, featureID)
+		return model.NewEvaluationDetails(
+			featureID,
+			user.ID,
+			"",
+			"",
+			0,
+			model.ReasonErrorFeatureFlagIDNotSpecified,
+			defaultValue,
+		), false
 	}
-	return nil
+	return model.BKTEvaluationDetails[T]{}, true
 }
 
 func (s *sdk) getEvaluation(ctx context.Context, user *user.User, featureID string) (*model.Evaluation, error) {
