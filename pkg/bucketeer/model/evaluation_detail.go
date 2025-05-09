@@ -17,12 +17,18 @@ type EvaluationValue interface {
 type EvaluationReason string
 
 const (
-	EvaluationReasonTarget       EvaluationReason = "TARGET"
-	EvaluationReasonRule         EvaluationReason = "RULE"
-	EvaluationReasonDefault      EvaluationReason = "DEFAULT"
-	EvaluationReasonClient       EvaluationReason = "CLIENT"
-	EvaluationReasonOffVariation EvaluationReason = "OFF_VARIATION"
-	EvaluationReasonPrerequisite EvaluationReason = "PREREQUISITE"
+	EvaluationReasonTarget                        EvaluationReason = "TARGET"
+	EvaluationReasonRule                          EvaluationReason = "RULE"
+	EvaluationReasonDefault                       EvaluationReason = "DEFAULT"
+	EvaluationReasonClient                        EvaluationReason = "CLIENT"
+	EvaluationReasonOffVariation                  EvaluationReason = "OFF_VARIATION"
+	EvaluationReasonPrerequisite                  EvaluationReason = "PREREQUISITE"
+	EvaluationReasonErrorNoEvaluations            EvaluationReason = "ERROR_NO_EVALUATIONS"
+	EvaluationReasonErrorFlagNotFound             EvaluationReason = "ERROR_FLAG_NOT_FOUND"
+	EvaluationReasonErrorWrongType                EvaluationReason = "ERROR_WRONG_TYPE"
+	EvaluationReasonErrorUserIDNotSpecified       EvaluationReason = "ERROR_USER_ID_NOT_SPECIFIED"
+	EvaluationReasonErrorFeatureFlagIDNotSpecified EvaluationReason = "ERROR_FEATURE_FLAG_ID_NOT_SPECIFIED"
+	EvaluationReasonErrorException                EvaluationReason = "ERROR_EXCEPTION"
 )
 
 func NewEvaluationDetails[T EvaluationValue](
@@ -56,6 +62,18 @@ func convertEvaluationReason(reasonType ReasonType) EvaluationReason {
 		return EvaluationReasonOffVariation
 	case ReasonPrerequisite:
 		return EvaluationReasonPrerequisite
+	case ReasonErrorNoEvaluations:
+		return EvaluationReasonErrorNoEvaluations
+	case ReasonErrorFlagNotFound:
+		return EvaluationReasonErrorFlagNotFound
+	case ReasonErrorWrongType:
+		return EvaluationReasonErrorWrongType
+	case ReasonErrorUserIDNotSpecified:
+		return EvaluationReasonErrorUserIDNotSpecified
+	case ReasonErrorFeatureFlagIDNotSpecified:
+		return EvaluationReasonErrorFeatureFlagIDNotSpecified
+	case ReasonErrorException:
+		return EvaluationReasonErrorException
 	default:
 		return EvaluationReasonDefault
 	}
