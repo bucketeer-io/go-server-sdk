@@ -226,7 +226,8 @@ func newFeatureFlagCacheProcessor(
 	apiClient api.Client,
 	eventProcessor event.Processor,
 	tag string,
-	loggers *log.Loggers) cacheprocessor.FeatureFlagProcessor {
+	loggers *log.Loggers,
+) cacheprocessor.FeatureFlagProcessor {
 	conf := &cacheprocessor.FeatureFlagProcessorConfig{
 		Cache:                   cache,
 		PollingInterval:         pollingInterval,
@@ -245,7 +246,8 @@ func newSegmentUserCacheProcessor(
 	pollingInterval time.Duration,
 	apiClient api.Client,
 	eventProcessor event.Processor,
-	loggers *log.Loggers) cacheprocessor.SegmentUserProcessor {
+	loggers *log.Loggers,
+) cacheprocessor.SegmentUserProcessor {
 	conf := &cacheprocessor.SegmentUserProcessorConfig{
 		Cache:                   cache,
 		PollingInterval:         pollingInterval,
@@ -266,8 +268,9 @@ func (s *sdk) BoolVariationDetails(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue bool) model.BKTEvaluationDetails[bool] {
-	return getEvaluationDetails(ctx, s, user, featureID, defaultValue, "BoolVariationDetails")
+	defaultValue bool,
+) model.BKTEvaluationDetails[bool] {
+	return getEvaluationDetails[bool](ctx, s, user, featureID, defaultValue, "BoolVariationDetails")
 }
 
 func (s *sdk) IntVariation(ctx context.Context, user *user.User, featureID string, defaultValue int) int {
@@ -278,8 +281,9 @@ func (s *sdk) IntVariationDetails(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue int) model.BKTEvaluationDetails[int] {
-	return getEvaluationDetails(ctx, s, user, featureID, defaultValue, "IntVariationDetails")
+	defaultValue int,
+) model.BKTEvaluationDetails[int] {
+	return getEvaluationDetails[int](ctx, s, user, featureID, defaultValue, "IntVariationDetails")
 }
 
 func (s *sdk) Int64Variation(ctx context.Context, user *user.User, featureID string, defaultValue int64) int64 {
@@ -290,8 +294,9 @@ func (s *sdk) Int64VariationDetails(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue int64) model.BKTEvaluationDetails[int64] {
-	return getEvaluationDetails(ctx, s, user, featureID, defaultValue, "Int64VariationDetails")
+	defaultValue int64,
+) model.BKTEvaluationDetails[int64] {
+	return getEvaluationDetails[int64](ctx, s, user, featureID, defaultValue, "Int64VariationDetails")
 }
 
 func (s *sdk) Float64Variation(ctx context.Context, user *user.User, featureID string, defaultValue float64) float64 {
@@ -302,8 +307,9 @@ func (s *sdk) Float64VariationDetails(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue float64) model.BKTEvaluationDetails[float64] {
-	return getEvaluationDetails(ctx, s, user, featureID, defaultValue, "Float64VariationDetails")
+	defaultValue float64,
+) model.BKTEvaluationDetails[float64] {
+	return getEvaluationDetails[float64](ctx, s, user, featureID, defaultValue, "Float64VariationDetails")
 }
 
 func (s *sdk) StringVariation(ctx context.Context, user *user.User, featureID, defaultValue string) string {
@@ -314,8 +320,9 @@ func (s *sdk) StringVariationDetails(
 	ctx context.Context,
 	user *user.User,
 	featureID,
-	defaultValue string) model.BKTEvaluationDetails[string] {
-	return getEvaluationDetails(ctx, s, user, featureID, defaultValue, "StringVariationDetails")
+	defaultValue string,
+) model.BKTEvaluationDetails[string] {
+	return getEvaluationDetails[string](ctx, s, user, featureID, defaultValue, "StringVariationDetails")
 }
 
 func (s *sdk) JSONVariation(ctx context.Context, user *user.User, featureID string, dst interface{}) {
@@ -339,16 +346,18 @@ func (s *sdk) ObjectVariation(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue interface{}) interface{} {
-	return getEvaluationDetails(ctx, s, user, featureID, defaultValue, "ObjectVariation").VariationValue
+	defaultValue interface{},
+) interface{} {
+	return getEvaluationDetails[interface{}](ctx, s, user, featureID, defaultValue, "ObjectVariation").VariationValue
 }
 
 func (s *sdk) ObjectVariationDetails(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue interface{}) model.BKTEvaluationDetails[interface{}] {
-	return getEvaluationDetails(ctx, s, user, featureID, defaultValue, "ObjectVariationDetails")
+	defaultValue interface{},
+) model.BKTEvaluationDetails[interface{}] {
+	return getEvaluationDetails[interface{}](ctx, s, user, featureID, defaultValue, "ObjectVariationDetails")
 }
 
 func getEvaluationDetails[T model.EvaluationValue](
@@ -403,7 +412,7 @@ func getEvaluationDetails[T model.EvaluationValue](
 			value = any(int(parsedValue)).(T)
 		}
 	case int64:
-		//support to return intValue even when the underlying value is a double
+		// support to return intValue even when the underlying value is a double
 		var parsedValue float64
 		parsedValue, err = strconv.ParseFloat(variation, 64)
 		if err == nil {
@@ -550,7 +559,8 @@ func (s *sdk) validateGetEvaluationResponse(res *model.GetEvaluationResponse, fe
 func (s *sdk) collectMetrics(
 	ctx context.Context,
 	featureID string,
-	startTime time.Time) {
+	startTime time.Time,
+) {
 	code := http.StatusOK
 	mutators := []iotag.Mutator{
 		iotag.Insert(keyFeatureID, featureID),
@@ -606,8 +616,7 @@ func (s *sdk) Close(ctx context.Context) error {
 	return nil
 }
 
-type nopSDK struct {
-}
+type nopSDK struct{}
 
 // NewNopSDK creates a new no-op Bucketeer SDK.
 //
@@ -620,7 +629,8 @@ func (s *nopSDK) BoolVariation(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue bool) bool {
+	defaultValue bool,
+) bool {
 	return defaultValue
 }
 
@@ -628,7 +638,8 @@ func (s *nopSDK) BoolVariationDetails(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue bool) model.BKTEvaluationDetails[bool] {
+	defaultValue bool,
+) model.BKTEvaluationDetails[bool] {
 	return model.NewEvaluationDetails(
 		featureID,
 		user.ID,
@@ -648,7 +659,8 @@ func (s *nopSDK) IntVariationDetails(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue int) model.BKTEvaluationDetails[int] {
+	defaultValue int,
+) model.BKTEvaluationDetails[int] {
 	return model.NewEvaluationDetails(
 		featureID,
 		user.ID,
@@ -664,7 +676,8 @@ func (s *nopSDK) Int64Variation(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue int64) int64 {
+	defaultValue int64,
+) int64 {
 	return defaultValue
 }
 
@@ -672,7 +685,8 @@ func (s *nopSDK) Int64VariationDetails(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue int64) model.BKTEvaluationDetails[int64] {
+	defaultValue int64,
+) model.BKTEvaluationDetails[int64] {
 	return model.NewEvaluationDetails(
 		featureID,
 		user.ID,
@@ -743,7 +757,8 @@ func (s *nopSDK) ObjectVariation(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue interface{}) interface{} {
+	defaultValue interface{},
+) interface{} {
 	return defaultValue
 }
 
@@ -751,7 +766,8 @@ func (s *nopSDK) ObjectVariationDetails(
 	ctx context.Context,
 	user *user.User,
 	featureID string,
-	defaultValue interface{}) model.BKTEvaluationDetails[interface{}] {
+	defaultValue interface{},
+) model.BKTEvaluationDetails[interface{}] {
 	return model.NewEvaluationDetails(
 		featureID,
 		user.ID,

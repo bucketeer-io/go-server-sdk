@@ -17,18 +17,18 @@ type EvaluationValue interface {
 type EvaluationReason string
 
 const (
-	EvaluationReasonTarget                        EvaluationReason = "TARGET"
-	EvaluationReasonRule                          EvaluationReason = "RULE"
-	EvaluationReasonDefault                       EvaluationReason = "DEFAULT"
-	EvaluationReasonClient                        EvaluationReason = "CLIENT"
-	EvaluationReasonOffVariation                  EvaluationReason = "OFF_VARIATION"
-	EvaluationReasonPrerequisite                  EvaluationReason = "PREREQUISITE"
-	EvaluationReasonErrorNoEvaluations            EvaluationReason = "ERROR_NO_EVALUATIONS"
-	EvaluationReasonErrorFlagNotFound             EvaluationReason = "ERROR_FLAG_NOT_FOUND"
-	EvaluationReasonErrorWrongType                EvaluationReason = "ERROR_WRONG_TYPE"
-	EvaluationReasonErrorUserIDNotSpecified       EvaluationReason = "ERROR_USER_ID_NOT_SPECIFIED"
+	EvaluationReasonTarget                         EvaluationReason = "TARGET"
+	EvaluationReasonRule                           EvaluationReason = "RULE"
+	EvaluationReasonDefault                        EvaluationReason = "DEFAULT"
+	EvaluationReasonClient                         EvaluationReason = "CLIENT"
+	EvaluationReasonOffVariation                   EvaluationReason = "OFF_VARIATION"
+	EvaluationReasonPrerequisite                   EvaluationReason = "PREREQUISITE"
+	EvaluationReasonErrorNoEvaluations             EvaluationReason = "ERROR_NO_EVALUATIONS"
+	EvaluationReasonErrorFlagNotFound              EvaluationReason = "ERROR_FLAG_NOT_FOUND"
+	EvaluationReasonErrorWrongType                 EvaluationReason = "ERROR_WRONG_TYPE"
+	EvaluationReasonErrorUserIDNotSpecified        EvaluationReason = "ERROR_USER_ID_NOT_SPECIFIED"
 	EvaluationReasonErrorFeatureFlagIDNotSpecified EvaluationReason = "ERROR_FEATURE_FLAG_ID_NOT_SPECIFIED"
-	EvaluationReasonErrorException                EvaluationReason = "ERROR_EXCEPTION"
+	EvaluationReasonErrorException                 EvaluationReason = "ERROR_EXCEPTION"
 )
 
 func NewEvaluationDetails[T EvaluationValue](

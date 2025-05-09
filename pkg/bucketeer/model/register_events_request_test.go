@@ -10,7 +10,7 @@ import (
 
 func TestNewRegisterEventsRequest(t *testing.T) {
 	t.Parallel()
-	event := []*Event{&Event{}}
+	event := []*Event{{}}
 	r := NewRegisterEventsRequest(event)
 	assert.IsType(t, &RegisterEventsRequest{}, r)
 	assert.Equal(t, event, r.Events)
