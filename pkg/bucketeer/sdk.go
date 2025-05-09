@@ -193,6 +193,7 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		client,
 		processor,
 		dopts.tag,
+		dopts.sdkVersion,
 		loggers,
 	)
 	sucp := newSegmentUserCacheProcessor(
@@ -200,6 +201,8 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		dopts.cachePollingInterval,
 		client,
 		processor,
+		dopts.tag,
+		dopts.sdkVersion,
 		loggers,
 	)
 	// Run the cache processors to update the cache in background
@@ -226,6 +229,7 @@ func newFeatureFlagCacheProcessor(
 	apiClient api.Client,
 	eventProcessor event.Processor,
 	tag string,
+	sdkVersion string,
 	loggers *log.Loggers) cacheprocessor.FeatureFlagProcessor {
 	conf := &cacheprocessor.FeatureFlagProcessorConfig{
 		Cache:                   cache,
@@ -235,6 +239,7 @@ func newFeatureFlagCacheProcessor(
 		PushSizeMetricsEvent:    eventProcessor.PushSizeMetricsEvent,
 		PushErrorEvent:          eventProcessor.PushErrorEvent,
 		Tag:                     tag,
+		SDKVersion:              sdkVersion,
 		Loggers:                 loggers,
 	}
 	return cacheprocessor.NewFeatureFlagProcessor(conf)
@@ -245,6 +250,8 @@ func newSegmentUserCacheProcessor(
 	pollingInterval time.Duration,
 	apiClient api.Client,
 	eventProcessor event.Processor,
+	tag string,
+	sdkVersion string,
 	loggers *log.Loggers) cacheprocessor.SegmentUserProcessor {
 	conf := &cacheprocessor.SegmentUserProcessorConfig{
 		Cache:                   cache,
@@ -253,6 +260,8 @@ func newSegmentUserCacheProcessor(
 		PushLatencyMetricsEvent: eventProcessor.PushLatencyMetricsEvent,
 		PushSizeMetricsEvent:    eventProcessor.PushSizeMetricsEvent,
 		PushErrorEvent:          eventProcessor.PushErrorEvent,
+		Tag:                     tag,
+		SDKVersion:              sdkVersion,
 		Loggers:                 loggers,
 	}
 	return cacheprocessor.NewSegmentUserProcessor(conf)

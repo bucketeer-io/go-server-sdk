@@ -12,6 +12,7 @@ import (
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/uuid"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/version"
 )
 
 func TestGetEvaluation(t *testing.T) {
@@ -79,7 +80,7 @@ func TestGetSegmentUsers(t *testing.T) {
 
 	segmentIDs := []string{""}
 	requestedAt := int64(1)
-	resp, _, err := client.GetSegmentUsers(model.NewGetSegmentUsersRequest(segmentIDs, requestedAt))
+	resp, _, err := client.GetSegmentUsers(model.NewGetSegmentUsersRequest(segmentIDs, requestedAt, version.SDKVersion))
 	assert.NoError(t, err)
 	assert.True(t, len(resp.SegmentUsers) > 0)
 	assert.Empty(t, resp.DeletedSegmentIDs)
@@ -95,7 +96,7 @@ func TestGetSegmentUsers(t *testing.T) {
 	segmentIDs = []string{resp.SegmentUsers[0].SegmentID, randomID}
 	ra, err = strconv.ParseInt(resp.RequestedAt, 10, 64)
 	assert.NoError(t, err)
-	resp, _, err = client.GetSegmentUsers(model.NewGetSegmentUsersRequest(segmentIDs, ra))
+	resp, _, err = client.GetSegmentUsers(model.NewGetSegmentUsersRequest(segmentIDs, ra, version.SDKVersion))
 	assert.NoError(t, err)
 	assert.Empty(t, resp.SegmentUsers)
 	assert.NotEmpty(t, resp.DeletedSegmentIDs)
