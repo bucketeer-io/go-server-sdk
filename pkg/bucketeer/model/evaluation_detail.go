@@ -17,9 +17,10 @@ type EvaluationValue interface {
 type EvaluationReason string
 
 const (
-	EvaluationReasonTarget                         EvaluationReason = "TARGET"
-	EvaluationReasonRule                           EvaluationReason = "RULE"
-	EvaluationReasonDefault                        EvaluationReason = "DEFAULT"
+	EvaluationReasonTarget  EvaluationReason = "TARGET"
+	EvaluationReasonRule    EvaluationReason = "RULE"
+	EvaluationReasonDefault EvaluationReason = "DEFAULT"
+	// Deprecated: Use the reason with the ERROR prefix instead.
 	EvaluationReasonClient                         EvaluationReason = "CLIENT"
 	EvaluationReasonOffVariation                   EvaluationReason = "OFF_VARIATION"
 	EvaluationReasonPrerequisite                   EvaluationReason = "PREREQUISITE"
