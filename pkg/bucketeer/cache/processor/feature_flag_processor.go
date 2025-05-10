@@ -66,6 +66,9 @@ type FeatureFlagProcessorConfig struct {
 	// Tag is the Feature Flag tag
 	// The tag is set when a Feature Flag is created, and can be retrieved from the admin console.
 	Tag string
+
+	// SDKVersion is the SDK version.
+	SDKVersion string
 }
 
 const (
@@ -84,6 +87,7 @@ func NewFeatureFlagProcessor(conf *FeatureFlagProcessorConfig) FeatureFlagProces
 		pushSizeMetricsEvent:    conf.PushSizeMetricsEvent,
 		pushErrorEvent:          conf.PushErrorEvent,
 		tag:                     conf.Tag,
+		sdkVersion:              conf.SDKVersion,
 		closeCh:                 make(chan struct{}),
 		loggers:                 conf.Loggers,
 	}

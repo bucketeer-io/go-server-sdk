@@ -35,6 +35,7 @@ type segmentUserProcessor struct {
 	pushSizeMetricsEvent    func(sizeByte int, api model.APIID)
 	pushErrorEvent          func(err error, api model.APIID)
 	tag                     string
+	sdkVersion              string
 	closeCh                 chan struct{}
 	loggers                 *log.Loggers
 }
@@ -67,6 +68,9 @@ type SegmentUserProcessorConfig struct {
 	//
 	// Note: this tag is used to report metric events.
 	Tag string
+
+	// SDKVersion is the SDK version.
+	SDKVersion string
 }
 
 const (
@@ -84,6 +88,7 @@ func NewSegmentUserProcessor(conf *SegmentUserProcessorConfig) SegmentUserProces
 		pushSizeMetricsEvent:    conf.PushSizeMetricsEvent,
 		pushErrorEvent:          conf.PushErrorEvent,
 		tag:                     conf.Tag,
+		sdkVersion:              conf.SDKVersion,
 		closeCh:                 make(chan struct{}),
 		loggers:                 conf.Loggers,
 	}
@@ -141,6 +146,7 @@ func (p *segmentUserProcessor) updateCache() error {
 	req := model.NewGetSegmentUsersRequest(
 		ftsID,
 		requestedAt,
+		p.sdkVersion,
 	)
 	// Get the latest cache from the server
 	reqStart := time.Now()
