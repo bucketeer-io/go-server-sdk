@@ -1,5 +1,25 @@
 # Changelog
 
+## [1.6.0](https://github.com/bucketeer-io/go-server-sdk/compare/v1.5.5...v1.6.0) (2025-05-10)
+
+
+### Features
+
+* add scheme configuration ([#159](https://github.com/bucketeer-io/go-server-sdk/issues/159)) ([3ca01d3](https://github.com/bucketeer-io/go-server-sdk/commit/3ca01d3255818811c781769298bd2f0f97f06c36))
+* add SDK version support to options ([#166](https://github.com/bucketeer-io/go-server-sdk/issues/166)) ([2655753](https://github.com/bucketeer-io/go-server-sdk/commit/2655753db6edba57a090071b81b82f5ac1b0356e))
+
+
+### Bug Fixes
+
+* remove unnecessary type arguments ([#163](https://github.com/bucketeer-io/go-server-sdk/issues/163)) ([11b5135](https://github.com/bucketeer-io/go-server-sdk/commit/11b51358c8d08af52a61b379049e0269d179278c))
+
+
+### Miscellaneous
+
+* deprecate host and port configs ([#162](https://github.com/bucketeer-io/go-server-sdk/issues/162)) ([6af938e](https://github.com/bucketeer-io/go-server-sdk/commit/6af938e0c5347b7d31e535bf75577df345f72db3))
+* enhance SDK with versioning support in cache processors and requests ([#168](https://github.com/bucketeer-io/go-server-sdk/issues/168)) ([1fbdec5](https://github.com/bucketeer-io/go-server-sdk/commit/1fbdec50a4469a58c985dcea4bcf0ea6a226e753))
+* fix CODEOWNERS ([#164](https://github.com/bucketeer-io/go-server-sdk/issues/164)) ([a068946](https://github.com/bucketeer-io/go-server-sdk/commit/a068946e5bbe74a67bb159bc1a75f55ca1f8a4e7))
+
 ## [1.5.5](https://github.com/bucketeer-io/go-server-sdk/compare/v1.5.4...v1.5.5) (2025-03-03)
 
 
