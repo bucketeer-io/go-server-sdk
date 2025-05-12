@@ -485,7 +485,13 @@ func getEvaluationDetails[T model.EvaluationValue](
 	)
 }
 
-func validateGetEvaluationRequest[T model.EvaluationValue](s *sdk, user *user.User, featureID string, defaultValue T, logFuncName string) (model.BKTEvaluationDetails[T], bool) {
+func validateGetEvaluationRequest[T model.EvaluationValue](
+	s *sdk,
+	user *user.User,
+	featureID string,
+	defaultValue T,
+	logFuncName string,
+) (model.BKTEvaluationDetails[T], bool) {
 	if !user.Valid() {
 		s.logVariationError(errors.New("invalid user"), logFuncName, "", featureID)
 		return model.NewEvaluationDetails(
