@@ -8,10 +8,13 @@ type RegisterEventsRequest struct {
 	SourceID   SourceIDType `json:"sourceId,omitempty"`
 }
 
-func NewRegisterEventsRequest(event []*Event) *RegisterEventsRequest {
+func NewRegisterEventsRequest(
+	event []*Event,
+	sourceID SourceIDType,
+) *RegisterEventsRequest {
 	return &RegisterEventsRequest{
 		Events:     event,
 		SDKVersion: version.SDKVersion,
-		SourceID:   SourceIDGoServer,
+		SourceID:   sourceID,
 	}
 }

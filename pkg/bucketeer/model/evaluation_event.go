@@ -23,6 +23,7 @@ type EvaluationEvent struct {
 func NewEvaluationEvent(
 	tag, featureID, variationID, sdkVersion string,
 	featureVersion int32,
+	sourceID SourceIDType,
 	user *user.User,
 	reason *Reason,
 ) *EvaluationEvent {
@@ -34,7 +35,7 @@ func NewEvaluationEvent(
 		VariationID:    variationID,
 		User:           user,
 		Reason:         reason,
-		SourceID:       SourceIDGoServer,
+		SourceID:       sourceID,
 		SDKVersion:     sdkVersion,
 		Metadata:       map[string]string{},
 		Type:           EvaluationEventType,

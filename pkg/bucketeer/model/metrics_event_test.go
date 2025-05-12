@@ -12,7 +12,7 @@ import (
 func TestNewMetricsEvent(t *testing.T) {
 	t.Parallel()
 	json := json.RawMessage{}
-	e := NewMetricsEvent(json, version.SDKVersion)
+	e := NewMetricsEvent(json, SourceIDGoServer, version.SDKVersion)
 	assert.IsType(t, &MetricsEvent{}, e)
 	assert.Equal(t, MetricsEventType, e.Type)
 	assert.Equal(t, e.SourceID, SourceIDGoServer)

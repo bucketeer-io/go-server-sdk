@@ -16,12 +16,13 @@ type MetricsEvent struct {
 
 func NewMetricsEvent(
 	encoded json.RawMessage,
+	sourceID SourceIDType,
 	sdkVersion string,
 ) *MetricsEvent {
 	return &MetricsEvent{
 		Timestamp:  time.Now().Unix(),
 		Event:      encoded,
-		SourceID:   SourceIDGoServer,
+		SourceID:   sourceID,
 		SDKVersion: sdkVersion,
 		Metadata:   map[string]string{},
 		Type:       MetricsEventType,

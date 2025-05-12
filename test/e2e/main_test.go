@@ -10,6 +10,7 @@ const (
 
 	tag                 = "go-server"
 	sdkVersion          = "1.0.0"
+	sourceID            = 5
 	userID              = "bucketeer-go-server-user-id-1"
 	featureID           = "feature-go-server-e2e-string"
 	featureIDVariation1 = "value-1"

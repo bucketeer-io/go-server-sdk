@@ -13,7 +13,7 @@ func TestNewGetSegmentUsersRequest(t *testing.T) {
 	segmentIDs := []string{"seg-1", "seg-2"}
 	requestedAt := int64(1)
 	sdkVersion := version.SDKVersion
-	e := NewGetSegmentUsersRequest(segmentIDs, requestedAt, sdkVersion)
+	e := NewGetSegmentUsersRequest(segmentIDs, requestedAt, sdkVersion, SourceIDGoServer)
 	assert.IsType(t, &GetSegmentUsersRequest{}, e)
 	assert.Equal(t, segmentIDs, e.SegmentIDs)
 	assert.Equal(t, requestedAt, e.RequestedAt)

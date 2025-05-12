@@ -11,7 +11,7 @@ import (
 func TestNewRegisterEventsRequest(t *testing.T) {
 	t.Parallel()
 	event := []*Event{&Event{}}
-	r := NewRegisterEventsRequest(event)
+	r := NewRegisterEventsRequest(event, SourceIDGoServer)
 	assert.IsType(t, &RegisterEventsRequest{}, r)
 	assert.Equal(t, event, r.Events)
 	assert.Equal(t, SourceIDGoServer, r.SourceID)

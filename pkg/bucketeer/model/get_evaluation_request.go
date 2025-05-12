@@ -14,13 +14,14 @@ type GetEvaluationRequest struct {
 
 func NewGetEvaluationRequest(
 	tag, featureID, sdkVersion string,
+	sourceID SourceIDType,
 	user *user.User,
 ) *GetEvaluationRequest {
 	return &GetEvaluationRequest{
 		Tag:        tag,
 		User:       user,
 		FeatureID:  featureID,
-		SourceID:   SourceIDGoServer,
+		SourceID:   sourceID,
 		SDKVersion: sdkVersion,
 	}
 }

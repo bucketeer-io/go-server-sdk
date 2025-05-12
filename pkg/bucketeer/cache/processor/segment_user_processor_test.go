@@ -23,6 +23,7 @@ import (
 	"go.uber.org/mock/gomock"
 
 	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
+
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/cache"
 	mockcache "github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/cache/mock"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/log"
@@ -150,7 +151,7 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().GetSegmentIDs().Return(make([]string, 0), nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Get(segmentUsersRequestedAtKey).Return(int64(10), nil)
 
-				req := model.NewGetSegmentUsersRequest(make([]string, 0), int64(10), p.sdkVersion)
+				req := model.NewGetSegmentUsersRequest(make([]string, 0), int64(10), p.sdkVersion, p.sourceID)
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(req).Return(
 					nil,
 					0,
@@ -171,7 +172,7 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Get(segmentUsersRequestedAtKey).Return(int64(10), nil)
 
-				req := model.NewGetSegmentUsersRequest([]string{"segment-id"}, int64(10), p.sdkVersion)
+				req := model.NewGetSegmentUsersRequest([]string{"segment-id"}, int64(10), p.sdkVersion, p.sourceID)
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(req).Return(
 					&model.GetSegmentUsersResponse{
 						SegmentUsers:      []model.SegmentUsers{modelSegmentUser},
@@ -211,7 +212,7 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Get(segmentUsersRequestedAtKey).Return(int64(10), nil)
 
-				req := model.NewGetSegmentUsersRequest([]string{"segment-id"}, int64(10), p.sdkVersion)
+				req := model.NewGetSegmentUsersRequest([]string{"segment-id"}, int64(10), p.sdkVersion, p.sourceID)
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(req).Return(
 					&model.GetSegmentUsersResponse{
 						SegmentUsers:      []model.SegmentUsers{modelSegmentUser},
@@ -249,7 +250,7 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Get(segmentUsersRequestedAtKey).Return(int64(10), nil)
 
-				req := model.NewGetSegmentUsersRequest(make([]string, 0), int64(10), p.sdkVersion)
+				req := model.NewGetSegmentUsersRequest(make([]string, 0), int64(10), p.sdkVersion, p.sourceID)
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(req).Return(
 					&model.GetSegmentUsersResponse{
 						SegmentUsers:      []model.SegmentUsers{modelSegmentUser},
@@ -285,7 +286,7 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Get(segmentUsersRequestedAtKey).Return(int64(0), cache.ErrNotFound)
 
-				req := model.NewGetSegmentUsersRequest(make([]string, 0), int64(0), p.sdkVersion)
+				req := model.NewGetSegmentUsersRequest(make([]string, 0), int64(0), p.sdkVersion, p.sourceID)
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(req).Return(
 					&model.GetSegmentUsersResponse{
 						SegmentUsers:      []model.SegmentUsers{modelSegmentUser},
@@ -323,7 +324,7 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Get(segmentUsersRequestedAtKey).Return(int64(10), nil)
 
-				req := model.NewGetSegmentUsersRequest([]string{"segment-id"}, int64(10), p.sdkVersion)
+				req := model.NewGetSegmentUsersRequest([]string{"segment-id"}, int64(10), p.sdkVersion, p.sourceID)
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(req).Return(
 					&model.GetSegmentUsersResponse{
 						SegmentUsers:      []model.SegmentUsers{modelSegmentUser},
@@ -366,7 +367,7 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().Delete(deletedSegmentIDs[0])
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().Delete(deletedSegmentIDs[1])
 
-				req := model.NewGetSegmentUsersRequest([]string{"segment-id"}, int64(10), p.sdkVersion)
+				req := model.NewGetSegmentUsersRequest([]string{"segment-id"}, int64(10), p.sdkVersion, p.sourceID)
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(req).Return(
 					&model.GetSegmentUsersResponse{
 						SegmentUsers:      []model.SegmentUsers{modelSegmentUser},

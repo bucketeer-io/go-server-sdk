@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/log"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/version"
 )
 
@@ -22,6 +23,7 @@ type options struct {
 	sdkVersion            string
 	eventQueueCapacity    int
 	numEventFlushWorkers  int
+	sourceID              int32
 	eventFlushInterval    time.Duration
 	eventFlushSize        int
 	enableDebugLog        bool
@@ -40,6 +42,7 @@ var defaultOptions = options{
 	sdkVersion:            version.SDKVersion,
 	eventQueueCapacity:    100_000,
 	numEventFlushWorkers:  50,
+	sourceID:              model.SourceIDGoServer.Int32(),
 	eventFlushInterval:    1 * time.Minute,
 	eventFlushSize:        100,
 	enableDebugLog:        false,
@@ -116,6 +119,13 @@ func WithPort(port int) Option {
 func WithSDKVersion(sdkVersion string) Option {
 	return func(opts *options) {
 		opts.sdkVersion = sdkVersion
+	}
+}
+
+// WithSourceID sets the source ID. (Default: model.SourceIDGoServer)
+func WithSourceID(sourceID int32) Option {
+	return func(opts *options) {
+		opts.sourceID = sourceID
 	}
 }
 

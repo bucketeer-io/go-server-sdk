@@ -34,7 +34,7 @@ func TestPushEvaluationEvent(t *testing.T) {
 	evaluation := newEvaluation(t, processorFeatureID, processorVariationID)
 	p.PushEvaluationEvent(user, evaluation)
 	evt := <-p.evtQueue.eventCh()
-	e := model.NewEvaluationEvent(p.tag, processorFeatureID, "", version.SDKVersion, 0, user, &model.Reason{Type: model.ReasonClient})
+	e := model.NewEvaluationEvent(p.tag, processorFeatureID, "", version.SDKVersion, 0, model.SourceIDGoServer, user, &model.Reason{Type: model.ReasonClient})
 	err := json.Unmarshal(evt.Event, e)
 	assert.NoError(t, err)
 	assert.Equal(t, p.tag, e.Tag)
@@ -54,7 +54,7 @@ func TestPushDefaultEvaluationEvent(t *testing.T) {
 	user := newUser(t, processorUserID)
 	p.PushDefaultEvaluationEvent(user, processorFeatureID)
 	evt := <-p.evtQueue.eventCh()
-	e := model.NewEvaluationEvent(p.tag, processorFeatureID, "", version.SDKVersion, 0, user, &model.Reason{Type: model.ReasonClient})
+	e := model.NewEvaluationEvent(p.tag, processorFeatureID, "", version.SDKVersion, 0, model.SourceIDGoServer, user, &model.Reason{Type: model.ReasonClient})
 	err := json.Unmarshal(evt.Event, e)
 	assert.NoError(t, err)
 	assert.Equal(t, p.tag, e.Tag)
@@ -74,7 +74,7 @@ func TestPushGoalEvent(t *testing.T) {
 	user := newUser(t, processorUserID)
 	p.PushGoalEvent(user, processorGoalID, 1.1)
 	evt := <-p.evtQueue.eventCh()
-	e := model.NewGoalEvent(p.tag, processorGoalID, version.SDKVersion, 1.1, user)
+	e := model.NewGoalEvent(p.tag, processorGoalID, version.SDKVersion, 1.1, model.SourceIDGoServer, user)
 	err := json.Unmarshal(evt.Event, e)
 	assert.NoError(t, err)
 	assert.Equal(t, p.tag, e.Tag)
@@ -473,7 +473,10 @@ func newEvaluation(t *testing.T, featureID, variationID string) *model.Evaluatio
 
 func newEncodedEvaluationEvent(t *testing.T, featureID string) []byte {
 	t.Helper()
-	evaluationEvt := &model.EvaluationEvent{FeatureID: featureID}
+	evaluationEvt := &model.EvaluationEvent{
+		FeatureID: featureID,
+		SourceID:  model.SourceIDGoServer,
+	}
 	encodedEvt, err := json.Marshal(evaluationEvt)
 	assert.NoError(t, err)
 	return encodedEvt
@@ -493,7 +496,7 @@ func TestFlushEvents(t *testing.T) {
 		{
 			desc: "do nothing when events length is 0",
 			setup: func(p *processor, events []*model.Event) {
-				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(model.NewRegisterEventsRequest(events)).Times(0)
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(model.NewRegisterEventsRequest(events, model.SourceIDGoServer)).Times(0)
 			},
 			events:           make([]*model.Event, 0, 10),
 			expectedQueueLen: 0,
@@ -501,7 +504,7 @@ func TestFlushEvents(t *testing.T) {
 		{
 			desc: "re-push all events when failed to register events",
 			setup: func(p *processor, events []*model.Event) {
-				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(model.NewRegisterEventsRequest(events)).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(model.NewRegisterEventsRequest(events, model.SourceIDGoServer)).Return(
 					nil,
 					0,
 					api.NewErrStatus(http.StatusInternalServerError),
@@ -514,7 +517,7 @@ func TestFlushEvents(t *testing.T) {
 			desc: "faled to re-push all events when failed to register events if queue is closed",
 			setup: func(p *processor, events []*model.Event) {
 				p.evtQueue.close()
-				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(model.NewRegisterEventsRequest(events)).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(model.NewRegisterEventsRequest(events, model.SourceIDGoServer)).Return(
 					nil,
 					0,
 					api.NewErrStatus(http.StatusInternalServerError),
@@ -526,7 +529,7 @@ func TestFlushEvents(t *testing.T) {
 		{
 			desc: "re-push events when register events res contains retriable errors",
 			setup: func(p *processor, events []*model.Event) {
-				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(model.NewRegisterEventsRequest(events)).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(model.NewRegisterEventsRequest(events, model.SourceIDGoServer)).Return(
 					&model.RegisterEventsResponse{
 						Errors: map[string]*model.RegisterEventsResponseError{
 							"id-0": {Retriable: true, Message: "retriable"},
@@ -544,7 +547,7 @@ func TestFlushEvents(t *testing.T) {
 			desc: "faled to re-push events when register events res contains retriable errors if queue is closed",
 			setup: func(p *processor, events []*model.Event) {
 				p.evtQueue.close()
-				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(model.NewRegisterEventsRequest(events)).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(model.NewRegisterEventsRequest(events, model.SourceIDGoServer)).Return(
 					&model.RegisterEventsResponse{
 						Errors: map[string]*model.RegisterEventsResponseError{
 							"id-0": {Retriable: true, Message: "retriable"},
@@ -561,7 +564,7 @@ func TestFlushEvents(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(p *processor, events []*model.Event) {
-				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(model.NewRegisterEventsRequest(events)).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(model.NewRegisterEventsRequest(events, model.SourceIDGoServer)).Return(
 					&model.RegisterEventsResponse{
 						Errors: make(map[string]*model.RegisterEventsResponseError),
 					},
@@ -644,6 +647,7 @@ func newProcessorForTestWorker(t *testing.T, mockCtrl *gomock.Controller) *proce
 			EnableDebugLog: false,
 			ErrorLogger:    log.DiscardErrorLogger,
 		}),
-		closeCh: make(chan struct{}),
+		closeCh:  make(chan struct{}),
+		sourceID: model.SourceIDGoServer,
 	}
 }

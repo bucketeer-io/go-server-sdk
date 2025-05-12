@@ -10,7 +10,7 @@ import (
 
 func TestNewGoalEvent(t *testing.T) {
 	t.Parallel()
-	e := NewGoalEvent(tag, goalID, version.SDKVersion, 0.2, newUser(t, id))
+	e := NewGoalEvent(tag, goalID, version.SDKVersion, 0.2, SourceIDGoServer, newUser(t, id))
 	assert.IsType(t, &GoalEvent{}, e)
 	assert.Equal(t, tag, e.Tag)
 	assert.Equal(t, GoalEventType, e.Type)
