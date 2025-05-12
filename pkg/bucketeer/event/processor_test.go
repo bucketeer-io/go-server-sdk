@@ -63,7 +63,7 @@ func TestPushDefaultEvaluationEvent(t *testing.T) {
 	assert.Equal(t, "", e.VariationID)
 	assert.Equal(t, int32(0), e.FeatureVersion)
 	assert.Equal(t, processorUserID, e.User.ID)
-	assert.Equal(t, model.ReasonClient, e.Reason.Type)
+	assert.Equal(t, model.ReasonDefault, e.Reason.Type)
 	assert.Equal(t, e.SourceID, model.SourceIDGoServer)
 	assert.Equal(t, version.SDKVersion, e.SDKVersion)
 }
