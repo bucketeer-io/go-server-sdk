@@ -163,7 +163,7 @@ func TestBoolVariationDetails(t *testing.T) {
 				VariationID:    "",
 				VariationValue: false,
 				VariationName:  "",
-				Reason:         model.EvaluationReasonErrorException,
+				Reason:         model.EvaluationReasonClient,
 			},
 		},
 		{
@@ -195,7 +195,7 @@ func TestBoolVariationDetails(t *testing.T) {
 				VariationID:    "",
 				VariationValue: false,
 				VariationName:  "",
-				Reason:         model.EvaluationReasonErrorWrongType,
+				Reason:         model.EvaluationReasonClient,
 			},
 		},
 		{
@@ -405,7 +405,7 @@ func TestIntVariationDetails(t *testing.T) {
 				VariationID:    "",
 				VariationName:  "",
 				VariationValue: 1,
-				Reason:         model.EvaluationReasonErrorException,
+				Reason:         model.EvaluationReasonClient,
 			},
 		},
 		{
@@ -437,7 +437,7 @@ func TestIntVariationDetails(t *testing.T) {
 				VariationID:    "",
 				VariationName:  "",
 				VariationValue: 1,
-				Reason:         model.EvaluationReasonErrorWrongType,
+				Reason:         model.EvaluationReasonClient,
 			},
 		},
 		{
@@ -681,7 +681,7 @@ func TestInt64VariationDetails(t *testing.T) {
 				VariationID:    "",
 				VariationValue: 1,
 				VariationName:  "",
-				Reason:         model.EvaluationReasonErrorException,
+				Reason:         model.EvaluationReasonClient,
 			},
 		},
 		{
@@ -713,7 +713,7 @@ func TestInt64VariationDetails(t *testing.T) {
 				VariationID:    "",
 				VariationValue: 1,
 				VariationName:  "",
-				Reason:         model.EvaluationReasonErrorWrongType,
+				Reason:         model.EvaluationReasonClient,
 			},
 		},
 		{
@@ -931,7 +931,7 @@ func TestFloat64VariationDetails(t *testing.T) {
 				VariationID:    "",
 				VariationValue: 1.1,
 				VariationName:  "",
-				Reason:         model.EvaluationReasonErrorException,
+				Reason:         model.EvaluationReasonClient,
 			},
 		},
 		{
@@ -963,7 +963,7 @@ func TestFloat64VariationDetails(t *testing.T) {
 				VariationID:    "",
 				VariationValue: 1.1,
 				VariationName:  "",
-				Reason:         model.EvaluationReasonErrorWrongType,
+				Reason:         model.EvaluationReasonClient,
 			},
 		},
 		{
@@ -1125,7 +1125,7 @@ func TestStringVariationDetails(t *testing.T) {
 				VariationID:    "",
 				VariationValue: "default",
 				VariationName:  "",
-				Reason:         model.EvaluationReasonErrorException,
+				Reason:         model.EvaluationReasonClient,
 			},
 		},
 		{
@@ -1570,7 +1570,7 @@ func TestObjectVariationDetails(t *testing.T) {
 					Int: "int1",
 				},
 				VariationName: "",
-				Reason:        model.EvaluationReasonErrorException,
+				Reason:        model.EvaluationReasonClient,
 			},
 		},
 		{
@@ -1608,7 +1608,7 @@ func TestObjectVariationDetails(t *testing.T) {
 					Int: "int1",
 				},
 				VariationName: "",
-				Reason:        model.EvaluationReasonErrorWrongType,
+				Reason:        model.EvaluationReasonClient,
 			},
 		},
 		{
@@ -2190,7 +2190,7 @@ func TestGetEvaluationDetails(t *testing.T) {
 				"",
 				"",
 				0,
-				model.ReasonErrorFeatureFlagIDNotSpecified,
+				model.ReasonClient,
 				"default",
 			),
 		},
@@ -2205,7 +2205,7 @@ func TestGetEvaluationDetails(t *testing.T) {
 				"",
 				"",
 				0,
-				model.ReasonErrorUserIDNotSpecified,
+				model.ReasonClient,
 				"default",
 			),
 		},
@@ -2220,7 +2220,7 @@ func TestGetEvaluationDetails(t *testing.T) {
 				"",
 				"",
 				0,
-				model.ReasonErrorUserIDNotSpecified,
+				model.ReasonClient,
 				"default",
 			),
 		},

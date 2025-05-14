@@ -54,11 +54,7 @@ func TestPushDefaultEvaluationEvent(t *testing.T) {
 	user := newUser(t, processorUserID)
 	p.PushDefaultEvaluationEvent(user, processorFeatureID)
 	evt := <-p.evtQueue.eventCh()
-<<<<<<< HEAD
 	e := model.NewEvaluationEvent(p.tag, processorFeatureID, "", version.SDKVersion, 0, model.SourceIDGoServer, user, &model.Reason{Type: model.ReasonClient})
-=======
-	e := model.NewEvaluationEvent(p.tag, processorFeatureID, "", version.SDKVersion, 0, user, &model.Reason{Type: model.ReasonClient})
->>>>>>> 547bb3c (fix: use ReasonClient)
 	err := json.Unmarshal(evt.Event, e)
 	assert.NoError(t, err)
 	assert.Equal(t, p.tag, e.Tag)

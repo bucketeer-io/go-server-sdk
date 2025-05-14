@@ -404,7 +404,8 @@ func getEvaluationDetails[T model.EvaluationValue](
 				"",
 				"",
 				0,
-				model.ReasonErrorNoEvaluations,
+				// TODO: Use the reason with the ERROR prefix instead.
+				model.ReasonClient,
 				defaultValue,
 			)
 		}
@@ -416,7 +417,8 @@ func getEvaluationDetails[T model.EvaluationValue](
 			"",
 			"",
 			0,
-			model.ReasonErrorException,
+			// TODO: Use the reason with the ERROR prefix instead.
+			model.ReasonClient,
 			defaultValue,
 		)
 	}
@@ -468,7 +470,8 @@ func getEvaluationDetails[T model.EvaluationValue](
 			"",
 			"",
 			0,
-			model.ReasonErrorWrongType,
+			// TODO: Use the reason with the ERROR prefix instead.
+			model.ReasonClient,
 			defaultValue,
 		)
 	}
@@ -500,7 +503,8 @@ func validateGetEvaluationRequest[T model.EvaluationValue](
 			"",
 			"",
 			0,
-			model.ReasonErrorUserIDNotSpecified,
+			// TODO: Use the reason with the ERROR prefix instead.
+			model.ReasonClient,
 			defaultValue,
 		), false
 	}
@@ -512,7 +516,8 @@ func validateGetEvaluationRequest[T model.EvaluationValue](
 			"",
 			"",
 			0,
-			model.ReasonErrorFeatureFlagIDNotSpecified,
+			// TODO: Use the reason with the ERROR prefix instead.
+			model.ReasonClient,
 			defaultValue,
 		), false
 	}
