@@ -283,7 +283,7 @@ func newLocalSDK(t *testing.T, ctx context.Context) bucketeer.SDK {
 		bucketeer.WithNumEventFlushWorkers(3),
 		bucketeer.WithEventFlushSize(1),
 		bucketeer.WithEnableDebugLog(true),
-		bucketeer.WithSDKVersion("1.5.5"),
+		bucketeer.WithWrapperSDKVersion("1.5.5"),
 	)
 	assert.NoError(t, err)
 	return sdk
