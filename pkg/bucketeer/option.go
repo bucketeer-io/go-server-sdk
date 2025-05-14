@@ -115,8 +115,12 @@ func WithPort(port int) Option {
 	}
 }
 
-// WithSDKVersion sets the SDK version. (Default: version.SDKVersion)
-func WithSDKVersion(sdkVersion string) Option {
+// WithWrapperSDKVersion sets the SDK version explicitly. (Default: version.SDKVersion)
+// IMPORTANT: This option is intended for internal use only.
+// It should NOT be set by developers directly integrating this SDK.
+// Use this option ONLY when another SDK acts as a proxy and wraps this native SDK.
+// In such cases, set this value to the version of the proxy SDK.
+func WithWrapperSDKVersion(sdkVersion string) Option {
 	return func(opts *options) {
 		opts.sdkVersion = sdkVersion
 	}
