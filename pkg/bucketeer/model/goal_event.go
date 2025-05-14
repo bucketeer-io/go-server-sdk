@@ -22,6 +22,7 @@ type GoalEvent struct {
 func NewGoalEvent(
 	tag, goalID, sdkVersion string,
 	value float64,
+	sourceID SourceIDType,
 	user *user.User,
 ) *GoalEvent {
 	return &GoalEvent{
@@ -31,7 +32,7 @@ func NewGoalEvent(
 		UserID:     user.ID,
 		Value:      value,
 		User:       user,
-		SourceID:   SourceIDGoServer,
+		SourceID:   sourceID,
 		SDKVersion: sdkVersion,
 		Metadata:   map[string]string{},
 		Type:       GoalEventType,

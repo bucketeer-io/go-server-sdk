@@ -10,13 +10,14 @@ type GetFeatureFlagsRequest struct {
 
 func NewGetFeatureFlagsRequest(
 	tag, featureFlagsID, sdkVersion string,
+	sourceID SourceIDType,
 	requestedAt int64,
 ) *GetFeatureFlagsRequest {
 	return &GetFeatureFlagsRequest{
 		Tag:            tag,
 		FeatureFlagsID: featureFlagsID,
 		RequestedAt:    requestedAt,
-		SourceID:       SourceIDGoServer,
+		SourceID:       sourceID,
 		SDKVersion:     sdkVersion,
 	}
 }

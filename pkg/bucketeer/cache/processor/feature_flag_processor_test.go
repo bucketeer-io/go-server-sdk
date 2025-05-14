@@ -118,7 +118,7 @@ func TestUpdateCache(t *testing.T) {
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsIDKey).Return("", nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return(int64(0), nil)
 
-				req := model.NewGetFeatureFlagsRequest(tag, "", sdkVersion, int64(0))
+				req := model.NewGetFeatureFlagsRequest(tag, "", sdkVersion, model.SourceIDGoServer, int64(0))
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
 					nil,
 					0,
@@ -140,7 +140,7 @@ func TestUpdateCache(t *testing.T) {
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsIDKey, "feature-flags-id-2", cacheTTL).Return(internalErr)
 
-				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", sdkVersion, int64(10))
+				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", sdkVersion, model.SourceIDGoServer, int64(10))
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
 					&model.GetFeatureFlagsResponse{
 						FeatureFlagsID:         "feature-flags-id-2",
@@ -175,7 +175,7 @@ func TestUpdateCache(t *testing.T) {
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsIDKey).Return("feature-flags-id-1", nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return(int64(10), nil)
 
-				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", sdkVersion, int64(10))
+				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", sdkVersion, model.SourceIDGoServer, int64(10))
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
 					&model.GetFeatureFlagsResponse{
 						FeatureFlagsID:         "feature-flags-id-2",
@@ -214,7 +214,7 @@ func TestUpdateCache(t *testing.T) {
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsIDKey).Return("feature-flags-id-1", nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return(int64(10), nil)
 
-				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", sdkVersion, int64(10))
+				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", sdkVersion, model.SourceIDGoServer, int64(10))
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
 					&model.GetFeatureFlagsResponse{
 						FeatureFlagsID:         "feature-flags-id-2",
@@ -252,7 +252,7 @@ func TestUpdateCache(t *testing.T) {
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsIDKey).Return("feature-flags-id-1", nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return(int64(10), nil)
 
-				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", sdkVersion, int64(10))
+				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", sdkVersion, model.SourceIDGoServer, int64(10))
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
 					&model.GetFeatureFlagsResponse{
 						FeatureFlagsID:         "feature-flags-id-2",
@@ -292,7 +292,7 @@ func TestUpdateCache(t *testing.T) {
 				p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsIDKey, "", cacheTTL).Return(nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsRequestedAtKey, int64(0), cacheTTL).Return(nil)
 
-				req := model.NewGetFeatureFlagsRequest(tag, "", sdkVersion, int64(10))
+				req := model.NewGetFeatureFlagsRequest(tag, "", sdkVersion, model.SourceIDGoServer, int64(10))
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
 					&model.GetFeatureFlagsResponse{},
 					1,
@@ -313,7 +313,7 @@ func TestUpdateCache(t *testing.T) {
 				p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsIDKey, "", cacheTTL).Return(nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsRequestedAtKey, int64(0), cacheTTL).Return(nil)
 
-				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", sdkVersion, int64(0))
+				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", sdkVersion, model.SourceIDGoServer, int64(0))
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
 					&model.GetFeatureFlagsResponse{},
 					1,
@@ -344,7 +344,7 @@ func TestUpdateCache(t *testing.T) {
 				p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsIDKey, "feature-flags-id-2", cacheTTL).Return(nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsRequestedAtKey, int64(20), cacheTTL).Return(nil)
 
-				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", sdkVersion, int64(10))
+				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", sdkVersion, model.SourceIDGoServer, int64(10))
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
 					&model.GetFeatureFlagsResponse{
 						FeatureFlagsID:         "feature-flags-id-2",
@@ -370,7 +370,7 @@ func TestUpdateCache(t *testing.T) {
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsIDKey).Return("feature-flags-id-1", nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return(int64(10), nil)
 
-				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", sdkVersion, int64(10))
+				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", sdkVersion, model.SourceIDGoServer, int64(10))
 				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
 					&model.GetFeatureFlagsResponse{
 						FeatureFlagsID:         "feature-flags-id-2",
@@ -447,6 +447,7 @@ func newMockFeatureFlagProcessor(
 			featureFlagsCache:       featureFlagsCache,
 			tag:                     tag,
 			sdkVersion:              sdkVersion,
+			sourceID:                model.SourceIDGoServer,
 			closeCh:                 make(chan struct{}),
 			pollingInterval:         pollingInterval,
 			loggers:                 log.NewLoggers(loggerConf),

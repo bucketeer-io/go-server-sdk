@@ -19,7 +19,7 @@ func TestGetEvaluation(t *testing.T) {
 	t.Parallel()
 	client := newAPIClient(t, *apiKey)
 	user := user.NewUser(userID, nil)
-	res, _, err := client.GetEvaluation(model.NewGetEvaluationRequest(tag, featureID, sdkVersion, user))
+	res, _, err := client.GetEvaluation(model.NewGetEvaluationRequest(tag, featureID, sdkVersion, sourceID, user))
 	assert.NoError(t, err)
 	assert.Equal(t, featureID, res.Evaluation.FeatureID)
 	assert.Equal(t, featureIDVariation2, res.Evaluation.VariationValue)
@@ -32,13 +32,13 @@ func TestGetFeatureFlags(t *testing.T) {
 	// Get all the features by tag
 	featureFlagsID := ""
 	requestedAt := int64(1)
-	resp, _, err := client.GetFeatureFlags(model.NewGetFeatureFlagsRequest(tag, featureFlagsID, sdkVersion, requestedAt))
+	resp, _, err := client.GetFeatureFlags(model.NewGetFeatureFlagsRequest(tag, featureFlagsID, sdkVersion, sourceID, requestedAt))
 	assert.NoError(t, err)
 	assert.True(t, len(resp.Features) >= 1)
 	assert.True(t, resp.FeatureFlagsID != featureFlagsID)
 	assert.NoError(t, err)
 
-	ra, err := strconv.ParseInt(resp.RequestedAt, 10, 64)
+	ra, _ := strconv.ParseInt(resp.RequestedAt, 10, 64)
 	assert.True(t, ra > requestedAt)
 	assert.True(t, resp.ForceUpdate)
 	assert.True(t, findFeature(t, resp.Features, featureIDString))
@@ -54,12 +54,12 @@ func TestGetFeatureFlags(t *testing.T) {
 	featureFlagsID = resp.FeatureFlagsID
 	requestedAt, err = strconv.ParseInt(resp.RequestedAt, 10, 64)
 	assert.NoError(t, err)
-	resp, _, err = client.GetFeatureFlags(model.NewGetFeatureFlagsRequest(tag, featureFlagsID, sdkVersion, requestedAt))
+	resp, _, err = client.GetFeatureFlags(model.NewGetFeatureFlagsRequest(tag, featureFlagsID, sdkVersion, sourceID, requestedAt))
 	assert.NoError(t, err)
 	assert.Empty(t, resp.Features)
 	assert.True(t, resp.FeatureFlagsID == featureFlagsID)
 
-	ra, err = strconv.ParseInt(resp.FeatureFlagsID, 10, 64)
+	ra, _ = strconv.ParseInt(resp.FeatureFlagsID, 10, 64)
 	assert.True(t, ra > requestedAt)
 	assert.False(t, resp.ForceUpdate)
 }
@@ -80,7 +80,7 @@ func TestGetSegmentUsers(t *testing.T) {
 
 	segmentIDs := []string{""}
 	requestedAt := int64(1)
-	resp, _, err := client.GetSegmentUsers(model.NewGetSegmentUsersRequest(segmentIDs, requestedAt, version.SDKVersion))
+	resp, _, err := client.GetSegmentUsers(model.NewGetSegmentUsersRequest(segmentIDs, requestedAt, version.SDKVersion, sourceID))
 	assert.NoError(t, err)
 	assert.True(t, len(resp.SegmentUsers) > 0)
 	assert.Empty(t, resp.DeletedSegmentIDs)
@@ -96,7 +96,7 @@ func TestGetSegmentUsers(t *testing.T) {
 	segmentIDs = []string{resp.SegmentUsers[0].SegmentID, randomID}
 	ra, err = strconv.ParseInt(resp.RequestedAt, 10, 64)
 	assert.NoError(t, err)
-	resp, _, err = client.GetSegmentUsers(model.NewGetSegmentUsersRequest(segmentIDs, ra, version.SDKVersion))
+	resp, _, err = client.GetSegmentUsers(model.NewGetSegmentUsersRequest(segmentIDs, ra, version.SDKVersion, sourceID))
 	assert.NoError(t, err)
 	assert.Empty(t, resp.SegmentUsers)
 	assert.NotEmpty(t, resp.DeletedSegmentIDs)
@@ -142,7 +142,7 @@ func TestRegisterEvents(t *testing.T) {
 		Type: model.SizeMetricsEventType,
 	})
 	assert.NoError(t, err)
-	sizeMetricsEvent, err := json.Marshal(model.NewMetricsEvent(sizeMetrics, sdkVersion))
+	sizeMetricsEvent, err := json.Marshal(model.NewMetricsEvent(sizeMetrics, sourceID, sdkVersion))
 	assert.NoError(t, err)
 	internalError, err := json.Marshal(&model.InternalSDKErrorMetricsEvent{
 		APIID:  model.GetEvaluation,
@@ -150,7 +150,7 @@ func TestRegisterEvents(t *testing.T) {
 		Type:   model.InternalSDKErrorMetricsEventType,
 	})
 	assert.NoError(t, err)
-	iemetricsEvent, err := json.Marshal(model.NewMetricsEvent(internalError, sdkVersion))
+	iemetricsEvent, err := json.Marshal(model.NewMetricsEvent(internalError, sourceID, sdkVersion))
 	assert.NoError(t, err)
 	timeoutError, err := json.Marshal(&model.TimeoutErrorMetricsEvent{
 		APIID:  model.GetEvaluation,
@@ -158,7 +158,7 @@ func TestRegisterEvents(t *testing.T) {
 		Type:   model.TimeoutErrorMetricsEventType,
 	})
 	assert.NoError(t, err)
-	temetricsEvent, err := json.Marshal(model.NewMetricsEvent(timeoutError, sdkVersion))
+	temetricsEvent, err := json.Marshal(model.NewMetricsEvent(timeoutError, sourceID, sdkVersion))
 	assert.NoError(t, err)
 	latency, err := json.Marshal(&model.LatencyMetricsEvent{
 		APIID:         model.GetEvaluation,
@@ -167,15 +167,15 @@ func TestRegisterEvents(t *testing.T) {
 		Type:          model.LatencyMetricsEventType,
 	})
 	assert.NoError(t, err)
-	lmetricsEvent, err := json.Marshal(model.NewMetricsEvent(latency, sdkVersion))
+	lmetricsEvent, err := json.Marshal(model.NewMetricsEvent(latency, sourceID, sdkVersion))
 	assert.NoError(t, err)
 	badRequest, err := json.Marshal(model.NewBadRequestErrorMetricsEvent(tag, model.GetEvaluation))
 	assert.NoError(t, err)
-	brmetricsEvent, err := json.Marshal(model.NewMetricsEvent(badRequest, sdkVersion))
+	brmetricsEvent, err := json.Marshal(model.NewMetricsEvent(badRequest, sourceID, sdkVersion))
 	assert.NoError(t, err)
 	internalServerError, err := json.Marshal(model.NewInternalServerErrorMetricsEvent(tag, model.GetEvaluation))
 	assert.NoError(t, err)
-	iesmetricsEvent, err := json.Marshal(model.NewMetricsEvent(internalServerError, sdkVersion))
+	iesmetricsEvent, err := json.Marshal(model.NewMetricsEvent(internalServerError, sourceID, sdkVersion))
 	assert.NoError(t, err)
 	req := model.NewRegisterEventsRequest(
 		[]*model.Event{
@@ -212,6 +212,7 @@ func TestRegisterEvents(t *testing.T) {
 				Event: iesmetricsEvent,
 			},
 		},
+		sourceID,
 	)
 	res, _, err := client.RegisterEvents(req)
 	assert.NoError(t, err)

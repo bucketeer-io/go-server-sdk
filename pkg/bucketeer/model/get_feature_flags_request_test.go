@@ -13,7 +13,7 @@ func TestNewGetFeatureFlagsRequest(t *testing.T) {
 	featureFlagsID := "fid-1"
 	requestedAt := int64(1)
 	sdkVersion := version.SDKVersion
-	e := NewGetFeatureFlagsRequest(tag, featureFlagsID, sdkVersion, requestedAt)
+	e := NewGetFeatureFlagsRequest(tag, featureFlagsID, sdkVersion, SourceIDGoServer, requestedAt)
 	assert.IsType(t, &GetFeatureFlagsRequest{}, e)
 	assert.Equal(t, tag, e.Tag)
 	assert.Equal(t, featureFlagsID, e.FeatureFlagsID)

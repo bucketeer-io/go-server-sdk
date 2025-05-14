@@ -1351,7 +1351,7 @@ func TestGetEvaluationLocally(t *testing.T) {
 			sdk := newSDKLocalEvaluationWithMock(t, controller)
 			ctx := context.Background()
 			p.setup(sdk, p.user, p.featureID)
-			evaluation, err := sdk.getEvaluation(ctx, p.user, p.featureID)
+			evaluation, err := sdk.getEvaluation(ctx, model.SourceIDGoServer, p.user, p.featureID)
 			assert.Equal(t, p.expected, evaluation)
 			assert.Equal(t, p.expectedErr, err)
 		})

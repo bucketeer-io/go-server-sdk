@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/log"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/version"
 )
 
@@ -22,6 +23,7 @@ type options struct {
 	sdkVersion            string
 	eventQueueCapacity    int
 	numEventFlushWorkers  int
+	sourceID              int32
 	eventFlushInterval    time.Duration
 	eventFlushSize        int
 	enableDebugLog        bool
@@ -40,6 +42,7 @@ var defaultOptions = options{
 	sdkVersion:            version.SDKVersion,
 	eventQueueCapacity:    100_000,
 	numEventFlushWorkers:  50,
+	sourceID:              model.SourceIDGoServer.Int32(),
 	eventFlushInterval:    1 * time.Minute,
 	eventFlushSize:        100,
 	enableDebugLog:        false,
@@ -120,6 +123,18 @@ func WithPort(port int) Option {
 func WithWrapperSDKVersion(sdkVersion string) Option {
 	return func(opts *options) {
 		opts.sdkVersion = sdkVersion
+	}
+}
+
+// WithWrapperSourceID sets the source ID explicitly. (Default: model.SourceIDGoServer)
+// IMPORTANT: This option is intended for internal use only.
+// It should NOT be set by developers directly integrating this SDK.
+// Use this option ONLY when another SDK acts as a proxy and wraps this native SDK.
+// In such cases, set this value to the sourceID of the proxy SDK.
+// The sourceID is used to identify the origin of the request.
+func WithWrapperSourceID(sourceID int32) Option {
+	return func(opts *options) {
+		opts.sourceID = sourceID
 	}
 }
 

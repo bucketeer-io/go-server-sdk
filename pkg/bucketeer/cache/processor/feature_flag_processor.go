@@ -36,6 +36,7 @@ type processor struct {
 	pushErrorEvent          func(err error, api model.APIID)
 	tag                     string
 	sdkVersion              string
+	sourceID                model.SourceIDType
 	closeCh                 chan struct{}
 	loggers                 *log.Loggers
 }
@@ -69,6 +70,9 @@ type FeatureFlagProcessorConfig struct {
 
 	// SDKVersion is the SDK version.
 	SDKVersion string
+
+	// SourceID is the source ID of the SDK.
+	SourceID model.SourceIDType
 }
 
 const (
@@ -88,6 +92,7 @@ func NewFeatureFlagProcessor(conf *FeatureFlagProcessorConfig) FeatureFlagProces
 		pushErrorEvent:          conf.PushErrorEvent,
 		tag:                     conf.Tag,
 		sdkVersion:              conf.SDKVersion,
+		sourceID:                conf.SourceID,
 		closeCh:                 make(chan struct{}),
 		loggers:                 conf.Loggers,
 	}
@@ -146,6 +151,7 @@ func (p *processor) updateCache() error {
 		p.tag,
 		ftsID,
 		p.sdkVersion,
+		p.sourceID,
 		requestedAt,
 	)
 	// Get the latest cache from the server

@@ -36,6 +36,7 @@ type segmentUserProcessor struct {
 	pushErrorEvent          func(err error, api model.APIID)
 	tag                     string
 	sdkVersion              string
+	sourceID                model.SourceIDType
 	closeCh                 chan struct{}
 	loggers                 *log.Loggers
 }
@@ -71,6 +72,9 @@ type SegmentUserProcessorConfig struct {
 
 	// SDKVersion is the SDK version.
 	SDKVersion string
+
+	// SourceID is the source ID of the SDK.
+	SourceID model.SourceIDType
 }
 
 const (
@@ -89,6 +93,7 @@ func NewSegmentUserProcessor(conf *SegmentUserProcessorConfig) SegmentUserProces
 		pushErrorEvent:          conf.PushErrorEvent,
 		tag:                     conf.Tag,
 		sdkVersion:              conf.SDKVersion,
+		sourceID:                conf.SourceID,
 		closeCh:                 make(chan struct{}),
 		loggers:                 conf.Loggers,
 	}
@@ -147,6 +152,7 @@ func (p *segmentUserProcessor) updateCache() error {
 		ftsID,
 		requestedAt,
 		p.sdkVersion,
+		p.sourceID,
 	)
 	// Get the latest cache from the server
 	reqStart := time.Now()

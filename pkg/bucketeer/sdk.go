@@ -128,6 +128,7 @@ type sdk struct {
 	enableLocalEvaluation     bool
 	tag                       string
 	version                   string
+	sourceID                  int32
 	apiClient                 api.Client
 	eventProcessor            event.Processor
 	featureFlagCacheProcessor cacheprocessor.FeatureFlagProcessor
@@ -171,6 +172,7 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		Loggers:         loggers,
 		Tag:             dopts.tag,
 		SDKVersion:      dopts.sdkVersion,
+		SourceID:        model.SourceIDType(dopts.sourceID),
 	}
 	processor := event.NewProcessor(ctx, processorConf)
 	if !dopts.enableLocalEvaluation {
@@ -179,6 +181,7 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 			enableLocalEvaluation: dopts.enableLocalEvaluation,
 			tag:                   dopts.tag,
 			version:               dopts.sdkVersion,
+			sourceID:              dopts.sourceID,
 			apiClient:             client,
 			eventProcessor:        processor,
 			loggers:               loggers,
@@ -194,6 +197,7 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		processor,
 		dopts.tag,
 		dopts.sdkVersion,
+		dopts.sourceID,
 		loggers,
 	)
 	sucp := newSegmentUserCacheProcessor(
@@ -203,6 +207,7 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		processor,
 		dopts.tag,
 		dopts.sdkVersion,
+		dopts.sourceID,
 		loggers,
 	)
 	// Run the cache processors to update the cache in background
@@ -213,6 +218,7 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		enableLocalEvaluation:     dopts.enableLocalEvaluation,
 		tag:                       dopts.tag,
 		version:                   dopts.sdkVersion,
+		sourceID:                  dopts.sourceID,
 		apiClient:                 client,
 		eventProcessor:            processor,
 		featureFlagCacheProcessor: fcp,
@@ -230,6 +236,7 @@ func newFeatureFlagCacheProcessor(
 	eventProcessor event.Processor,
 	tag string,
 	sdkVersion string,
+	sourceID int32,
 	loggers *log.Loggers) cacheprocessor.FeatureFlagProcessor {
 	conf := &cacheprocessor.FeatureFlagProcessorConfig{
 		Cache:                   cache,
@@ -240,6 +247,7 @@ func newFeatureFlagCacheProcessor(
 		PushErrorEvent:          eventProcessor.PushErrorEvent,
 		Tag:                     tag,
 		SDKVersion:              sdkVersion,
+		SourceID:                model.SourceIDType(sourceID),
 		Loggers:                 loggers,
 	}
 	return cacheprocessor.NewFeatureFlagProcessor(conf)
@@ -252,6 +260,7 @@ func newSegmentUserCacheProcessor(
 	eventProcessor event.Processor,
 	tag string,
 	sdkVersion string,
+	sourceID int32,
 	loggers *log.Loggers) cacheprocessor.SegmentUserProcessor {
 	conf := &cacheprocessor.SegmentUserProcessorConfig{
 		Cache:                   cache,
@@ -262,6 +271,7 @@ func newSegmentUserCacheProcessor(
 		PushErrorEvent:          eventProcessor.PushErrorEvent,
 		Tag:                     tag,
 		SDKVersion:              sdkVersion,
+		SourceID:                model.SourceIDType(sourceID),
 		Loggers:                 loggers,
 	}
 	return cacheprocessor.NewSegmentUserProcessor(conf)
@@ -328,7 +338,7 @@ func (s *sdk) StringVariationDetails(
 }
 
 func (s *sdk) JSONVariation(ctx context.Context, user *user.User, featureID string, dst interface{}) {
-	evaluation, err := s.getEvaluation(ctx, user, featureID)
+	evaluation, err := s.getEvaluation(ctx, model.SourceIDType(s.sourceID), user, featureID)
 	if err != nil {
 		s.logVariationError(err, "JSONVariation", user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
@@ -389,7 +399,7 @@ func getEvaluationDetails[T model.EvaluationValue](
 		)
 	}
 
-	evaluation, err := s.getEvaluation(ctx, user, featureID)
+	evaluation, err := s.getEvaluation(ctx, model.SourceIDType(s.sourceID), user, featureID)
 	if err != nil {
 		s.logVariationError(err, logFuncName, user.ID, featureID)
 		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
@@ -478,7 +488,12 @@ func validateGetEvaluationRequest(user *user.User, featureID string) error {
 	return nil
 }
 
-func (s *sdk) getEvaluation(ctx context.Context, user *user.User, featureID string) (*model.Evaluation, error) {
+func (s *sdk) getEvaluation(
+	ctx context.Context,
+	sourceID model.SourceIDType,
+	user *user.User,
+	featureID string,
+) (*model.Evaluation, error) {
 	if !user.Valid() {
 		return nil, fmt.Errorf("invalid user: %v", user)
 	}
@@ -487,7 +502,7 @@ func (s *sdk) getEvaluation(ctx context.Context, user *user.User, featureID stri
 		return s.getEvaluationLocally(ctx, user, featureID)
 	}
 	// Evaluate the end user on the server
-	return s.getEvaluationRemotely(ctx, user, featureID)
+	return s.getEvaluationRemotely(ctx, user, sourceID, featureID)
 }
 
 func (s *sdk) getEvaluationLocally(
@@ -513,11 +528,12 @@ func (s *sdk) getEvaluationLocally(
 func (s *sdk) getEvaluationRemotely(
 	ctx context.Context,
 	user *user.User,
+	sourceID model.SourceIDType,
 	featureID string,
 ) (*model.Evaluation, error) {
 	reqStart := time.Now()
 	res, size, err := s.apiClient.GetEvaluation(model.NewGetEvaluationRequest(
-		s.tag, featureID, s.version,
+		s.tag, featureID, s.version, sourceID,
 		user,
 	))
 	if err != nil {

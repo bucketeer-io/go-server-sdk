@@ -11,11 +11,12 @@ func NewGetSegmentUsersRequest(
 	segmentIDs []string,
 	requestedAt int64,
 	sdkVersion string,
+	sourceID SourceIDType,
 ) *GetSegmentUsersRequest {
 	return &GetSegmentUsersRequest{
 		SegmentIDs:  segmentIDs,
 		RequestedAt: requestedAt,
-		SourceID:    SourceIDGoServer,
+		SourceID:    sourceID,
 		SDKVersion:  sdkVersion,
 	}
 }
