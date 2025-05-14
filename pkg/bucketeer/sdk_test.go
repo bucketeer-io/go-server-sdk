@@ -2272,38 +2272,51 @@ func TestGetEvaluationDetails(t *testing.T) {
 
 func TestValidateGetEvaluationRequest(t *testing.T) {
 	t.Parallel()
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 	tests := []struct {
-		desc      string
-		user      *user.User
-		featureID string
-		isErr     bool
+		desc         string
+		user         *user.User
+		featureID    string
+		isErr        bool
+		defaultValue string
 	}{
 		{
-			desc:      "invalid user",
-			user:      newUser(t, ""),
-			featureID: sdkFeatureID,
-			isErr:     true,
+			desc:         "invalid user",
+			user:         newUser(t, ""),
+			featureID:    sdkFeatureID,
+			isErr:        true,
+			defaultValue: "default",
 		},
 		{
-			desc:      "invalid featureId",
-			user:      newUser(t, sdkUserID),
-			featureID: "",
-			isErr:     true,
+			desc:         "invalid featureId",
+			user:         newUser(t, sdkUserID),
+			featureID:    "",
+			isErr:        true,
+			defaultValue: "default",
 		},
 		{
-			desc:      "valid user & featureId",
-			user:      newUser(t, sdkUserID),
-			featureID: sdkFeatureID,
-			isErr:     false,
+			desc:         "valid user & featureId",
+			user:         newUser(t, sdkUserID),
+			featureID:    sdkFeatureID,
+			isErr:        false,
+			defaultValue: "default",
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			err := validateGetEvaluationRequest(tt.user, tt.featureID)
+			t.Parallel()
+			s := newSDKWithMock(t, mockCtrl)
+			details, ok := validateGetEvaluationRequest(s, tt.user, tt.featureID, tt.defaultValue, "test")
 			if tt.isErr {
-				assert.Error(t, err)
+				assert.False(t, ok)
+				assert.Equal(t, tt.defaultValue, details.VariationValue)
+				assert.NotEmpty(t, details.Reason)
 			} else {
-				assert.NoError(t, err)
+				assert.True(t, ok)
+				assert.Equal(t, "", details.VariationValue)
+				assert.Empty(t, details.Reason)
 			}
 		})
 	}

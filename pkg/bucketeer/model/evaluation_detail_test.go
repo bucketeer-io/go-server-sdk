@@ -132,10 +132,39 @@ func TestConvertEvaluationReason(t *testing.T) {
 			reasonType:     ReasonRule,
 			expectedReason: EvaluationReasonRule,
 		},
+		{
+			desc:           "reasonType: ReasonErrorNoEvaluations",
+			reasonType:     ReasonErrorNoEvaluations,
+			expectedReason: EvaluationReasonErrorNoEvaluations,
+		},
+		{
+			desc:           "reasonType: ReasonErrorFlagNotFound",
+			reasonType:     ReasonErrorFlagNotFound,
+			expectedReason: EvaluationReasonErrorFlagNotFound,
+		},
+		{
+			desc:           "reasonType: ReasonErrorWrongType",
+			reasonType:     ReasonErrorWrongType,
+			expectedReason: EvaluationReasonErrorWrongType,
+		},
+		{
+			desc:           "reasonType: ReasonErrorUserIDNotSpecified",
+			reasonType:     ReasonErrorUserIDNotSpecified,
+			expectedReason: EvaluationReasonErrorUserIDNotSpecified,
+		},
+		{
+			desc:           "reasonType: ReasonErrorFeatureFlagIDNotSpecified",
+			reasonType:     ReasonErrorFeatureFlagIDNotSpecified,
+			expectedReason: EvaluationReasonErrorFeatureFlagIDNotSpecified,
+		},
+		{
+			desc:           "reasonType: ReasonErrorException",
+			reasonType:     ReasonErrorException,
+			expectedReason: EvaluationReasonErrorException,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			//
 			actual := NewEvaluationDetails(featureID, userID, variationID, variationName, featureVersion, tt.reasonType, value)
 			assert.Equal(t, tt.expectedReason, actual.Reason)
 		})

@@ -433,7 +433,7 @@ func TestFindEvaluation(t *testing.T) {
 			evaluations: []*ftproto.Evaluation{eval},
 			featureID:   "feature-id-2",
 			expected:    nil,
-			expectedErr: errEvaluationNotFound,
+			expectedErr: ErrEvaluationNotFound,
 		},
 		{
 			desc:        "success: evaluation found",

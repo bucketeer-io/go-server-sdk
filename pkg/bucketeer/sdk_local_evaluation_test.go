@@ -258,7 +258,6 @@ func TestLocalBoolVariation(t *testing.T) {
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushLatencyMetricsEvent(
 					gomock.Any(), model.SDKGetEvaluation,
 				)
-				// &{feature-id-3:0:user-id-1 feature-id-3 0 user-id-1 variation-true-id 0x140000fcac0 true} (*model.Evaluation)
 				eval := &model.Evaluation{
 					ID:             "feature-id-boolean:0:user-id-1",
 					UserID:         "user-id-1",
@@ -863,7 +862,7 @@ func TestLocalFloat64VariationDetail(t *testing.T) {
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
 				Reason:         model.EvaluationReasonClient,
-				VariationValue: 0.0,
+				VariationValue: 0,
 				VariationID:    "",
 			},
 		},
