@@ -2342,6 +2342,60 @@ func newUser(t *testing.T, id string) *user.User {
 	return &user.User{ID: id}
 }
 
+func TestNewSDK(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		desc    string
+		opts    []Option
+		wantErr error
+		isErr   bool
+	}{
+		{
+			desc:    "success",
+			opts:    []Option{WithAPIKey("api-key"), WithAPIEndpoint("api.example.com"), WithScheme("https"), WithWrapperSourceID(model.SourceIDGoServer.Int32())},
+			wantErr: nil,
+			isErr:   false,
+		},
+		{
+			desc:    "empty API key",
+			opts:    []Option{WithAPIKey(""), WithAPIEndpoint("api.example.com"), WithScheme("https")},
+			wantErr: api.ErrEmptyAPIKey,
+			isErr:   true,
+		},
+		{
+			desc:    "invalid scheme",
+			opts:    []Option{WithAPIKey("api-key"), WithAPIEndpoint("api.example.com"), WithScheme("invalid")},
+			wantErr: api.ErrInvalidScheme,
+			isErr:   true,
+		},
+		{
+			desc:    "empty API endpoint",
+			opts:    []Option{WithAPIKey("api-key"), WithAPIEndpoint(""), WithScheme("https")},
+			wantErr: api.ErrEmptyAPIEndpoint,
+			isErr:   true,
+		},
+		{
+			desc:    "invalid sourceID",
+			opts:    []Option{WithAPIKey("api-key"), WithAPIEndpoint("api.example.com"), WithScheme("https"), WithWrapperSourceID(123)},
+			wantErr: fmt.Errorf("invalid sourceID: 123"),
+			isErr:   true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			t.Parallel()
+			ctx := context.Background()
+			sdk, err := NewSDK(ctx, tt.opts...)
+			if tt.isErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.NotNil(t, sdk)
+			}
+		})
+	}
+}
+
 func newGetEvaluationResponse(t *testing.T, featureID, value string) *model.GetEvaluationResponse {
 	t.Helper()
 	return &model.GetEvaluationResponse{
