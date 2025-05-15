@@ -150,6 +150,12 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 	}
 	loggers := log.NewLoggers(loggerConf)
 
+	// validate sourceID
+	if dopts.sourceID != model.SourceIDGoServer.Int32() &&
+		dopts.sourceID != model.SourceIDOpenFeatureGo.Int32() {
+		return nil, fmt.Errorf("invalid sourceID: %d", dopts.sourceID)
+	}
+
 	// The `host` is deprecated and it will be removed soon.
 	apiEndpoint := dopts.apiEndpoint
 	if apiEndpoint == "" {
