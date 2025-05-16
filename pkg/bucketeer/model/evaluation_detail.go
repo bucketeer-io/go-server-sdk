@@ -30,6 +30,7 @@ const (
 	EvaluationReasonErrorUserIDNotSpecified        EvaluationReason = "ERROR_USER_ID_NOT_SPECIFIED"
 	EvaluationReasonErrorFeatureFlagIDNotSpecified EvaluationReason = "ERROR_FEATURE_FLAG_ID_NOT_SPECIFIED"
 	EvaluationReasonErrorException                 EvaluationReason = "ERROR_EXCEPTION"
+	EvaluationReasonErrorCacheNotFound             EvaluationReason = "ERROR_CACHE_NOT_FOUND"
 )
 
 func NewEvaluationDetails[T EvaluationValue](
@@ -75,6 +76,8 @@ func convertEvaluationReason(reasonType ReasonType) EvaluationReason {
 		return EvaluationReasonErrorFeatureFlagIDNotSpecified
 	case ReasonErrorException:
 		return EvaluationReasonErrorException
+	case ReasonErrorCacheNotFound:
+		return EvaluationReasonErrorCacheNotFound
 	default:
 		return EvaluationReasonDefault
 	}
