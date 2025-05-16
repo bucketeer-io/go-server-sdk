@@ -162,9 +162,15 @@ func TestConvertEvaluationReason(t *testing.T) {
 			reasonType:     ReasonErrorException,
 			expectedReason: EvaluationReasonErrorException,
 		},
+		{
+			desc:           "reasonType: ReasonErrorCacheNotFound",
+			reasonType:     ReasonErrorCacheNotFound,
+			expectedReason: EvaluationReasonErrorCacheNotFound,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
+			t.Parallel()
 			actual := NewEvaluationDetails(featureID, userID, variationID, variationName, featureVersion, tt.reasonType, value)
 			assert.Equal(t, tt.expectedReason, actual.Reason)
 		})

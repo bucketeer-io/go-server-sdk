@@ -36,4 +36,6 @@ const (
 	ReasonErrorFeatureFlagIDNotSpecified ReasonType = "ERROR_FEATURE_FLAG_ID_NOT_SPECIFIED"
 	// An unexpected error occurred during evaluation.
 	ReasonErrorException ReasonType = "ERROR_EXCEPTION"
+	// The flag is missing in the cache; the default value was returned.
+	ReasonErrorCacheNotFound ReasonType = "ERROR_CACHE_NOT_FOUND"
 )
