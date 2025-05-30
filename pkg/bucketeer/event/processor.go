@@ -176,7 +176,7 @@ func (p *processor) PushDefaultEvaluationEvent(user *user.User, featureID string
 		0,
 		p.sourceID,
 		user,
-		&model.Reason{Type: model.ReasonErrorCacheNotFound},
+		&model.Reason{Type: model.ReasonErrorFlagNotFound},
 	)
 	encodedEvaluationEvt, err := json.Marshal(evaluationEvt)
 	if err != nil {
