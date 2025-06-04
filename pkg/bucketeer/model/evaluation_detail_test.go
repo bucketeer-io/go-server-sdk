@@ -17,7 +17,7 @@ func TestNewEvaluationDetail(t *testing.T) {
 	variationID := "variation-id"
 	variationName := "variation-name"
 	userID := "user-id"
-	reasonType := ReasonClient
+	reasonType := ReasonErrorException
 	tests := []struct {
 		desc          string
 		value         interface{}
@@ -31,7 +31,7 @@ func TestNewEvaluationDetail(t *testing.T) {
 				FeatureVersion: featureVersion,
 				UserID:         userID,
 				VariationID:    variationID,
-				Reason:         EvaluationReasonClient,
+				Reason:         EvaluationReasonErrorException,
 				VariationName:  variationName,
 				VariationValue: true,
 			},
@@ -44,7 +44,7 @@ func TestNewEvaluationDetail(t *testing.T) {
 				FeatureVersion: featureVersion,
 				UserID:         userID,
 				VariationID:    variationID,
-				Reason:         EvaluationReasonClient,
+				Reason:         EvaluationReasonErrorException,
 				VariationName:  variationName,
 				VariationValue: 100,
 			},
@@ -57,7 +57,7 @@ func TestNewEvaluationDetail(t *testing.T) {
 				FeatureVersion: featureVersion,
 				UserID:         userID,
 				VariationID:    variationID,
-				Reason:         EvaluationReasonClient,
+				Reason:         EvaluationReasonErrorException,
 				VariationName:  variationName,
 				VariationValue: "value",
 			},
@@ -70,7 +70,7 @@ func TestNewEvaluationDetail(t *testing.T) {
 				FeatureVersion: featureVersion,
 				UserID:         userID,
 				VariationID:    variationID,
-				Reason:         EvaluationReasonClient,
+				Reason:         EvaluationReasonErrorException,
 				VariationName:  variationName,
 				VariationValue: &DstStruct{Str: "str", Int: "int"},
 			},

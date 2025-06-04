@@ -10,7 +10,7 @@ import (
 
 func TestNewEvaluationEvent(t *testing.T) {
 	t.Parallel()
-	e := NewEvaluationEvent(tag, featureID, variationID, version.SDKVersion, featureVersion, SourceIDGoServer, newUser(t, id), &Reason{Type: ReasonClient})
+	e := NewEvaluationEvent(tag, featureID, variationID, version.SDKVersion, featureVersion, SourceIDGoServer, newUser(t, id), &Reason{Type: ReasonErrorException})
 	assert.IsType(t, &EvaluationEvent{}, e)
 	assert.Equal(t, tag, e.Tag)
 	assert.Equal(t, EvaluationEventType, e.Type)
@@ -18,7 +18,7 @@ func TestNewEvaluationEvent(t *testing.T) {
 	assert.Equal(t, variationID, e.VariationID)
 	assert.Equal(t, featureID, e.FeatureID)
 	assert.Equal(t, id, e.User.ID)
-	assert.Equal(t, ReasonClient, e.Reason.Type)
+	assert.Equal(t, ReasonErrorException, e.Reason.Type)
 	assert.Equal(t, e.SourceID, SourceIDGoServer)
 	assert.Equal(t, version.SDKVersion, e.SDKVersion)
 }
