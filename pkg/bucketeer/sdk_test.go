@@ -47,9 +47,10 @@ func TestBoolVariation(t *testing.T) {
 					nil,
 					100, err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
 					user,
 					featureID,
+					model.ReasonErrorException,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
 					err,
@@ -75,9 +76,10 @@ func TestBoolVariation(t *testing.T) {
 					100,
 					model.GetEvaluation,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
 					user,
 					featureID,
+					model.ReasonErrorWrongType,
 				)
 			},
 			user:         newUser(t, sdkUserID),
@@ -144,9 +146,10 @@ func TestBoolVariationDetails(t *testing.T) {
 					nil,
 					100, err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
 					user,
 					featureID,
+					model.ReasonErrorException,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
 					err,
@@ -180,9 +183,10 @@ func TestBoolVariationDetails(t *testing.T) {
 					100,
 					model.GetEvaluation,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
 					user,
 					featureID,
+					model.ReasonErrorWrongType,
 				)
 			},
 			user:         newUser(t, sdkUserID),
@@ -265,9 +269,10 @@ func TestIntVariation(t *testing.T) {
 					nil,
 					100, err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
 					user,
 					featureID,
+					model.ReasonErrorException,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
 					err,
@@ -293,9 +298,10 @@ func TestIntVariation(t *testing.T) {
 					10,
 					model.GetEvaluation,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
 					user,
 					featureID,
+					model.ReasonErrorWrongType,
 				)
 			},
 			user:         newUser(t, sdkUserID),
@@ -386,9 +392,10 @@ func TestIntVariationDetails(t *testing.T) {
 					nil,
 					100, err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
 					user,
 					featureID,
+					model.ReasonErrorException,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
 					err,
@@ -422,9 +429,10 @@ func TestIntVariationDetails(t *testing.T) {
 					10,
 					model.GetEvaluation,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
 					user,
 					featureID,
+					model.ReasonErrorWrongType,
 				)
 			},
 			user:         newUser(t, sdkUserID),
@@ -540,9 +548,10 @@ func TestInt64Variation(t *testing.T) {
 					100,
 					err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
 					user,
 					featureID,
+					model.ReasonErrorException,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
 					err,
@@ -568,9 +577,10 @@ func TestInt64Variation(t *testing.T) {
 					5,
 					model.GetEvaluation,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
 					user,
 					featureID,
+					model.ReasonErrorWrongType,
 				)
 			},
 			user:         newUser(t, sdkUserID),
@@ -662,9 +672,10 @@ func TestInt64VariationDetails(t *testing.T) {
 					100,
 					err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
 					user,
 					featureID,
+					model.ReasonErrorException,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
 					err,
@@ -698,9 +709,10 @@ func TestInt64VariationDetails(t *testing.T) {
 					5,
 					model.GetEvaluation,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
 					user,
 					featureID,
+					model.ReasonErrorWrongType,
 				)
 			},
 			user:         newUser(t, sdkUserID),
@@ -815,9 +827,10 @@ func TestFloat64Variation(t *testing.T) {
 					nil,
 					100, err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
 					user,
 					featureID,
+					model.ReasonErrorException,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
 					err,
@@ -843,9 +856,10 @@ func TestFloat64Variation(t *testing.T) {
 					100,
 					model.GetEvaluation,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
 					user,
 					featureID,
+					model.ReasonErrorWrongType,
 				)
 			},
 			user:         newUser(t, sdkUserID),
@@ -912,9 +926,10 @@ func TestFloat64VariationDetails(t *testing.T) {
 					nil,
 					100, err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
 					user,
 					featureID,
+					model.ReasonErrorException,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
 					err,
@@ -948,9 +963,10 @@ func TestFloat64VariationDetails(t *testing.T) {
 					100,
 					model.GetEvaluation,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
 					user,
 					featureID,
+					model.ReasonErrorWrongType,
 				)
 			},
 			user:         newUser(t, sdkUserID),
@@ -1033,9 +1049,10 @@ func TestStringVariation(t *testing.T) {
 					nil,
 					100, err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
 					user,
 					featureID,
+					model.ReasonErrorException,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
 					err,
@@ -1106,9 +1123,10 @@ func TestStringVariationDetails(t *testing.T) {
 					nil,
 					100, err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
 					user,
 					featureID,
+					model.ReasonErrorException,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
 					err,
@@ -1199,9 +1217,10 @@ func TestJSONVariation(t *testing.T) {
 					nil,
 					100, err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
 					user,
 					featureID,
+					model.ReasonErrorException,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
 					err,
@@ -1227,9 +1246,10 @@ func TestJSONVariation(t *testing.T) {
 					100,
 					model.GetEvaluation,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
 					user,
 					featureID,
+					model.ReasonErrorWrongType,
 				)
 			},
 			user:      newUser(t, sdkUserID),
@@ -1300,9 +1320,10 @@ func TestObjectVariation(t *testing.T) {
 					nil,
 					100, err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
 					user,
 					featureID,
+					model.ReasonErrorException,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
 					err,
@@ -1334,9 +1355,10 @@ func TestObjectVariation(t *testing.T) {
 					100,
 					model.GetEvaluation,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
 					user,
 					featureID,
+					model.ReasonErrorWrongType,
 				)
 			},
 			user:      newUser(t, sdkUserID),
@@ -1545,9 +1567,10 @@ func TestObjectVariationDetails(t *testing.T) {
 					nil,
 					100, err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
 					user,
 					featureID,
+					model.ReasonErrorException,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
 					err,
@@ -1587,9 +1610,10 @@ func TestObjectVariationDetails(t *testing.T) {
 					100,
 					model.GetEvaluation,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
 					user,
 					featureID,
+					model.ReasonErrorWrongType,
 				)
 			},
 			user:      newUser(t, sdkUserID),
@@ -1904,7 +1928,7 @@ func TestGetEvaluation(t *testing.T) {
 					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
-					errResponseNil,
+					ErrResponseNil,
 					model.GetEvaluation,
 				)
 			},
@@ -1929,7 +1953,7 @@ func TestGetEvaluation(t *testing.T) {
 					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
-					errResponseEvaluationNil,
+					ErrResponseEvaluationNil,
 					model.GetEvaluation,
 				)
 			},
@@ -1943,8 +1967,8 @@ func TestGetEvaluation(t *testing.T) {
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
 				req := model.NewGetEvaluationRequest(sdkTag, featureID, sdkVersion, model.SourceIDGoServer, user)
 				res := newGetEvaluationResponse(t, "invalid-feature-id", "value")
-				err := fmt.Errorf(
-					errResponseDifferentFeatureIDs,
+				err := fmt.Errorf("%w: actual %s != expected %s", 
+					ErrResponseFeatureIDMismatch,
 					res.Evaluation.FeatureID,
 					featureID,
 				)
@@ -1982,7 +2006,7 @@ func TestGetEvaluation(t *testing.T) {
 					model.GetEvaluation,
 				)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(
-					errResponseVariationValueEmpty,
+					ErrResponseVariationValueEmpty,
 					model.GetEvaluation,
 				)
 			},

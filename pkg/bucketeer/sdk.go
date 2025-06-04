@@ -4,7 +4,6 @@ package bucketeer
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -117,12 +116,6 @@ type SDK interface {
 	Close(ctx context.Context) error
 }
 
-var (
-	errResponseNil                 = errors.New("invalid get evaluation response: res is nil")
-	errResponseEvaluationNil       = errors.New("invalid get evaluation response: evaluation is nil")
-	errResponseVariationValueEmpty = errors.New("invalid get evaluation response: variation value is empty")
-	errResponseDifferentFeatureIDs = "invalid get evaluation response: feature id doesn't match: actual %s != expected %s"
-)
 
 type sdk struct {
 	enableLocalEvaluation     bool
@@ -353,15 +346,16 @@ func (s *sdk) StringVariationDetails(
 func (s *sdk) JSONVariation(ctx context.Context, user *user.User, featureID string, dst interface{}) {
 	evaluation, err := s.getEvaluation(ctx, model.SourceIDType(s.sourceID), user, featureID)
 	if err != nil {
+		reason := MapErrorToReason(err, s.enableLocalEvaluation, featureID)
 		s.logVariationError(err, "JSONVariation", user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+		s.eventProcessor.PushDefaultEvaluationEventWithReason(user, featureID, reason)
 		return
 	}
 	variation := evaluation.VariationValue
 	err = json.Unmarshal([]byte(variation), dst)
 	if err != nil {
 		s.logVariationError(err, "JSONVariation", user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+		s.eventProcessor.PushDefaultEvaluationEventWithReason(user, featureID, model.ReasonErrorWrongType)
 		return
 	}
 	s.eventProcessor.PushEvaluationEvent(user, evaluation)
@@ -402,27 +396,18 @@ func getEvaluationDetails[T model.EvaluationValue](
 
 	evaluation, err := s.getEvaluation(ctx, model.SourceIDType(s.sourceID), user, featureID)
 	if err != nil {
-		if errors.Is(err, evaluator.ErrEvaluationNotFound) {
-			s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-			return model.NewEvaluationDetails(
-				featureID,
-				user.ID,
-				"",
-				"",
-				0,
-				model.ReasonErrorFlagNotFound,
-				defaultValue,
-			)
-		}
+		reason := MapErrorToReason(err, s.enableLocalEvaluation, featureID)
+
 		s.logVariationError(err, logFuncName, user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+		s.eventProcessor.PushDefaultEvaluationEventWithReason(user, featureID, reason)
+
 		return model.NewEvaluationDetails(
 			featureID,
 			user.ID,
 			"",
 			"",
 			0,
-			model.ReasonErrorException,
+			reason,
 			defaultValue,
 		)
 	}
@@ -462,11 +447,11 @@ func getEvaluationDetails[T model.EvaluationValue](
 			value = parsedValue
 		}
 	default:
-		err = fmt.Errorf("unsupported type: %T", defaultValue)
+		err = fmt.Errorf("%w: %T", ErrUnsupportedType, defaultValue)
 	}
 	if err != nil {
 		s.logVariationError(err, logFuncName, user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+		s.eventProcessor.PushDefaultEvaluationEventWithReason(user, featureID, model.ReasonErrorWrongType)
 
 		return model.NewEvaluationDetails(
 			featureID,
@@ -499,7 +484,7 @@ func validateGetEvaluationRequest[T model.EvaluationValue](
 	logFuncName string,
 ) (model.BKTEvaluationDetails[T], bool) {
 	if !user.Valid() {
-		s.logVariationError(errors.New("invalid user"), logFuncName, "", featureID)
+		s.logVariationError(ErrInvalidUser, logFuncName, "", featureID)
 		return model.NewEvaluationDetails(
 			featureID,
 			"",
@@ -511,7 +496,7 @@ func validateGetEvaluationRequest[T model.EvaluationValue](
 		), false
 	}
 	if featureID == "" {
-		s.logVariationError(errors.New("featureID is empty"), logFuncName, user.ID, featureID)
+		s.logVariationError(ErrFeatureIDEmpty, logFuncName, user.ID, featureID)
 		return model.NewEvaluationDetails(
 			featureID,
 			user.ID,
@@ -532,7 +517,7 @@ func (s *sdk) getEvaluation(
 	featureID string,
 ) (*model.Evaluation, error) {
 	if !user.Valid() {
-		return nil, fmt.Errorf("invalid user: %v", user)
+		return nil, fmt.Errorf("%w: %v", ErrInvalidUser, user)
 	}
 	if s.enableLocalEvaluation {
 		// Evaluate the end user locally
@@ -590,20 +575,20 @@ func (s *sdk) getEvaluationRemotely(
 
 func (s *sdk) validateGetEvaluationResponse(res *model.GetEvaluationResponse, featureID string) error {
 	if res == nil {
-		return errResponseNil
+		return ErrResponseNil
 	}
 	if res.Evaluation == nil {
-		return errResponseEvaluationNil
+		return ErrResponseEvaluationNil
 	}
 	if res.Evaluation.FeatureID != featureID {
-		return fmt.Errorf(
-			errResponseDifferentFeatureIDs,
+		return fmt.Errorf("%w: actual %s != expected %s", 
+			ErrResponseFeatureIDMismatch,
 			res.Evaluation.FeatureID,
 			featureID,
 		)
 	}
 	if res.Evaluation.VariationValue == "" {
-		return errResponseVariationValueEmpty
+		return ErrResponseVariationValueEmpty
 	}
 	return nil
 }
