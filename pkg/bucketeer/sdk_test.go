@@ -1967,7 +1967,7 @@ func TestGetEvaluation(t *testing.T) {
 			setup: func(ctx context.Context, s *sdk, user *user.User, featureID string) {
 				req := model.NewGetEvaluationRequest(sdkTag, featureID, sdkVersion, model.SourceIDGoServer, user)
 				res := newGetEvaluationResponse(t, "invalid-feature-id", "value")
-				err := fmt.Errorf("%w: actual %s != expected %s", 
+				err := fmt.Errorf("%w: actual %s != expected %s",
 					ErrResponseFeatureIDMismatch,
 					res.Evaluation.FeatureID,
 					featureID,

@@ -116,7 +116,6 @@ type SDK interface {
 	Close(ctx context.Context) error
 }
 
-
 type sdk struct {
 	enableLocalEvaluation     bool
 	tag                       string
@@ -581,7 +580,7 @@ func (s *sdk) validateGetEvaluationResponse(res *model.GetEvaluationResponse, fe
 		return ErrResponseEvaluationNil
 	}
 	if res.Evaluation.FeatureID != featureID {
-		return fmt.Errorf("%w: actual %s != expected %s", 
+		return fmt.Errorf("%w: actual %s != expected %s",
 			ErrResponseFeatureIDMismatch,
 			res.Evaluation.FeatureID,
 			featureID,
