@@ -31,11 +31,8 @@ type Processor interface {
 	// PushEvaluationEvent pushes the evaluation event to the queue.
 	PushEvaluationEvent(user *user.User, evaluation *model.Evaluation)
 
-	// PushDefaultEvaluationEvent pushes the default evaluation event to the queue.
-	PushDefaultEvaluationEvent(user *user.User, featureID string)
-
-	// PushDefaultEvaluationEventWithReason pushes the default evaluation event with a specific reason to the queue.
-	PushDefaultEvaluationEventWithReason(user *user.User, featureID string, reason model.ReasonType)
+	// PushDefaultEvaluationEvent pushes the default evaluation event with a specific reason to the queue.
+	PushDefaultEvaluationEvent(user *user.User, featureID string, reason model.ReasonType)
 
 	// PushGoalEvent pushes the goal event to the queue.
 	PushGoalEvent(user *user.User, GoalID string, value float64)
@@ -170,11 +167,7 @@ func (p *processor) PushEvaluationEvent(
 	}
 }
 
-func (p *processor) PushDefaultEvaluationEvent(user *user.User, featureID string) {
-	p.PushDefaultEvaluationEventWithReason(user, featureID, model.ReasonErrorException)
-}
-
-func (p *processor) PushDefaultEvaluationEventWithReason(user *user.User, featureID string, reason model.ReasonType) {
+func (p *processor) PushDefaultEvaluationEvent(user *user.User, featureID string, reason model.ReasonType) {
 	evaluationEvt := model.NewEvaluationEvent(
 		p.tag,
 		featureID,

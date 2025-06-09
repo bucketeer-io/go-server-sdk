@@ -52,7 +52,7 @@ func TestPushDefaultEvaluationEventWithReason(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	user := newUser(t, processorUserID)
-	p.PushDefaultEvaluationEventWithReason(user, processorFeatureID, model.ReasonErrorFlagNotFound)
+	p.PushDefaultEvaluationEvent(user, processorFeatureID, model.ReasonErrorFlagNotFound)
 	evt := <-p.evtQueue.eventCh()
 	e := model.NewEvaluationEvent(p.tag, processorFeatureID, "", version.SDKVersion, 0, model.SourceIDGoServer, user, &model.Reason{Type: model.ReasonErrorFlagNotFound})
 	err := json.Unmarshal(evt.Event, e)

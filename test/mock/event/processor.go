@@ -58,27 +58,15 @@ func (mr *MockProcessorMockRecorder) Close(ctx any) *gomock.Call {
 }
 
 // PushDefaultEvaluationEvent mocks base method.
-func (m *MockProcessor) PushDefaultEvaluationEvent(user *user.User, featureID string) {
+func (m *MockProcessor) PushDefaultEvaluationEvent(user *user.User, featureID string, reason model.ReasonType) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PushDefaultEvaluationEvent", user, featureID)
+	m.ctrl.Call(m, "PushDefaultEvaluationEvent", user, featureID, reason)
 }
 
 // PushDefaultEvaluationEvent indicates an expected call of PushDefaultEvaluationEvent.
-func (mr *MockProcessorMockRecorder) PushDefaultEvaluationEvent(user, featureID any) *gomock.Call {
+func (mr *MockProcessorMockRecorder) PushDefaultEvaluationEvent(user, featureID, reason any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushDefaultEvaluationEvent", reflect.TypeOf((*MockProcessor)(nil).PushDefaultEvaluationEvent), user, featureID)
-}
-
-// PushDefaultEvaluationEventWithReason mocks base method.
-func (m *MockProcessor) PushDefaultEvaluationEventWithReason(user *user.User, featureID string, reason model.ReasonType) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PushDefaultEvaluationEventWithReason", user, featureID, reason)
-}
-
-// PushDefaultEvaluationEventWithReason indicates an expected call of PushDefaultEvaluationEventWithReason.
-func (mr *MockProcessorMockRecorder) PushDefaultEvaluationEventWithReason(user, featureID, reason any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushDefaultEvaluationEventWithReason", reflect.TypeOf((*MockProcessor)(nil).PushDefaultEvaluationEventWithReason), user, featureID, reason)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushDefaultEvaluationEvent", reflect.TypeOf((*MockProcessor)(nil).PushDefaultEvaluationEvent), user, featureID, reason)
 }
 
 // PushErrorEvent mocks base method.

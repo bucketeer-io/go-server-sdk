@@ -47,7 +47,7 @@ func TestBoolVariation(t *testing.T) {
 					nil,
 					100, err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					user,
 					featureID,
 					model.ReasonErrorException,
@@ -76,7 +76,7 @@ func TestBoolVariation(t *testing.T) {
 					100,
 					model.GetEvaluation,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					user,
 					featureID,
 					model.ReasonErrorWrongType,
@@ -146,7 +146,7 @@ func TestBoolVariationDetails(t *testing.T) {
 					nil,
 					100, err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					user,
 					featureID,
 					model.ReasonErrorException,
@@ -183,7 +183,7 @@ func TestBoolVariationDetails(t *testing.T) {
 					100,
 					model.GetEvaluation,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					user,
 					featureID,
 					model.ReasonErrorWrongType,
@@ -269,7 +269,7 @@ func TestIntVariation(t *testing.T) {
 					nil,
 					100, err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					user,
 					featureID,
 					model.ReasonErrorException,
@@ -298,7 +298,7 @@ func TestIntVariation(t *testing.T) {
 					10,
 					model.GetEvaluation,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					user,
 					featureID,
 					model.ReasonErrorWrongType,
@@ -392,7 +392,7 @@ func TestIntVariationDetails(t *testing.T) {
 					nil,
 					100, err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					user,
 					featureID,
 					model.ReasonErrorException,
@@ -429,7 +429,7 @@ func TestIntVariationDetails(t *testing.T) {
 					10,
 					model.GetEvaluation,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					user,
 					featureID,
 					model.ReasonErrorWrongType,
@@ -548,7 +548,7 @@ func TestInt64Variation(t *testing.T) {
 					100,
 					err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					user,
 					featureID,
 					model.ReasonErrorException,
@@ -577,7 +577,7 @@ func TestInt64Variation(t *testing.T) {
 					5,
 					model.GetEvaluation,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					user,
 					featureID,
 					model.ReasonErrorWrongType,
@@ -672,7 +672,7 @@ func TestInt64VariationDetails(t *testing.T) {
 					100,
 					err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					user,
 					featureID,
 					model.ReasonErrorException,
@@ -709,7 +709,7 @@ func TestInt64VariationDetails(t *testing.T) {
 					5,
 					model.GetEvaluation,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					user,
 					featureID,
 					model.ReasonErrorWrongType,
@@ -827,7 +827,7 @@ func TestFloat64Variation(t *testing.T) {
 					nil,
 					100, err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					user,
 					featureID,
 					model.ReasonErrorException,
@@ -856,7 +856,7 @@ func TestFloat64Variation(t *testing.T) {
 					100,
 					model.GetEvaluation,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					user,
 					featureID,
 					model.ReasonErrorWrongType,
@@ -926,7 +926,7 @@ func TestFloat64VariationDetails(t *testing.T) {
 					nil,
 					100, err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					user,
 					featureID,
 					model.ReasonErrorException,
@@ -963,7 +963,7 @@ func TestFloat64VariationDetails(t *testing.T) {
 					100,
 					model.GetEvaluation,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					user,
 					featureID,
 					model.ReasonErrorWrongType,
@@ -1049,7 +1049,7 @@ func TestStringVariation(t *testing.T) {
 					nil,
 					100, err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					user,
 					featureID,
 					model.ReasonErrorException,
@@ -1123,7 +1123,7 @@ func TestStringVariationDetails(t *testing.T) {
 					nil,
 					100, err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					user,
 					featureID,
 					model.ReasonErrorException,
@@ -1217,7 +1217,7 @@ func TestJSONVariation(t *testing.T) {
 					nil,
 					100, err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					user,
 					featureID,
 					model.ReasonErrorException,
@@ -1246,7 +1246,7 @@ func TestJSONVariation(t *testing.T) {
 					100,
 					model.GetEvaluation,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					user,
 					featureID,
 					model.ReasonErrorWrongType,
@@ -1320,7 +1320,7 @@ func TestObjectVariation(t *testing.T) {
 					nil,
 					100, err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					user,
 					featureID,
 					model.ReasonErrorException,
@@ -1355,7 +1355,7 @@ func TestObjectVariation(t *testing.T) {
 					100,
 					model.GetEvaluation,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					user,
 					featureID,
 					model.ReasonErrorWrongType,
@@ -1567,7 +1567,7 @@ func TestObjectVariationDetails(t *testing.T) {
 					nil,
 					100, err,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					user,
 					featureID,
 					model.ReasonErrorException,
@@ -1610,7 +1610,7 @@ func TestObjectVariationDetails(t *testing.T) {
 					100,
 					model.GetEvaluation,
 				)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEventWithReason(
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(
 					user,
 					featureID,
 					model.ReasonErrorWrongType,

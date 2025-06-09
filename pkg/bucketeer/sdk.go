@@ -347,14 +347,14 @@ func (s *sdk) JSONVariation(ctx context.Context, user *user.User, featureID stri
 	if err != nil {
 		reason := MapErrorToReason(err, s.enableLocalEvaluation, featureID)
 		s.logVariationError(err, "JSONVariation", user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEventWithReason(user, featureID, reason)
+		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID, reason)
 		return
 	}
 	variation := evaluation.VariationValue
 	err = json.Unmarshal([]byte(variation), dst)
 	if err != nil {
 		s.logVariationError(err, "JSONVariation", user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEventWithReason(user, featureID, model.ReasonErrorWrongType)
+		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID, model.ReasonErrorWrongType)
 		return
 	}
 	s.eventProcessor.PushEvaluationEvent(user, evaluation)
@@ -398,7 +398,7 @@ func getEvaluationDetails[T model.EvaluationValue](
 		reason := MapErrorToReason(err, s.enableLocalEvaluation, featureID)
 
 		s.logVariationError(err, logFuncName, user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEventWithReason(user, featureID, reason)
+		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID, reason)
 
 		return model.NewEvaluationDetails(
 			featureID,
@@ -450,7 +450,7 @@ func getEvaluationDetails[T model.EvaluationValue](
 	}
 	if err != nil {
 		s.logVariationError(err, logFuncName, user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEventWithReason(user, featureID, model.ReasonErrorWrongType)
+		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID, model.ReasonErrorWrongType)
 
 		return model.NewEvaluationDetails(
 			featureID,
