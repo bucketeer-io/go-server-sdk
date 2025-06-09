@@ -4,8 +4,6 @@ import "errors"
 
 // Validation errors
 var (
-	ErrUserIDEmpty     = errors.New("user ID is empty")
-	ErrInvalidUser     = errors.New("invalid user")
 	ErrFeatureIDEmpty  = errors.New("featureID is empty")
 	ErrCacheNotReady   = errors.New("cache is not ready")
 	ErrUnsupportedType = errors.New("unsupported variation type")
