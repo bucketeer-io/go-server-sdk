@@ -41,7 +41,7 @@ func MapErrorToReason(err error, isLocalEvaluation bool, featureID string) model
 }
 
 func mapLocalEvaluationError(err error) model.ReasonType {
-	if errors.Is(err, evaluator.ErrEvaluationNotFound) || errors.Is(err, cache.ErrNotFound){
+	if errors.Is(err, evaluator.ErrEvaluationNotFound) || errors.Is(err, cache.ErrNotFound) {
 		return model.ReasonErrorFlagNotFound
 	}
 	if errors.Is(err, ErrCacheNotReady) || errors.Is(err, cache.ErrInvalidType) {
