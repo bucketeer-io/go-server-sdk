@@ -181,7 +181,7 @@ func (p *processor) PushDefaultEvaluationEvent(user *user.User, featureID string
 	encodedEvaluationEvt, err := json.Marshal(evaluationEvt)
 	if err != nil {
 		p.loggers.Errorf(
-			"bucketeer/event: PushDefaultEvaluationEventWithReason failed (err: %v, UserID: %s, featureID: %s)",
+			"bucketeer/event: PushDefaultEvaluationEvent failed (err: %v, UserID: %s, featureID: %s)",
 			err,
 			user.ID,
 			featureID,
@@ -190,7 +190,7 @@ func (p *processor) PushDefaultEvaluationEvent(user *user.User, featureID string
 	}
 	if err := p.PushEvent(encodedEvaluationEvt); err != nil {
 		p.loggers.Errorf(
-			"bucketeer/event: PushDefaultEvaluationEventWithReason failed (err: %v, UserID: %s, featureID: %s)",
+			"bucketeer/event: PushDefaultEvaluationEvent failed (err: %v, UserID: %s, featureID: %s)",
 			err,
 			user.ID,
 			featureID,

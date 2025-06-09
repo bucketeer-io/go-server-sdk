@@ -48,7 +48,7 @@ func TestPushEvaluationEvent(t *testing.T) {
 	assert.Equal(t, version.SDKVersion, e.SDKVersion)
 }
 
-func TestPushDefaultEvaluationEventWithReason(t *testing.T) {
+func TestPushDefaultEvaluationEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	user := newUser(t, processorUserID)
