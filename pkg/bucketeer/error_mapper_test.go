@@ -11,6 +11,7 @@ import (
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/cache"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/evaluator"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"
 )
 
 func TestMapErrorToReason(t *testing.T) {
@@ -42,7 +43,7 @@ func TestMapErrorToReason(t *testing.T) {
 			err:               cache.ErrNotFound,
 			isLocalEvaluation: true,
 			featureID:         "test-feature",
-			expected:          model.ReasonErrorCacheNotFound,
+			expected:          model.ReasonErrorFlagNotFound,
 		},
 		{
 			name:              "local evaluation - other error",
@@ -74,7 +75,7 @@ func TestMapErrorToReason(t *testing.T) {
 		},
 		{
 			name:              "validation - invalid user with custom error",
-			err:               ErrInvalidUser,
+			err:               user.ErrInvalidUser,
 			isLocalEvaluation: false,
 			featureID:         "test-feature",
 			expected:          model.ReasonErrorUserIDNotSpecified,
@@ -88,7 +89,7 @@ func TestMapErrorToReason(t *testing.T) {
 		},
 		{
 			name:              "validation - user ID is empty with custom error",
-			err:               ErrUserIDEmpty,
+			err:               user.ErrUserIDEmpty,
 			isLocalEvaluation: false,
 			featureID:         "test-feature",
 			expected:          model.ReasonErrorUserIDNotSpecified,
@@ -119,21 +120,21 @@ func TestMapErrorToReason(t *testing.T) {
 			err:               cache.ErrFailedToMarshalProto,
 			isLocalEvaluation: true,
 			featureID:         "test-feature",
-			expected:          model.ReasonErrorCacheNotFound,
+			expected:          model.ReasonErrorException,
 		},
 		{
 			name:              "local evaluation - cache proto message nil",
 			err:               cache.ErrProtoMessageNil,
 			isLocalEvaluation: true,
 			featureID:         "test-feature",
-			expected:          model.ReasonErrorCacheNotFound,
+			expected:          model.ReasonErrorException,
 		},
 		{
 			name:              "local evaluation - cache failed to unmarshal proto",
 			err:               cache.ErrFailedToUnmarshalProto,
 			isLocalEvaluation: true,
 			featureID:         "test-feature",
-			expected:          model.ReasonErrorCacheNotFound,
+			expected:          model.ReasonErrorException,
 		},
 		{
 			name:              "local evaluation - cache invalid type",
