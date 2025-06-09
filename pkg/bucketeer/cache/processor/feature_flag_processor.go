@@ -24,6 +24,9 @@ type FeatureFlagProcessor interface {
 
 	// Close tears down all Processor activities, after ensuring that all events have been delivered.
 	Close()
+
+	// IsReady returns true if the processor has completed at least one successful cache update
+	IsReady() bool
 }
 
 type processor struct {
@@ -39,6 +42,7 @@ type processor struct {
 	sourceID                model.SourceIDType
 	closeCh                 chan struct{}
 	loggers                 *log.Loggers
+	ready                   bool
 }
 
 // ProcessorConfig is the config for Processor.
@@ -105,6 +109,10 @@ func (p *processor) Run() {
 
 func (p *processor) Close() {
 	p.closeCh <- struct{}{}
+}
+
+func (p *processor) IsReady() bool {
+	return p.ready
 }
 
 func (p *processor) runProcessLoop() {
@@ -174,6 +182,7 @@ func (p *processor) updateCache() error {
 			p.pushErrorEvent(p.newInternalError(err), model.GetFeatureFlags)
 			return err
 		}
+		p.ready = true
 		return nil
 	}
 	// Update only the updated flags
@@ -187,6 +196,7 @@ func (p *processor) updateCache() error {
 		p.pushErrorEvent(p.newInternalError(err), model.GetFeatureFlags)
 		return err
 	}
+	p.ready = true
 	return nil
 }
 

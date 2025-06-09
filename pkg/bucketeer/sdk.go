@@ -482,8 +482,8 @@ func validateGetEvaluationRequest[T model.EvaluationValue](
 	defaultValue T,
 	logFuncName string,
 ) (model.BKTEvaluationDetails[T], bool) {
-	if !user.Valid() {
-		s.logVariationError(ErrInvalidUser, logFuncName, "", featureID)
+	if err := user.Validate(); err != nil {
+		s.logVariationError(err, logFuncName, "", featureID)
 		return model.NewEvaluationDetails(
 			featureID,
 			"",
@@ -515,8 +515,11 @@ func (s *sdk) getEvaluation(
 	user *user.User,
 	featureID string,
 ) (*model.Evaluation, error) {
-	if !user.Valid() {
-		return nil, fmt.Errorf("%w: %v", ErrInvalidUser, user)
+	if err := user.Validate(); err != nil {
+		return nil, fmt.Errorf("%w: %v", err, user)
+	}
+	if featureID == "" {
+		return nil, ErrFeatureIDEmpty
 	}
 	if s.enableLocalEvaluation {
 		// Evaluate the end user locally
@@ -531,6 +534,9 @@ func (s *sdk) getEvaluationLocally(
 	user *user.User,
 	featureID string,
 ) (*model.Evaluation, error) {
+	if !s.isCacheReady() {
+		return nil, ErrCacheNotReady
+	}
 	reqStart := time.Now()
 	eval := evaluator.NewEvaluator(s.tag, s.featureFlagsCache, s.segmentUsersCache)
 	evaluation, err := eval.Evaluate(user, featureID)
@@ -544,6 +550,14 @@ func (s *sdk) getEvaluationLocally(
 	s.eventProcessor.PushLatencyMetricsEvent(time.Since(reqStart), model.SDKGetEvaluation)
 	go s.collectMetrics(ctx, featureID, reqStart)
 	return evaluation, nil
+}
+
+func (s *sdk) isCacheReady() bool {
+	if !s.enableLocalEvaluation {
+		return true // Always ready for remote evaluation
+	}
+	// Check if cache processors have loaded initial data
+	return s.featureFlagCacheProcessor.IsReady() && s.segmentUserCacheProcessor.IsReady()
 }
 
 func (s *sdk) getEvaluationRemotely(

@@ -24,6 +24,9 @@ type SegmentUserProcessor interface {
 
 	// Close tears down all Processor activities, after ensuring that all events have been delivered.
 	Close()
+
+	// IsReady returns true if the processor has completed at least one successful cache update
+	IsReady() bool
 }
 
 type segmentUserProcessor struct {
@@ -39,6 +42,7 @@ type segmentUserProcessor struct {
 	sourceID                model.SourceIDType
 	closeCh                 chan struct{}
 	loggers                 *log.Loggers
+	ready                   bool
 }
 
 // ProcessorConfig is the config for Processor.
@@ -108,6 +112,10 @@ func (p *segmentUserProcessor) Close() {
 	p.closeCh <- struct{}{}
 }
 
+func (p *segmentUserProcessor) IsReady() bool {
+	return p.ready
+}
+
 func (p *segmentUserProcessor) runProcessLoop() {
 	defer func() {
 		p.loggers.Debug("bucketeer/cache: segmentUsers runProcessLoop done")
@@ -174,6 +182,7 @@ func (p *segmentUserProcessor) updateCache() error {
 			p.pushErrorEvent(p.newInternalError(err), model.GetSegmentUsers)
 			return err
 		}
+		p.ready = true
 		return nil
 	}
 	// Update only the updated segment users
@@ -181,6 +190,7 @@ func (p *segmentUserProcessor) updateCache() error {
 		p.pushErrorEvent(p.newInternalError(err), model.GetSegmentUsers)
 		return err
 	}
+	p.ready = true
 	return nil
 }
 
