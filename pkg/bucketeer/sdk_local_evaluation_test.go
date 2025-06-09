@@ -1388,13 +1388,20 @@ func TestCloseProcessor(t *testing.T) {
 
 func newSDKLocalEvaluationWithMock(t *testing.T, mockCtrl *gomock.Controller) *sdk {
 	t.Helper()
+	mockFF := mockprocessor.NewMockFeatureFlagProcessor(mockCtrl)
+	mockSU := mockprocessor.NewMockSegmentUserProcessor(mockCtrl)
+
+	// Set default expectations for IsReady - most tests expect cache to be ready
+	mockFF.EXPECT().IsReady().Return(true).AnyTimes()
+	mockSU.EXPECT().IsReady().Return(true).AnyTimes()
+
 	return &sdk{
 		tag:                       "server",
 		apiClient:                 mockapi.NewMockClient(mockCtrl),
 		eventProcessor:            mockevent.NewMockProcessor(mockCtrl),
 		enableLocalEvaluation:     true,
-		featureFlagCacheProcessor: mockprocessor.NewMockFeatureFlagProcessor(mockCtrl),
-		segmentUserCacheProcessor: mockprocessor.NewMockSegmentUserProcessor(mockCtrl),
+		featureFlagCacheProcessor: mockFF,
+		segmentUserCacheProcessor: mockSU,
 		featureFlagsCache:         mockcache.NewMockFeaturesCache(mockCtrl),
 		segmentUsersCache:         mockcache.NewMockSegmentUsersCache(mockCtrl),
 		loggers: log.NewLoggers(&log.LoggersConfig{
