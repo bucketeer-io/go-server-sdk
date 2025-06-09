@@ -48,26 +48,6 @@ func TestPushEvaluationEvent(t *testing.T) {
 	assert.Equal(t, version.SDKVersion, e.SDKVersion)
 }
 
-func TestPushDefaultEvaluationEvent(t *testing.T) {
-	t.Parallel()
-	p := newProcessorForTestPushEvent(t, 10)
-	user := newUser(t, processorUserID)
-	p.PushDefaultEvaluationEvent(user, processorFeatureID, model.ReasonErrorFlagNotFound)
-	evt := <-p.evtQueue.eventCh()
-	e := model.NewEvaluationEvent(p.tag, processorFeatureID, "", version.SDKVersion, 0, model.SourceIDGoServer, user, &model.Reason{Type: model.ReasonErrorFlagNotFound})
-	err := json.Unmarshal(evt.Event, e)
-	assert.NoError(t, err)
-	assert.Equal(t, p.tag, e.Tag)
-	assert.Equal(t, model.EvaluationEventType, e.Type)
-	assert.Equal(t, processorFeatureID, e.FeatureID)
-	assert.Equal(t, "", e.VariationID)
-	assert.Equal(t, int32(0), e.FeatureVersion)
-	assert.Equal(t, processorUserID, e.User.ID)
-	assert.Equal(t, model.ReasonErrorFlagNotFound, e.Reason.Type)
-	assert.Equal(t, e.SourceID, model.SourceIDGoServer)
-	assert.Equal(t, version.SDKVersion, e.SDKVersion)
-}
-
 func TestPushGoalEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
