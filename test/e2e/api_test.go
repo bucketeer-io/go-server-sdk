@@ -119,7 +119,7 @@ func TestRegisterEvents(t *testing.T) {
 		FeatureVersion: 0,
 		VariationID:    "",
 		User:           user,
-		Reason:         &model.Reason{Type: model.ReasonClient},
+		Reason:         &model.Reason{Type: model.ReasonErrorException},
 		Type:           model.EvaluationEventType,
 	})
 	assert.NoError(t, err)

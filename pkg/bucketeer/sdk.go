@@ -4,7 +4,6 @@ package bucketeer
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -116,13 +115,6 @@ type SDK interface {
 	// After calling this, the SDK should no longer be used.
 	Close(ctx context.Context) error
 }
-
-var (
-	errResponseNil                 = errors.New("invalid get evaluation response: res is nil")
-	errResponseEvaluationNil       = errors.New("invalid get evaluation response: evaluation is nil")
-	errResponseVariationValueEmpty = errors.New("invalid get evaluation response: variation value is empty")
-	errResponseDifferentFeatureIDs = "invalid get evaluation response: feature id doesn't match: actual %s != expected %s"
-)
 
 type sdk struct {
 	enableLocalEvaluation     bool
@@ -353,15 +345,16 @@ func (s *sdk) StringVariationDetails(
 func (s *sdk) JSONVariation(ctx context.Context, user *user.User, featureID string, dst interface{}) {
 	evaluation, err := s.getEvaluation(ctx, model.SourceIDType(s.sourceID), user, featureID)
 	if err != nil {
+		reason := MapErrorToReason(err, s.enableLocalEvaluation, featureID)
 		s.logVariationError(err, "JSONVariation", user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID, reason)
 		return
 	}
 	variation := evaluation.VariationValue
 	err = json.Unmarshal([]byte(variation), dst)
 	if err != nil {
 		s.logVariationError(err, "JSONVariation", user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID, model.ReasonErrorWrongType)
 		return
 	}
 	s.eventProcessor.PushEvaluationEvent(user, evaluation)
@@ -402,29 +395,18 @@ func getEvaluationDetails[T model.EvaluationValue](
 
 	evaluation, err := s.getEvaluation(ctx, model.SourceIDType(s.sourceID), user, featureID)
 	if err != nil {
-		if errors.Is(err, evaluator.ErrEvaluationNotFound) {
-			s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
-			return model.NewEvaluationDetails(
-				featureID,
-				user.ID,
-				"",
-				"",
-				0,
-				// TODO: Use the reason with the ERROR prefix instead.
-				model.ReasonClient,
-				defaultValue,
-			)
-		}
+		reason := MapErrorToReason(err, s.enableLocalEvaluation, featureID)
+
 		s.logVariationError(err, logFuncName, user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID, reason)
+
 		return model.NewEvaluationDetails(
 			featureID,
 			user.ID,
 			"",
 			"",
 			0,
-			// TODO: Use the reason with the ERROR prefix instead.
-			model.ReasonClient,
+			reason,
 			defaultValue,
 		)
 	}
@@ -464,11 +446,11 @@ func getEvaluationDetails[T model.EvaluationValue](
 			value = parsedValue
 		}
 	default:
-		err = fmt.Errorf("unsupported type: %T", defaultValue)
+		err = fmt.Errorf("%w: %T", ErrUnsupportedType, defaultValue)
 	}
 	if err != nil {
 		s.logVariationError(err, logFuncName, user.ID, featureID)
-		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID)
+		s.eventProcessor.PushDefaultEvaluationEvent(user, featureID, model.ReasonErrorWrongType)
 
 		return model.NewEvaluationDetails(
 			featureID,
@@ -476,8 +458,7 @@ func getEvaluationDetails[T model.EvaluationValue](
 			"",
 			"",
 			0,
-			// TODO: Use the reason with the ERROR prefix instead.
-			model.ReasonClient,
+			model.ReasonErrorWrongType,
 			defaultValue,
 		)
 	}
@@ -501,29 +482,27 @@ func validateGetEvaluationRequest[T model.EvaluationValue](
 	defaultValue T,
 	logFuncName string,
 ) (model.BKTEvaluationDetails[T], bool) {
-	if !user.Valid() {
-		s.logVariationError(errors.New("invalid user"), logFuncName, "", featureID)
+	if err := user.Validate(); err != nil {
+		s.logVariationError(err, logFuncName, "", featureID)
 		return model.NewEvaluationDetails(
 			featureID,
 			"",
 			"",
 			"",
 			0,
-			// TODO: Use the reason with the ERROR prefix instead.
-			model.ReasonClient,
+			model.ReasonErrorUserIDNotSpecified,
 			defaultValue,
 		), false
 	}
 	if featureID == "" {
-		s.logVariationError(errors.New("featureID is empty"), logFuncName, user.ID, featureID)
+		s.logVariationError(ErrFeatureIDEmpty, logFuncName, user.ID, featureID)
 		return model.NewEvaluationDetails(
 			featureID,
 			user.ID,
 			"",
 			"",
 			0,
-			// TODO: Use the reason with the ERROR prefix instead.
-			model.ReasonClient,
+			model.ReasonErrorFeatureFlagIDNotSpecified,
 			defaultValue,
 		), false
 	}
@@ -536,8 +515,11 @@ func (s *sdk) getEvaluation(
 	user *user.User,
 	featureID string,
 ) (*model.Evaluation, error) {
-	if !user.Valid() {
-		return nil, fmt.Errorf("invalid user: %v", user)
+	if err := user.Validate(); err != nil {
+		return nil, fmt.Errorf("%w: %v", err, user)
+	}
+	if featureID == "" {
+		return nil, ErrFeatureIDEmpty
 	}
 	if s.enableLocalEvaluation {
 		// Evaluate the end user locally
@@ -552,6 +534,9 @@ func (s *sdk) getEvaluationLocally(
 	user *user.User,
 	featureID string,
 ) (*model.Evaluation, error) {
+	if !s.isCacheReady() {
+		return nil, ErrCacheNotReady
+	}
 	reqStart := time.Now()
 	eval := evaluator.NewEvaluator(s.tag, s.featureFlagsCache, s.segmentUsersCache)
 	evaluation, err := eval.Evaluate(user, featureID)
@@ -565,6 +550,14 @@ func (s *sdk) getEvaluationLocally(
 	s.eventProcessor.PushLatencyMetricsEvent(time.Since(reqStart), model.SDKGetEvaluation)
 	go s.collectMetrics(ctx, featureID, reqStart)
 	return evaluation, nil
+}
+
+func (s *sdk) isCacheReady() bool {
+	if !s.enableLocalEvaluation {
+		return true // Always ready for remote evaluation
+	}
+	// Check if cache processors have loaded initial data
+	return s.featureFlagCacheProcessor.IsReady() && s.segmentUserCacheProcessor.IsReady()
 }
 
 func (s *sdk) getEvaluationRemotely(
@@ -595,20 +588,20 @@ func (s *sdk) getEvaluationRemotely(
 
 func (s *sdk) validateGetEvaluationResponse(res *model.GetEvaluationResponse, featureID string) error {
 	if res == nil {
-		return errResponseNil
+		return ErrResponseNil
 	}
 	if res.Evaluation == nil {
-		return errResponseEvaluationNil
+		return ErrResponseEvaluationNil
 	}
 	if res.Evaluation.FeatureID != featureID {
-		return fmt.Errorf(
-			errResponseDifferentFeatureIDs,
+		return fmt.Errorf("%w: actual %s != expected %s",
+			ErrResponseFeatureIDMismatch,
 			res.Evaluation.FeatureID,
 			featureID,
 		)
 	}
 	if res.Evaluation.VariationValue == "" {
-		return errResponseVariationValueEmpty
+		return ErrResponseVariationValueEmpty
 	}
 	return nil
 }

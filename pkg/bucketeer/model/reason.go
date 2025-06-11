@@ -36,4 +36,6 @@ const (
 	ReasonErrorFeatureFlagIDNotSpecified ReasonType = "ERROR_FEATURE_FLAG_ID_NOT_SPECIFIED"
 	// An unexpected error occurred during evaluation.
 	ReasonErrorException ReasonType = "ERROR_EXCEPTION"
+	// The cache is not ready after SDK initialization.
+	ReasonErrorCacheNotFound ReasonType = "ERROR_CACHE_NOT_FOUND"
 )

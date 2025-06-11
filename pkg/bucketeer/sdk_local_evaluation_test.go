@@ -242,7 +242,7 @@ func TestLocalBoolVariation(t *testing.T) {
 				)
 				e := fmt.Errorf("internal error while evaluating user locally: %w", internalErr)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(e, model.SDKGetEvaluation)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID, model.ReasonErrorException)
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftBoolean.Id,
@@ -307,7 +307,7 @@ func TestLocalBoolVariationDetail(t *testing.T) {
 				)
 				e := fmt.Errorf("internal error while evaluating user locally: %w", internalErr)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(e, model.SDKGetEvaluation)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID, model.ReasonErrorException)
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftBoolean.Id,
@@ -315,7 +315,7 @@ func TestLocalBoolVariationDetail(t *testing.T) {
 				FeatureID:      ftBoolean.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
-				Reason:         model.EvaluationReasonClient,
+				Reason:         model.EvaluationReasonErrorException,
 				VariationValue: false,
 				VariationID:    "",
 			},
@@ -386,7 +386,7 @@ func TestLocalIntVariation(t *testing.T) {
 				)
 				e := fmt.Errorf("internal error while evaluating user locally: %w", internalErr)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(e, model.SDKGetEvaluation)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID, model.ReasonErrorException)
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftInt.Id,
@@ -476,7 +476,7 @@ func TestLocalIntVariationDetail(t *testing.T) {
 				)
 				e := fmt.Errorf("internal error while evaluating user locally: %w", internalErr)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(e, model.SDKGetEvaluation)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID, model.ReasonErrorException)
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftInt.Id,
@@ -484,7 +484,7 @@ func TestLocalIntVariationDetail(t *testing.T) {
 				FeatureID:      ftInt.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
-				Reason:         model.EvaluationReasonClient,
+				Reason:         model.EvaluationReasonErrorException,
 				VariationValue: 0,
 				VariationID:    "",
 			},
@@ -587,7 +587,7 @@ func TestLocalInt64Variation(t *testing.T) {
 				)
 				e := fmt.Errorf("internal error while evaluating user locally: %w", internalErr)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(e, model.SDKGetEvaluation)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID, model.ReasonErrorException)
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftInt.Id,
@@ -677,7 +677,7 @@ func TestLocalInt64VariationDetail(t *testing.T) {
 				)
 				e := fmt.Errorf("internal error while evaluating user locally: %w", internalErr)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(e, model.SDKGetEvaluation)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID, model.ReasonErrorException)
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftInt.Id,
@@ -685,7 +685,7 @@ func TestLocalInt64VariationDetail(t *testing.T) {
 				FeatureID:      ftInt.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
-				Reason:         model.EvaluationReasonClient,
+				Reason:         model.EvaluationReasonErrorException,
 				VariationValue: 0,
 				VariationID:    "",
 			},
@@ -788,7 +788,7 @@ func TestLocalFloat64Variation(t *testing.T) {
 				)
 				e := fmt.Errorf("internal error while evaluating user locally: %w", internalErr)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(e, model.SDKGetEvaluation)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID, model.ReasonErrorException)
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftFloat.Id,
@@ -853,7 +853,7 @@ func TestLocalFloat64VariationDetail(t *testing.T) {
 				)
 				e := fmt.Errorf("internal error while evaluating user locally: %w", internalErr)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(e, model.SDKGetEvaluation)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID, model.ReasonErrorException)
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftFloat.Id,
@@ -861,7 +861,7 @@ func TestLocalFloat64VariationDetail(t *testing.T) {
 				FeatureID:      ftFloat.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
-				Reason:         model.EvaluationReasonClient,
+				Reason:         model.EvaluationReasonErrorException,
 				VariationValue: 0,
 				VariationID:    "",
 			},
@@ -932,7 +932,7 @@ func TestLocalStringVariation(t *testing.T) {
 				)
 				e := fmt.Errorf("internal error while evaluating user locally: %w", internalErr)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(e, model.SDKGetEvaluation)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID, model.ReasonErrorException)
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftString.Id,
@@ -997,7 +997,7 @@ func TestLocalStringVariationDetail(t *testing.T) {
 				)
 				e := fmt.Errorf("internal error while evaluating user locally: %w", internalErr)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(e, model.SDKGetEvaluation)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID, model.ReasonErrorException)
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftString.Id,
@@ -1005,7 +1005,7 @@ func TestLocalStringVariationDetail(t *testing.T) {
 				FeatureID:      ftString.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
-				Reason:         model.EvaluationReasonClient,
+				Reason:         model.EvaluationReasonErrorException,
 				VariationValue: "value default",
 				VariationID:    "",
 			},
@@ -1080,7 +1080,7 @@ func TestLocalJSONVariation(t *testing.T) {
 				)
 				e := fmt.Errorf("internal error while evaluating user locally: %w", internalErr)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(e, model.SDKGetEvaluation)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID, model.ReasonErrorException)
 			},
 			user:      &user.User{ID: "user-id-1"},
 			featureID: ftString.Id,
@@ -1151,7 +1151,7 @@ func TestLocalObjectVariation(t *testing.T) {
 				)
 				e := fmt.Errorf("internal error while evaluating user locally: %w", internalErr)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(e, model.SDKGetEvaluation)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID, model.ReasonErrorException)
 			},
 			user:         &user.User{ID: "user-id-1"},
 			featureID:    ftString.Id,
@@ -1223,7 +1223,7 @@ func TestLocalObjectVariationDetail(t *testing.T) {
 				)
 				e := fmt.Errorf("internal error while evaluating user locally: %w", internalErr)
 				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushErrorEvent(e, model.SDKGetEvaluation)
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().PushDefaultEvaluationEvent(u, featureID, model.ReasonErrorException)
 			},
 			user:         &user.User{ID: "user-id-1"},
 			featureID:    ftJSON.Id,
@@ -1232,7 +1232,7 @@ func TestLocalObjectVariationDetail(t *testing.T) {
 				FeatureID:      ftJSON.Id,
 				FeatureVersion: 0,
 				UserID:         "user-id-1",
-				Reason:         model.EvaluationReasonClient,
+				Reason:         model.EvaluationReasonErrorException,
 				VariationValue: &DstStruct{"defaultStr", "defaultInt"},
 				VariationID:    "",
 			},
@@ -1388,13 +1388,20 @@ func TestCloseProcessor(t *testing.T) {
 
 func newSDKLocalEvaluationWithMock(t *testing.T, mockCtrl *gomock.Controller) *sdk {
 	t.Helper()
+	mockFF := mockprocessor.NewMockFeatureFlagProcessor(mockCtrl)
+	mockSU := mockprocessor.NewMockSegmentUserProcessor(mockCtrl)
+
+	// Set default expectations for IsReady - most tests expect cache to be ready
+	mockFF.EXPECT().IsReady().Return(true).AnyTimes()
+	mockSU.EXPECT().IsReady().Return(true).AnyTimes()
+
 	return &sdk{
 		tag:                       "server",
 		apiClient:                 mockapi.NewMockClient(mockCtrl),
 		eventProcessor:            mockevent.NewMockProcessor(mockCtrl),
 		enableLocalEvaluation:     true,
-		featureFlagCacheProcessor: mockprocessor.NewMockFeatureFlagProcessor(mockCtrl),
-		segmentUserCacheProcessor: mockprocessor.NewMockSegmentUserProcessor(mockCtrl),
+		featureFlagCacheProcessor: mockFF,
+		segmentUserCacheProcessor: mockSU,
 		featureFlagsCache:         mockcache.NewMockFeaturesCache(mockCtrl),
 		segmentUsersCache:         mockcache.NewMockSegmentUsersCache(mockCtrl),
 		loggers: log.NewLoggers(&log.LoggersConfig{

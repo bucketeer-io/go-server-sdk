@@ -50,6 +50,20 @@ func (mr *MockSegmentUserProcessorMockRecorder) Close() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockSegmentUserProcessor)(nil).Close))
 }
 
+// IsReady mocks base method.
+func (m *MockSegmentUserProcessor) IsReady() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsReady")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsReady indicates an expected call of IsReady.
+func (mr *MockSegmentUserProcessorMockRecorder) IsReady() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsReady", reflect.TypeOf((*MockSegmentUserProcessor)(nil).IsReady))
+}
+
 // Run mocks base method.
 func (m *MockSegmentUserProcessor) Run() {
 	m.ctrl.T.Helper()
