@@ -4,10 +4,10 @@ package evaluator
 import (
 	"errors"
 
-	evaluation "github.com/bucketeer-io/bucketeer/evaluation/go"
-	ftdomain "github.com/bucketeer-io/bucketeer/pkg/feature/domain"
-	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	userproto "github.com/bucketeer-io/bucketeer/proto/user"
+	evaluation "github.com/bucketeer-io/bucketeer/v2/evaluation/go"
+	ftdomain "github.com/bucketeer-io/bucketeer/v2/pkg/feature/domain"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/cache"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"

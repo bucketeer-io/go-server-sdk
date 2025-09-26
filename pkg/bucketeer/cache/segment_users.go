@@ -20,7 +20,7 @@ import (
 	"strings"
 	"time"
 
-	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	"google.golang.org/protobuf/proto"
 )
 

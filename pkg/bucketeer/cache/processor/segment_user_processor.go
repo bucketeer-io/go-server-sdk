@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/api"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/cache"

@@ -3,8 +3,8 @@ package model
 import (
 	"strconv"
 
-	"github.com/bucketeer-io/bucketeer/proto/feature"
-	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
+	"github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 )
 
 type GetSegmentUsersResponse struct {

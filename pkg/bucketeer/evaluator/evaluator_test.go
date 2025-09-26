@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
-	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/cache/mock"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
