@@ -1,5 +1,32 @@
 # Changelog
 
+## [1.6.0](https://github.com/bucketeer-io/go-server-sdk/compare/v1.5.5...v1.6.0) (2025-09-26)
+
+
+### Features
+
+* add error details reason types ([#167](https://github.com/bucketeer-io/go-server-sdk/issues/167)) ([c7ec90b](https://github.com/bucketeer-io/go-server-sdk/commit/c7ec90b76d1397a67345a29d1251d00951f706e5))
+* add scheme configuration ([#159](https://github.com/bucketeer-io/go-server-sdk/issues/159)) ([3ca01d3](https://github.com/bucketeer-io/go-server-sdk/commit/3ca01d3255818811c781769298bd2f0f97f06c36))
+* add SDK version support to options ([#166](https://github.com/bucketeer-io/go-server-sdk/issues/166)) ([2655753](https://github.com/bucketeer-io/go-server-sdk/commit/2655753db6edba57a090071b81b82f5ac1b0356e))
+* add source ID support to SDK options and evaluation requests ([#169](https://github.com/bucketeer-io/go-server-sdk/issues/169)) ([439c6da](https://github.com/bucketeer-io/go-server-sdk/commit/439c6da38f9e04b650cb89cb1cea69cac8f4828c))
+* support detailed error reasons in client-side evaluation ([#174](https://github.com/bucketeer-io/go-server-sdk/issues/174)) ([7939bd8](https://github.com/bucketeer-io/go-server-sdk/commit/7939bd82f801bfdde0a74b0c257496ee23c1fd31))
+
+
+### Bug Fixes
+
+* remove unnecessary type arguments ([#163](https://github.com/bucketeer-io/go-server-sdk/issues/163)) ([11b5135](https://github.com/bucketeer-io/go-server-sdk/commit/11b51358c8d08af52a61b379049e0269d179278c))
+* resolve missing dependencies in incremental feature flag evaluation ([#177](https://github.com/bucketeer-io/go-server-sdk/issues/177)) ([6c691c9](https://github.com/bucketeer-io/go-server-sdk/commit/6c691c9c6f53d11fd545a2ded6e8de2515089289))
+
+
+### Miscellaneous
+
+* deprecate host and port configs ([#162](https://github.com/bucketeer-io/go-server-sdk/issues/162)) ([6af938e](https://github.com/bucketeer-io/go-server-sdk/commit/6af938e0c5347b7d31e535bf75577df345f72db3))
+* enhance SDK with versioning support in cache processors and requests ([#168](https://github.com/bucketeer-io/go-server-sdk/issues/168)) ([1fbdec5](https://github.com/bucketeer-io/go-server-sdk/commit/1fbdec50a4469a58c985dcea4bcf0ea6a226e753))
+* fix CODEOWNERS ([#164](https://github.com/bucketeer-io/go-server-sdk/issues/164)) ([a068946](https://github.com/bucketeer-io/go-server-sdk/commit/a068946e5bbe74a67bb159bc1a75f55ca1f8a4e7))
+* fix data race when calling IsReady() ([#175](https://github.com/bucketeer-io/go-server-sdk/issues/175)) ([ea1d748](https://github.com/bucketeer-io/go-server-sdk/commit/ea1d748fddf8ecd37e1294c6b291c24067d41090))
+* rename WithSDKVersion to WithWrapperSDKVersion for internal use indication ([#170](https://github.com/bucketeer-io/go-server-sdk/issues/170)) ([9f9a207](https://github.com/bucketeer-io/go-server-sdk/commit/9f9a2074ef4988d4c6b14f20bc964fcbe46587a0))
+* validate the source ID when initializing the SDK ([#173](https://github.com/bucketeer-io/go-server-sdk/issues/173)) ([9e1d5ff](https://github.com/bucketeer-io/go-server-sdk/commit/9e1d5ff17a1d9283a9134de122b88a539789402b))
+
 ## [1.5.5](https://github.com/bucketeer-io/go-server-sdk/compare/v1.5.4...v1.5.5) (2025-03-03)
 
 
