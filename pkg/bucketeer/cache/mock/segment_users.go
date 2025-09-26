@@ -12,7 +12,7 @@ package mock
 import (
 	reflect "reflect"
 
-	feature "github.com/bucketeer-io/bucketeer/proto/feature"
+	feature "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	gomock "go.uber.org/mock/gomock"
 )
 

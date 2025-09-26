@@ -1,25 +1,32 @@
+version: "2"
 run:
   tests: false
-linters-settings:
-  goimports:
-    # put imports beginning with prefix after 3rd-party packages;
-    # it's a comma-separated list of prefixes
-    local-prefixes: github.com/bucketeer-io/go-server-sdk
 linters:
-  disable-all: true
+  default: none
   enable:
-    - deadcode
     - errcheck
-    - gosimple
     - govet
     - ineffassign
+    - lll
     - staticcheck
-    - structcheck
-    - typecheck
     - unused
-    - varcheck
+  settings:
+    staticcheck:
+      checks: ["all", "-SA1019", "-ST1003", "-ST1012"] # ignore deprecated, ignore poorly chosen identifier and ignore poorly chosen name for error variable
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+formatters:
+  enable:
     - gofmt
     - goimports
-    - golint
-    - gosec
-    - lll
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/bucketeer-io/go-server-sdk
+  exclusions:
+    generated: lax

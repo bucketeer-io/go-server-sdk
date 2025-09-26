@@ -3,8 +3,8 @@ package model
 import (
 	"strconv"
 
-	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
-	gwproto "github.com/bucketeer-io/bucketeer/proto/gateway"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
+	gwproto "github.com/bucketeer-io/bucketeer/v2/proto/gateway"
 )
 
 type GetFeatureFlagsResponse struct {

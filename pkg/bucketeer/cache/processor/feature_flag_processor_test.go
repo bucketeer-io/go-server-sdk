@@ -19,7 +19,7 @@ import (
 	"testing"
 	"time"
 
-	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 

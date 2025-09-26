@@ -4,9 +4,10 @@ package processor
 import (
 	"errors"
 	"fmt"
+	"sync/atomic"
 	"time"
 
-	ftproto "github.com/bucketeer-io/bucketeer/proto/feature"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/api"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/cache"
@@ -42,7 +43,7 @@ type segmentUserProcessor struct {
 	sourceID                model.SourceIDType
 	closeCh                 chan struct{}
 	loggers                 *log.Loggers
-	ready                   bool
+	ready                   atomic.Bool
 }
 
 // ProcessorConfig is the config for Processor.
@@ -113,7 +114,7 @@ func (p *segmentUserProcessor) Close() {
 }
 
 func (p *segmentUserProcessor) IsReady() bool {
-	return p.ready
+	return p.ready.Load()
 }
 
 func (p *segmentUserProcessor) runProcessLoop() {
@@ -182,7 +183,7 @@ func (p *segmentUserProcessor) updateCache() error {
 			p.pushErrorEvent(p.newInternalError(err), model.GetSegmentUsers)
 			return err
 		}
-		p.ready = true
+		p.ready.Store(true)
 		return nil
 	}
 	// Update only the updated segment users
@@ -190,7 +191,7 @@ func (p *segmentUserProcessor) updateCache() error {
 		p.pushErrorEvent(p.newInternalError(err), model.GetSegmentUsers)
 		return err
 	}
-	p.ready = true
+	p.ready.Store(true)
 	return nil
 }
 
