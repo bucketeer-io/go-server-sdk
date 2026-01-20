@@ -38,7 +38,7 @@ build:
 
 .PHONY: test
 test:
-	TZ=UTC CGO_ENABLED=0 go run gotest.tools/gotestsum@$(GOTESTSUM_VERSION) \
+	TZ=UTC CGO_ENABLED=1 go run gotest.tools/gotestsum@$(GOTESTSUM_VERSION) \
 		--format pkgname \
 		-- -v -race ./pkg/...
 
@@ -48,7 +48,7 @@ coverage:
 
 .PHONY: e2e
 e2e:
-	TZ=UTC CGO_ENABLED=0 go run gotest.tools/gotestsum@$(GOTESTSUM_VERSION) \
+	TZ=UTC CGO_ENABLED=1 go run gotest.tools/gotestsum@$(GOTESTSUM_VERSION) \
 		--format pkgname \
 		-- -v -race ./test/e2e/... -args \
 		-api-key=${API_KEY} \
