@@ -2,6 +2,7 @@
 # Variables
 #############################
 IMPORT_PATH_TO := github.com/bucketeer-io/go-server-sdk
+GOTESTSUM_VERSION := v1.13.0
 
 #############################
 # Go
@@ -37,7 +38,9 @@ build:
 
 .PHONY: test
 test:
-	go test -v -race ./pkg/...
+	TZ=UTC CGO_ENABLED=0 go run gotest.tools/gotestsum@$(GOTESTSUM_VERSION) \
+		--format pkgname \
+		-- -v -race ./pkg/...
 
 .PHONY: coverage
 coverage:
@@ -45,5 +48,10 @@ coverage:
 
 .PHONY: e2e
 e2e:
-	go test -v -race ./test/e2e/... \
-		-args -api-key=${API_KEY} -api-key-server=${API_KEY_SERVER} -api-endpoint=${API_ENDPOINT} -scheme=${SCHEME}
+	TZ=UTC CGO_ENABLED=0 go run gotest.tools/gotestsum@$(GOTESTSUM_VERSION) \
+		--format pkgname \
+		-- -v -race ./test/e2e/... -args \
+		-api-key=${API_KEY} \
+		-api-key-server=${API_KEY_SERVER} \
+		-api-endpoint=${API_ENDPOINT} \
+		-scheme=${SCHEME}
