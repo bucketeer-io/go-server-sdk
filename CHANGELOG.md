@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.1](https://github.com/bucketeer-io/go-server-sdk/compare/v1.6.0...v1.6.1) (2026-01-20)
+
+
+### Bug Fixes
+
+* add semver support for equals and in operators with v-prefix normalization ([#178](https://github.com/bucketeer-io/go-server-sdk/issues/178)) ([905d292](https://github.com/bucketeer-io/go-server-sdk/commit/905d292470aabb9a1b3ef9bc193030438e45348b))
+
 ## [1.6.0](https://github.com/bucketeer-io/go-server-sdk/compare/v1.5.5...v1.6.0) (2025-09-26)
 
 
