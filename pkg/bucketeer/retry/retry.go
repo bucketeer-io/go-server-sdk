@@ -76,11 +76,7 @@ func IsRetryable(err error) bool {
 
 	// Check for DNS errors
 	var dnsErr *net.DNSError
-	if errors.As(err, &dnsErr) {
-		return true
-	}
-
-	return false
+	return errors.As(err, &dnsErr)
 }
 
 // Do executes the function with retry logic.
