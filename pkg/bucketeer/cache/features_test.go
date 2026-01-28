@@ -130,7 +130,37 @@ func TestPutFeaturesFlag(t *testing.T) {
 	}
 }
 
-// This function also tests the `Delete` interface
+func TestDeleteFeatureFlag(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	featureID := "feature-id-to-delete"
+	expectedKey := fmt.Sprintf("%s:%s", featureFlagPrefix, featureID)
+
+	patterns := []struct {
+		desc  string
+		setup func(*featuresCache)
+		input string
+	}{
+		{
+			desc: "success: deletes with correct prefixed key",
+			setup: func(fc *featuresCache) {
+				fc.cache.(*cachemock.MockCache).EXPECT().Delete(expectedKey)
+			},
+			input: featureID,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			fc := newFeaturesCache(t, mockController)
+			p.setup(fc)
+			fc.Delete(p.input)
+			// No error return, just verify the mock expectation was met
+		})
+	}
+}
+
 func TestDeleteAll(t *testing.T) {
 	t.Parallel()
 	mockController := gomock.NewController(t)

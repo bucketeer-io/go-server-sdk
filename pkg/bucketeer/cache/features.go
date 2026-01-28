@@ -81,7 +81,8 @@ func (c *featuresCache) Put(feature *ftproto.Feature) error {
 }
 
 func (c *featuresCache) Delete(id string) {
-	c.cache.Delete(id)
+	key := fmt.Sprintf("%s:%s", featureFlagPrefix, id)
+	c.cache.Delete(key)
 }
 
 func (c *featuresCache) DeleteAll() error {
