@@ -2,6 +2,7 @@
 package processor
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync/atomic"
@@ -84,6 +85,10 @@ const (
 	cacheTTL                   = time.Duration(0)
 	featureFlagsIDKey          = "bucketeer_feature_flags_id"
 	featureFlagsRequestedAtKey = "bucketeer_feature_flags_requested_at"
+
+	// minAbsoluteDeadline is the minimum deadline for retry operations.
+	// This ensures at least some retry attempts even with tight polling intervals.
+	minAbsoluteDeadline = 5 * time.Second
 )
 
 func NewFeatureFlagProcessor(conf *FeatureFlagProcessorConfig) FeatureFlagProcessor {
@@ -123,13 +128,14 @@ func (p *processor) runProcessLoop() {
 	ticker := time.NewTicker(p.pollingInterval)
 	defer ticker.Stop()
 	// Update the cache once when starts polling
-	if err := p.updateCache(); err != nil {
+	ctx := context.Background()
+	if err := p.updateCache(ctx); err != nil {
 		p.loggers.Errorf("bucketeer/cache: failed to update feature flags cache. Error: %v", err)
 	}
 	for {
 		select {
 		case <-ticker.C:
-			if err := p.updateCache(); err != nil {
+			if err := p.updateCache(ctx); err != nil {
 				p.loggers.Errorf("bucketeer/cache: failed to update feature flags cache. Error: %v", err)
 				continue
 			}
@@ -139,7 +145,16 @@ func (p *processor) runProcessLoop() {
 	}
 }
 
-func (p *processor) updateCache() error {
+func (p *processor) updateCache(ctx context.Context) error {
+	// Calculate deadline: leave 10% buffer before next tick
+	// This ensures retries complete before the next polling cycle
+	deadlineDuration := p.pollingInterval * 9 / 10
+
+	// Enforce minimum absolute deadline to ensure at least some retry attempts
+	deadlineDuration = max(deadlineDuration, minAbsoluteDeadline)
+
+	deadline := time.Now().Add(deadlineDuration)
+
 	ftsID, err := p.getFeatureFlagsID()
 	if err != nil {
 		if !errors.Is(err, cache.ErrNotFound) {
@@ -163,9 +178,9 @@ func (p *processor) updateCache() error {
 		p.sourceID,
 		requestedAt,
 	)
-	// Get the latest cache from the server
+	// Get the latest cache from the server with deadline-aware retry
 	reqStart := time.Now()
-	resp, size, err := p.apiClient.GetFeatureFlags(req)
+	resp, size, err := p.apiClient.GetFeatureFlagsWithDeadline(ctx, req, deadline)
 	if err != nil {
 		p.pushErrorEvent(p.newInternalError(err), model.GetFeatureFlags)
 		return err

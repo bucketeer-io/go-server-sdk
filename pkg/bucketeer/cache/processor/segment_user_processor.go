@@ -2,6 +2,7 @@
 package processor
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"sync/atomic"
@@ -124,13 +125,14 @@ func (p *segmentUserProcessor) runProcessLoop() {
 	ticker := time.NewTicker(p.pollingInterval)
 	defer ticker.Stop()
 	// Update the cache once when starts polling
-	if err := p.updateCache(); err != nil {
+	ctx := context.Background()
+	if err := p.updateCache(ctx); err != nil {
 		p.loggers.Errorf("bucketeer/cache: segmentUsers failed to update segment users cache. Error: %v", err)
 	}
 	for {
 		select {
 		case <-ticker.C:
-			if err := p.updateCache(); err != nil {
+			if err := p.updateCache(ctx); err != nil {
 				p.loggers.Errorf("bucketeer/cache: segmentUsers failed to update segment users cache. Error: %v", err)
 				continue
 			}
@@ -140,7 +142,18 @@ func (p *segmentUserProcessor) runProcessLoop() {
 	}
 }
 
-func (p *segmentUserProcessor) updateCache() error {
+func (p *segmentUserProcessor) updateCache(ctx context.Context) error {
+	// Calculate deadline: leave 10% buffer before next tick
+	// This ensures retries complete before the next polling cycle
+	deadlineDuration := p.pollingInterval * 9 / 10
+
+	// Enforce minimum absolute deadline to ensure at least some retry attempts
+	if deadlineDuration < minAbsoluteDeadline {
+		deadlineDuration = minAbsoluteDeadline
+	}
+
+	deadline := time.Now().Add(deadlineDuration)
+
 	ftsID, err := p.segmentUsersCache.GetSegmentIDs()
 	if err != nil {
 		if !errors.Is(err, cache.ErrNotFound) {
@@ -163,9 +176,9 @@ func (p *segmentUserProcessor) updateCache() error {
 		p.sdkVersion,
 		p.sourceID,
 	)
-	// Get the latest cache from the server
+	// Get the latest cache from the server with deadline-aware retry
 	reqStart := time.Now()
-	resp, size, err := p.apiClient.GetSegmentUsers(req)
+	resp, size, err := p.apiClient.GetSegmentUsersWithDeadline(ctx, req, deadline)
 	if err != nil {
 		p.pushErrorEvent(p.newInternalError(err), model.GetSegmentUsers)
 		return err

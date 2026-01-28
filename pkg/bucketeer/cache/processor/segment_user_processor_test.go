@@ -15,6 +15,7 @@
 package processor
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -49,11 +50,13 @@ func TestSegmentUsersPollingInterval(t *testing.T) {
 	p.cache.(*mockcache.MockCache).EXPECT().Get(segmentUsersRequestedAtKey).Return(int64(0), nil).Times(maxTimes)
 	p.cache.(*mockcache.MockCache).EXPECT().Put(segmentUsersRequestedAtKey, int64(0), segmentUserCacheTTL).Return(nil).Times(maxTimes)
 
-	p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(
+	p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsersWithDeadline(
+		gomock.Any(),
 		gomock.Cond(func(x any) bool {
 			req, ok := x.(*model.GetSegmentUsersRequest)
 			return ok && req.SDKVersion == p.sdkVersion
 		}),
+		gomock.Any(),
 	).Return(
 		&model.GetSegmentUsersResponse{},
 		10,
@@ -151,8 +154,14 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().GetSegmentIDs().Return(make([]string, 0), nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Get(segmentUsersRequestedAtKey).Return(int64(10), nil)
 
-				req := model.NewGetSegmentUsersRequest(make([]string, 0), int64(10), p.sdkVersion, p.sourceID)
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(req).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsersWithDeadline(
+					gomock.Any(),
+					gomock.Cond(func(x any) bool {
+						req, ok := x.(*model.GetSegmentUsersRequest)
+						return ok && req.SDKVersion == p.sdkVersion
+					}),
+					gomock.Any(),
+				).Return(
 					nil,
 					0,
 					internalErr,
@@ -172,8 +181,14 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Get(segmentUsersRequestedAtKey).Return(int64(10), nil)
 
-				req := model.NewGetSegmentUsersRequest([]string{"segment-id"}, int64(10), p.sdkVersion, p.sourceID)
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(req).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsersWithDeadline(
+					gomock.Any(),
+					gomock.Cond(func(x any) bool {
+						req, ok := x.(*model.GetSegmentUsersRequest)
+						return ok && req.SDKVersion == p.sdkVersion
+					}),
+					gomock.Any(),
+				).Return(
 					&model.GetSegmentUsersResponse{
 						SegmentUsers:      []model.SegmentUsers{modelSegmentUser},
 						RequestedAt:       "20",
@@ -212,8 +227,14 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Get(segmentUsersRequestedAtKey).Return(int64(10), nil)
 
-				req := model.NewGetSegmentUsersRequest([]string{"segment-id"}, int64(10), p.sdkVersion, p.sourceID)
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(req).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsersWithDeadline(
+					gomock.Any(),
+					gomock.Cond(func(x any) bool {
+						req, ok := x.(*model.GetSegmentUsersRequest)
+						return ok && req.SDKVersion == p.sdkVersion
+					}),
+					gomock.Any(),
+				).Return(
 					&model.GetSegmentUsersResponse{
 						SegmentUsers:      []model.SegmentUsers{modelSegmentUser},
 						RequestedAt:       "20",
@@ -250,8 +271,14 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Get(segmentUsersRequestedAtKey).Return(int64(10), nil)
 
-				req := model.NewGetSegmentUsersRequest(make([]string, 0), int64(10), p.sdkVersion, p.sourceID)
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(req).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsersWithDeadline(
+					gomock.Any(),
+					gomock.Cond(func(x any) bool {
+						req, ok := x.(*model.GetSegmentUsersRequest)
+						return ok && req.SDKVersion == p.sdkVersion
+					}),
+					gomock.Any(),
+				).Return(
 					&model.GetSegmentUsersResponse{
 						SegmentUsers:      []model.SegmentUsers{modelSegmentUser},
 						RequestedAt:       "20",
@@ -286,8 +313,14 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Get(segmentUsersRequestedAtKey).Return(int64(0), cache.ErrNotFound)
 
-				req := model.NewGetSegmentUsersRequest(make([]string, 0), int64(0), p.sdkVersion, p.sourceID)
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(req).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsersWithDeadline(
+					gomock.Any(),
+					gomock.Cond(func(x any) bool {
+						req, ok := x.(*model.GetSegmentUsersRequest)
+						return ok && req.SDKVersion == p.sdkVersion
+					}),
+					gomock.Any(),
+				).Return(
 					&model.GetSegmentUsersResponse{
 						SegmentUsers:      []model.SegmentUsers{modelSegmentUser},
 						RequestedAt:       "20",
@@ -324,8 +357,14 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Get(segmentUsersRequestedAtKey).Return(int64(10), nil)
 
-				req := model.NewGetSegmentUsersRequest([]string{"segment-id"}, int64(10), p.sdkVersion, p.sourceID)
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(req).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsersWithDeadline(
+					gomock.Any(),
+					gomock.Cond(func(x any) bool {
+						req, ok := x.(*model.GetSegmentUsersRequest)
+						return ok && req.SDKVersion == p.sdkVersion
+					}),
+					gomock.Any(),
+				).Return(
 					&model.GetSegmentUsersResponse{
 						SegmentUsers:      []model.SegmentUsers{modelSegmentUser},
 						RequestedAt:       "20",
@@ -367,8 +406,14 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().Delete(deletedSegmentIDs[0])
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().Delete(deletedSegmentIDs[1])
 
-				req := model.NewGetSegmentUsersRequest([]string{"segment-id"}, int64(10), p.sdkVersion, p.sourceID)
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(req).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsersWithDeadline(
+					gomock.Any(),
+					gomock.Cond(func(x any) bool {
+						req, ok := x.(*model.GetSegmentUsersRequest)
+						return ok && req.SDKVersion == p.sdkVersion
+					}),
+					gomock.Any(),
+				).Return(
 					&model.GetSegmentUsersResponse{
 						SegmentUsers:      []model.SegmentUsers{modelSegmentUser},
 						RequestedAt:       "20",
@@ -405,7 +450,7 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				3*time.Second,
 			)
 			p.setup(processor)
-			err := processor.updateCache()
+			err := processor.updateCache(context.Background())
 			assert.Equal(t, p.expected, err)
 		})
 	}
@@ -442,6 +487,7 @@ func newMockSegmentUserProcessor(
 			loggers:                 log.NewLoggers(loggerConf),
 			tag:                     "tag",
 			sdkVersion:              "1.0.0",
+			sourceID:                model.SourceIDGoServer,
 		},
 		MockProcessor: mockEventProcessor,
 	}
