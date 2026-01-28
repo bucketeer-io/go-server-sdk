@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"context"
 	"encoding/json"
 	"strconv"
 	"testing"
@@ -18,8 +19,15 @@ import (
 func TestGetEvaluation(t *testing.T) {
 	t.Parallel()
 	client := newAPIClient(t, *apiKey)
+	ctx := context.Background()
+	deadline := time.Now().Add(30 * time.Second)
+
 	user := user.NewUser(userID, nil)
-	res, _, err := client.GetEvaluation(model.NewGetEvaluationRequest(tag, featureID, sdkVersion, sourceID, user))
+	res, _, err := client.GetEvaluation(
+		ctx,
+		model.NewGetEvaluationRequest(tag, featureID, sdkVersion, sourceID, user),
+		deadline,
+	)
 	assert.NoError(t, err)
 	assert.Equal(t, featureID, res.Evaluation.FeatureID)
 	assert.Equal(t, featureIDVariation2, res.Evaluation.VariationValue)
@@ -28,11 +36,17 @@ func TestGetEvaluation(t *testing.T) {
 func TestGetFeatureFlags(t *testing.T) {
 	t.Parallel()
 	client := newAPIClient(t, *apiKeyServer)
+	ctx := context.Background()
+	deadline := time.Now().Add(30 * time.Second)
 
 	// Get all the features by tag
 	featureFlagsID := ""
 	requestedAt := int64(1)
-	resp, _, err := client.GetFeatureFlags(model.NewGetFeatureFlagsRequest(tag, featureFlagsID, sdkVersion, sourceID, requestedAt))
+	resp, _, err := client.GetFeatureFlags(
+		ctx,
+		model.NewGetFeatureFlagsRequest(tag, featureFlagsID, sdkVersion, sourceID, requestedAt),
+		deadline,
+	)
 	assert.NoError(t, err)
 	assert.True(t, len(resp.Features) >= 1)
 	assert.True(t, resp.FeatureFlagsID != featureFlagsID)
@@ -54,7 +68,12 @@ func TestGetFeatureFlags(t *testing.T) {
 	featureFlagsID = resp.FeatureFlagsID
 	requestedAt, err = strconv.ParseInt(resp.RequestedAt, 10, 64)
 	assert.NoError(t, err)
-	resp, _, err = client.GetFeatureFlags(model.NewGetFeatureFlagsRequest(tag, featureFlagsID, sdkVersion, sourceID, requestedAt))
+	deadline = time.Now().Add(30 * time.Second)
+	resp, _, err = client.GetFeatureFlags(
+		ctx,
+		model.NewGetFeatureFlagsRequest(tag, featureFlagsID, sdkVersion, sourceID, requestedAt),
+		deadline,
+	)
 	assert.NoError(t, err)
 	assert.Empty(t, resp.Features)
 	assert.True(t, resp.FeatureFlagsID == featureFlagsID)
@@ -77,10 +96,16 @@ func findFeature(t *testing.T, features []model.Feature, featureID string) bool 
 func TestGetSegmentUsers(t *testing.T) {
 	t.Parallel()
 	client := newAPIClient(t, *apiKeyServer)
+	ctx := context.Background()
+	deadline := time.Now().Add(30 * time.Second)
 
 	segmentIDs := []string{""}
 	requestedAt := int64(1)
-	resp, _, err := client.GetSegmentUsers(model.NewGetSegmentUsersRequest(segmentIDs, requestedAt, version.SDKVersion, sourceID))
+	resp, _, err := client.GetSegmentUsers(
+		ctx,
+		model.NewGetSegmentUsersRequest(segmentIDs, requestedAt, version.SDKVersion, sourceID),
+		deadline,
+	)
 	assert.NoError(t, err)
 	assert.True(t, len(resp.SegmentUsers) > 0)
 	assert.Empty(t, resp.DeletedSegmentIDs)
@@ -96,7 +121,12 @@ func TestGetSegmentUsers(t *testing.T) {
 	segmentIDs = []string{resp.SegmentUsers[0].SegmentID, randomID}
 	ra, err = strconv.ParseInt(resp.RequestedAt, 10, 64)
 	assert.NoError(t, err)
-	resp, _, err = client.GetSegmentUsers(model.NewGetSegmentUsersRequest(segmentIDs, ra, version.SDKVersion, sourceID))
+	deadline = time.Now().Add(30 * time.Second)
+	resp, _, err = client.GetSegmentUsers(
+		ctx,
+		model.NewGetSegmentUsersRequest(segmentIDs, ra, version.SDKVersion, sourceID),
+		deadline,
+	)
 	assert.NoError(t, err)
 	assert.Empty(t, resp.SegmentUsers)
 	assert.NotEmpty(t, resp.DeletedSegmentIDs)
@@ -110,6 +140,9 @@ func TestGetSegmentUsers(t *testing.T) {
 func TestRegisterEvents(t *testing.T) {
 	t.Parallel()
 	client := newAPIClient(t, *apiKey)
+	ctx := context.Background()
+	deadline := time.Now().Add(30 * time.Second)
+
 	user := user.NewUser(userID, nil)
 	evaluationEvent, err := json.Marshal(&model.EvaluationEvent{
 		Timestamp:      time.Now().Unix(),
@@ -214,7 +247,7 @@ func TestRegisterEvents(t *testing.T) {
 		},
 		sourceID,
 	)
-	res, _, err := client.RegisterEvents(req)
+	res, _, err := client.RegisterEvents(ctx, req, deadline)
 	assert.NoError(t, err)
 	assert.Len(t, res.Errors, 0)
 }

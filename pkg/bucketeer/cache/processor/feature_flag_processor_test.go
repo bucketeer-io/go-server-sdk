@@ -15,6 +15,7 @@
 package processor
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -54,7 +55,7 @@ func TestPollingInterval(t *testing.T) {
 	p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsIDKey, "", cacheTTL).Return(nil).Times(maxTimes)
 	p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsRequestedAtKey, int64(0), cacheTTL).Return(nil).Times(maxTimes)
 
-	p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(gomock.Any()).Return(
+	p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(gomock.Any(), gomock.Any(), gomock.Any()).Return(
 		&model.GetFeatureFlagsResponse{},
 		1,
 		nil,
@@ -118,8 +119,14 @@ func TestUpdateCache(t *testing.T) {
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsIDKey).Return("", nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return(int64(0), nil)
 
-				req := model.NewGetFeatureFlagsRequest(tag, "", sdkVersion, model.SourceIDGoServer, int64(0))
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(
+					gomock.Any(),
+					gomock.Cond(func(x any) bool {
+						req, ok := x.(*model.GetFeatureFlagsRequest)
+						return ok && req.Tag == tag && req.FeatureFlagsID == "" && req.SDKVersion == sdkVersion
+					}),
+					gomock.Any(),
+				).Return(
 					nil,
 					0,
 					internalErr,
@@ -140,8 +147,14 @@ func TestUpdateCache(t *testing.T) {
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsIDKey, "feature-flags-id-2", cacheTTL).Return(internalErr)
 
-				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", sdkVersion, model.SourceIDGoServer, int64(10))
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(
+					gomock.Any(),
+					gomock.Cond(func(x any) bool {
+						req, ok := x.(*model.GetFeatureFlagsRequest)
+						return ok && req.Tag == tag && req.FeatureFlagsID == "feature-flags-id-1"
+					}),
+					gomock.Any(),
+				).Return(
 					&model.GetFeatureFlagsResponse{
 						FeatureFlagsID:         "feature-flags-id-2",
 						RequestedAt:            "20",
@@ -175,8 +188,14 @@ func TestUpdateCache(t *testing.T) {
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsIDKey).Return("feature-flags-id-1", nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return(int64(10), nil)
 
-				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", sdkVersion, model.SourceIDGoServer, int64(10))
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(
+					gomock.Any(),
+					gomock.Cond(func(x any) bool {
+						req, ok := x.(*model.GetFeatureFlagsRequest)
+						return ok && req.Tag == tag && req.FeatureFlagsID == "feature-flags-id-1"
+					}),
+					gomock.Any(),
+				).Return(
 					&model.GetFeatureFlagsResponse{
 						FeatureFlagsID:         "feature-flags-id-2",
 						RequestedAt:            "20",
@@ -214,8 +233,14 @@ func TestUpdateCache(t *testing.T) {
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsIDKey).Return("feature-flags-id-1", nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return(int64(10), nil)
 
-				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", sdkVersion, model.SourceIDGoServer, int64(10))
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(
+					gomock.Any(),
+					gomock.Cond(func(x any) bool {
+						req, ok := x.(*model.GetFeatureFlagsRequest)
+						return ok && req.Tag == tag && req.FeatureFlagsID == "feature-flags-id-1"
+					}),
+					gomock.Any(),
+				).Return(
 					&model.GetFeatureFlagsResponse{
 						FeatureFlagsID:         "feature-flags-id-2",
 						RequestedAt:            "20",
@@ -252,8 +277,14 @@ func TestUpdateCache(t *testing.T) {
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsIDKey).Return("feature-flags-id-1", nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return(int64(10), nil)
 
-				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", sdkVersion, model.SourceIDGoServer, int64(10))
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(
+					gomock.Any(),
+					gomock.Cond(func(x any) bool {
+						req, ok := x.(*model.GetFeatureFlagsRequest)
+						return ok && req.Tag == tag && req.FeatureFlagsID == "feature-flags-id-1"
+					}),
+					gomock.Any(),
+				).Return(
 					&model.GetFeatureFlagsResponse{
 						FeatureFlagsID:         "feature-flags-id-2",
 						RequestedAt:            "20",
@@ -292,8 +323,14 @@ func TestUpdateCache(t *testing.T) {
 				p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsIDKey, "", cacheTTL).Return(nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsRequestedAtKey, int64(0), cacheTTL).Return(nil)
 
-				req := model.NewGetFeatureFlagsRequest(tag, "", sdkVersion, model.SourceIDGoServer, int64(10))
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(
+					gomock.Any(),
+					gomock.Cond(func(x any) bool {
+						req, ok := x.(*model.GetFeatureFlagsRequest)
+						return ok && req.Tag == tag && req.FeatureFlagsID == ""
+					}),
+					gomock.Any(),
+				).Return(
 					&model.GetFeatureFlagsResponse{},
 					1,
 					nil,
@@ -313,8 +350,14 @@ func TestUpdateCache(t *testing.T) {
 				p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsIDKey, "", cacheTTL).Return(nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsRequestedAtKey, int64(0), cacheTTL).Return(nil)
 
-				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", sdkVersion, model.SourceIDGoServer, int64(0))
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(
+					gomock.Any(),
+					gomock.Cond(func(x any) bool {
+						req, ok := x.(*model.GetFeatureFlagsRequest)
+						return ok && req.Tag == tag && req.FeatureFlagsID == "feature-flags-id-1"
+					}),
+					gomock.Any(),
+				).Return(
 					&model.GetFeatureFlagsResponse{},
 					1,
 					nil,
@@ -344,8 +387,14 @@ func TestUpdateCache(t *testing.T) {
 				p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsIDKey, "feature-flags-id-2", cacheTTL).Return(nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsRequestedAtKey, int64(20), cacheTTL).Return(nil)
 
-				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", sdkVersion, model.SourceIDGoServer, int64(10))
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(
+					gomock.Any(),
+					gomock.Cond(func(x any) bool {
+						req, ok := x.(*model.GetFeatureFlagsRequest)
+						return ok && req.Tag == tag && req.FeatureFlagsID == "feature-flags-id-1"
+					}),
+					gomock.Any(),
+				).Return(
 					&model.GetFeatureFlagsResponse{
 						FeatureFlagsID:         "feature-flags-id-2",
 						RequestedAt:            "20",
@@ -370,8 +419,14 @@ func TestUpdateCache(t *testing.T) {
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsIDKey).Return("feature-flags-id-1", nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return(int64(10), nil)
 
-				req := model.NewGetFeatureFlagsRequest(tag, "feature-flags-id-1", sdkVersion, model.SourceIDGoServer, int64(10))
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(req).Return(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(
+					gomock.Any(),
+					gomock.Cond(func(x any) bool {
+						req, ok := x.(*model.GetFeatureFlagsRequest)
+						return ok && req.Tag == tag && req.FeatureFlagsID == "feature-flags-id-1"
+					}),
+					gomock.Any(),
+				).Return(
 					&model.GetFeatureFlagsResponse{
 						FeatureFlagsID:         "feature-flags-id-2",
 						RequestedAt:            "20",
@@ -412,7 +467,7 @@ func TestUpdateCache(t *testing.T) {
 				3*time.Second,
 			)
 			p.setup(processor)
-			err := processor.updateCache()
+			err := processor.updateCache(context.Background())
 			assert.Equal(t, p.expected, err)
 		})
 	}

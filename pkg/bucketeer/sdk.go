@@ -566,11 +566,21 @@ func (s *sdk) getEvaluationRemotely(
 	sourceID model.SourceIDType,
 	featureID string,
 ) (*model.Evaluation, error) {
+	// Calculate deadline: use context deadline if set, otherwise default to 30 seconds.
+	// 30 seconds is generous for a single-flag evaluation, allowing multiple retry attempts
+	// even with cross-region latency.
+	const defaultEvaluationTimeout = 30 * time.Second
+	deadline := time.Now().Add(defaultEvaluationTimeout)
+	if d, ok := ctx.Deadline(); ok {
+		deadline = d
+	}
+
 	reqStart := time.Now()
-	res, size, err := s.apiClient.GetEvaluation(model.NewGetEvaluationRequest(
-		s.tag, featureID, s.version, sourceID,
-		user,
-	))
+	res, size, err := s.apiClient.GetEvaluation(
+		ctx,
+		model.NewGetEvaluationRequest(s.tag, featureID, s.version, sourceID, user),
+		deadline,
+	)
 	if err != nil {
 		s.eventProcessor.PushErrorEvent(err, model.GetEvaluation)
 		return nil, fmt.Errorf("failed to get evaluation: %w", err)
