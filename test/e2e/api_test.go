@@ -19,8 +19,15 @@ import (
 func TestGetEvaluation(t *testing.T) {
 	t.Parallel()
 	client := newAPIClient(t, *apiKey)
+	ctx := context.Background()
+	deadline := time.Now().Add(30 * time.Second)
+
 	user := user.NewUser(userID, nil)
-	res, _, err := client.GetEvaluation(model.NewGetEvaluationRequest(tag, featureID, sdkVersion, sourceID, user))
+	res, _, err := client.GetEvaluation(
+		ctx,
+		model.NewGetEvaluationRequest(tag, featureID, sdkVersion, sourceID, user),
+		deadline,
+	)
 	assert.NoError(t, err)
 	assert.Equal(t, featureID, res.Evaluation.FeatureID)
 	assert.Equal(t, featureIDVariation2, res.Evaluation.VariationValue)

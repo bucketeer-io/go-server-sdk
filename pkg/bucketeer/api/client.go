@@ -18,8 +18,13 @@ var (
 
 // Client is the client interface for the Bucketeer APIGateway service.
 type Client interface {
-	// GetEvaluation retrieves evaluation for a single feature flag (server-side evaluation mode).
-	GetEvaluation(req *model.GetEvaluationRequest) (*model.GetEvaluationResponse, int, error)
+	// GetEvaluation retrieves evaluation for a single feature flag with retry support.
+	// Used in server-side evaluation mode.
+	GetEvaluation(
+		ctx context.Context,
+		req *model.GetEvaluationRequest,
+		deadline time.Time,
+	) (*model.GetEvaluationResponse, int, error)
 
 	// GetFeatureFlags retrieves feature flags with retry support.
 	GetFeatureFlags(

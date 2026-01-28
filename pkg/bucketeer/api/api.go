@@ -22,8 +22,12 @@ const (
 	segmentUsersAPI  = "/get_segment_users"
 )
 
-// GetEvaluation is used for server-side evaluation mode.
-func (c *client) GetEvaluation(req *model.GetEvaluationRequest) (*model.GetEvaluationResponse, int, error) {
+// GetEvaluation retrieves evaluation for a single feature flag with retry support.
+func (c *client) GetEvaluation(
+	ctx context.Context,
+	req *model.GetEvaluationRequest,
+	deadline time.Time,
+) (*model.GetEvaluationResponse, int, error) {
 	url := fmt.Sprintf(
 		"%s://%s%s",
 		c.scheme,
@@ -31,10 +35,7 @@ func (c *client) GetEvaluation(req *model.GetEvaluationRequest) (*model.GetEvalu
 		evaluationAPI,
 	)
 
-	resp, size, err := c.sendHTTPRequest(
-		url,
-		req,
-	)
+	resp, size, err := c.sendHTTPRequestWithRetry(ctx, url, req, deadline)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -43,10 +44,6 @@ func (c *client) GetEvaluation(req *model.GetEvaluationRequest) (*model.GetEvalu
 		return nil, 0, err
 	}
 	return &ger, size, nil
-}
-
-func (c *client) sendHTTPRequest(url string, body any) ([]byte, int, error) {
-	return c.sendHTTPRequestWithContext(context.Background(), url, body)
 }
 
 func (c *client) sendHTTPRequestWithContext(ctx context.Context, url string, body any) ([]byte, int, error) {

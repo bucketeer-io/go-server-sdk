@@ -42,9 +42,9 @@ func (m *MockClient) EXPECT() *MockClientMockRecorder {
 }
 
 // GetEvaluation mocks base method.
-func (m *MockClient) GetEvaluation(req *model.GetEvaluationRequest) (*model.GetEvaluationResponse, int, error) {
+func (m *MockClient) GetEvaluation(ctx context.Context, req *model.GetEvaluationRequest, deadline time.Time) (*model.GetEvaluationResponse, int, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetEvaluation", req)
+	ret := m.ctrl.Call(m, "GetEvaluation", ctx, req, deadline)
 	ret0, _ := ret[0].(*model.GetEvaluationResponse)
 	ret1, _ := ret[1].(int)
 	ret2, _ := ret[2].(error)
@@ -52,9 +52,9 @@ func (m *MockClient) GetEvaluation(req *model.GetEvaluationRequest) (*model.GetE
 }
 
 // GetEvaluation indicates an expected call of GetEvaluation.
-func (mr *MockClientMockRecorder) GetEvaluation(req any) *gomock.Call {
+func (mr *MockClientMockRecorder) GetEvaluation(ctx, req, deadline any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEvaluation", reflect.TypeOf((*MockClient)(nil).GetEvaluation), req)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEvaluation", reflect.TypeOf((*MockClient)(nil).GetEvaluation), ctx, req, deadline)
 }
 
 // GetFeatureFlags mocks base method.
