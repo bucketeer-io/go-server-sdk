@@ -18,24 +18,25 @@ var (
 
 // Client is the client interface for the Bucketeer APIGateway service.
 type Client interface {
-	// Existing methods (backward compatible, use background context)
+	// GetEvaluation retrieves evaluation for a single feature flag (server-side evaluation mode).
 	GetEvaluation(req *model.GetEvaluationRequest) (*model.GetEvaluationResponse, int, error)
-	GetFeatureFlags(req *model.GetFeatureFlagsRequest) (*model.GetFeatureFlagsResponse, int, error)
-	GetSegmentUsers(req *model.GetSegmentUsersRequest) (*model.GetSegmentUsersResponse, int, error)
-	RegisterEvents(req *model.RegisterEventsRequest) (*model.RegisterEventsResponse, int, error)
 
-	// New methods with context and deadline support for retry logic
-	GetFeatureFlagsWithDeadline(
+	// GetFeatureFlags retrieves feature flags with retry support.
+	GetFeatureFlags(
 		ctx context.Context,
 		req *model.GetFeatureFlagsRequest,
 		deadline time.Time,
 	) (*model.GetFeatureFlagsResponse, int, error)
-	GetSegmentUsersWithDeadline(
+
+	// GetSegmentUsers retrieves segment users with retry support.
+	GetSegmentUsers(
 		ctx context.Context,
 		req *model.GetSegmentUsersRequest,
 		deadline time.Time,
 	) (*model.GetSegmentUsersResponse, int, error)
-	RegisterEventsWithDeadline(
+
+	// RegisterEvents registers events with retry support.
+	RegisterEvents(
 		ctx context.Context,
 		req *model.RegisterEventsRequest,
 		deadline time.Time,

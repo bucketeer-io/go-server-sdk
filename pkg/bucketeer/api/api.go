@@ -22,7 +22,7 @@ const (
 	segmentUsersAPI  = "/get_segment_users"
 )
 
-// GetEvaluation is used for server-side evaluation mode (no WithDeadline variant needed).
+// GetEvaluation is used for server-side evaluation mode.
 func (c *client) GetEvaluation(req *model.GetEvaluationRequest) (*model.GetEvaluationResponse, int, error) {
 	url := fmt.Sprintf(
 		"%s://%s%s",
@@ -43,72 +43,6 @@ func (c *client) GetEvaluation(req *model.GetEvaluationRequest) (*model.GetEvalu
 		return nil, 0, err
 	}
 	return &ger, size, nil
-}
-
-// TODO: Replace usages with RegisterEventsWithDeadline for deadline-aware retry.
-func (c *client) RegisterEvents(req *model.RegisterEventsRequest) (*model.RegisterEventsResponse, int, error) {
-	url := fmt.Sprintf(
-		"%s://%s%s",
-		c.scheme,
-		c.apiEndpoint,
-		registerEventAPI,
-	)
-	resp, size, err := c.sendHTTPRequest(
-		url,
-		req,
-	)
-	if err != nil {
-		return nil, 0, err
-	}
-	var rer model.RegisterEventsResponse
-	if err := json.Unmarshal(resp, &rer); err != nil {
-		return nil, 0, err
-	}
-	return &rer, size, nil
-}
-
-// TODO: Replace usages with GetFeatureFlagsWithDeadline for deadline-aware retry.
-func (c *client) GetFeatureFlags(req *model.GetFeatureFlagsRequest) (*model.GetFeatureFlagsResponse, int, error) {
-	url := fmt.Sprintf(
-		"%s://%s%s",
-		c.scheme,
-		c.apiEndpoint,
-		featureFlagsAPI,
-	)
-	resp, size, err := c.sendHTTPRequest(
-		url,
-		req,
-	)
-	if err != nil {
-		return nil, 0, err
-	}
-	var gfr *model.GetFeatureFlagsResponse
-	if err := json.Unmarshal(resp, &gfr); err != nil {
-		return nil, 0, err
-	}
-	return gfr, size, nil
-}
-
-// TODO: Replace usages with GetSegmentUsersWithDeadline for deadline-aware retry.
-func (c *client) GetSegmentUsers(req *model.GetSegmentUsersRequest) (*model.GetSegmentUsersResponse, int, error) {
-	url := fmt.Sprintf(
-		"%s://%s%s",
-		c.scheme,
-		c.apiEndpoint,
-		segmentUsersAPI,
-	)
-	resp, size, err := c.sendHTTPRequest(
-		url,
-		req,
-	)
-	if err != nil {
-		return nil, 0, err
-	}
-	var gsur model.GetSegmentUsersResponse
-	if err := json.Unmarshal(resp, &gsur); err != nil {
-		return nil, 0, err
-	}
-	return &gsur, size, nil
 }
 
 func (c *client) sendHTTPRequest(url string, body any) ([]byte, int, error) {
@@ -192,8 +126,8 @@ func (c *client) sendHTTPRequestWithRetry(
 	return respData, respSize, err
 }
 
-// GetFeatureFlagsWithDeadline retrieves feature flags with retry support and deadline.
-func (c *client) GetFeatureFlagsWithDeadline(
+// GetFeatureFlags retrieves feature flags with retry support.
+func (c *client) GetFeatureFlags(
 	ctx context.Context,
 	req *model.GetFeatureFlagsRequest,
 	deadline time.Time,
@@ -217,8 +151,8 @@ func (c *client) GetFeatureFlagsWithDeadline(
 	return gfr, size, nil
 }
 
-// GetSegmentUsersWithDeadline retrieves segment users with retry support and deadline.
-func (c *client) GetSegmentUsersWithDeadline(
+// GetSegmentUsers retrieves segment users with retry support.
+func (c *client) GetSegmentUsers(
 	ctx context.Context,
 	req *model.GetSegmentUsersRequest,
 	deadline time.Time,
@@ -242,8 +176,8 @@ func (c *client) GetSegmentUsersWithDeadline(
 	return &gsur, size, nil
 }
 
-// RegisterEventsWithDeadline registers events with retry support and deadline.
-func (c *client) RegisterEventsWithDeadline(
+// RegisterEvents registers events with retry support.
+func (c *client) RegisterEvents(
 	ctx context.Context,
 	req *model.RegisterEventsRequest,
 	deadline time.Time,

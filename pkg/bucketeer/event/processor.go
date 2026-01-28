@@ -431,7 +431,20 @@ func (p *processor) flushEvents(ctx context.Context, events []*model.Event) {
 	if len(events) == 0 {
 		return
 	}
-	res, _, err := p.apiClient.RegisterEvents(model.NewRegisterEventsRequest(events, p.sourceID))
+
+	// Calculate deadline: use 80% of flush interval or flush timeout, whichever is smaller
+	// Minimum 5 seconds to allow retry attempts
+	deadlineDuration := p.flushInterval * 8 / 10
+	if p.flushTimeout > 0 && p.flushTimeout < deadlineDuration {
+		deadlineDuration = p.flushTimeout
+	}
+	const minDeadline = 5 * time.Second
+	if deadlineDuration < minDeadline {
+		deadlineDuration = minDeadline
+	}
+	deadline := time.Now().Add(deadlineDuration)
+
+	res, _, err := p.apiClient.RegisterEvents(ctx, model.NewRegisterEventsRequest(events, p.sourceID), deadline)
 	if err != nil {
 		p.loggers.Debugf("bucketeer/event: failed to register events: %v", err)
 		// Re-push all events to the event queue.

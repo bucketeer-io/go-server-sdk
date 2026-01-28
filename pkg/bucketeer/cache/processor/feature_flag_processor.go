@@ -178,9 +178,9 @@ func (p *processor) updateCache(ctx context.Context) error {
 		p.sourceID,
 		requestedAt,
 	)
-	// Get the latest cache from the server with deadline-aware retry
+	// Get the latest cache from the server with retry support
 	reqStart := time.Now()
-	resp, size, err := p.apiClient.GetFeatureFlagsWithDeadline(ctx, req, deadline)
+	resp, size, err := p.apiClient.GetFeatureFlags(ctx, req, deadline)
 	if err != nil {
 		p.pushErrorEvent(p.newInternalError(err), model.GetFeatureFlags)
 		return err

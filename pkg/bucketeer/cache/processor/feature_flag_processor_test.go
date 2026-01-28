@@ -55,7 +55,7 @@ func TestPollingInterval(t *testing.T) {
 	p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsIDKey, "", cacheTTL).Return(nil).Times(maxTimes)
 	p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsRequestedAtKey, int64(0), cacheTTL).Return(nil).Times(maxTimes)
 
-	p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlagsWithDeadline(gomock.Any(), gomock.Any(), gomock.Any()).Return(
+	p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(gomock.Any(), gomock.Any(), gomock.Any()).Return(
 		&model.GetFeatureFlagsResponse{},
 		1,
 		nil,
@@ -119,7 +119,7 @@ func TestUpdateCache(t *testing.T) {
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsIDKey).Return("", nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return(int64(0), nil)
 
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlagsWithDeadline(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(
 					gomock.Any(),
 					gomock.Cond(func(x any) bool {
 						req, ok := x.(*model.GetFeatureFlagsRequest)
@@ -147,7 +147,7 @@ func TestUpdateCache(t *testing.T) {
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsIDKey, "feature-flags-id-2", cacheTTL).Return(internalErr)
 
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlagsWithDeadline(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(
 					gomock.Any(),
 					gomock.Cond(func(x any) bool {
 						req, ok := x.(*model.GetFeatureFlagsRequest)
@@ -188,7 +188,7 @@ func TestUpdateCache(t *testing.T) {
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsIDKey).Return("feature-flags-id-1", nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return(int64(10), nil)
 
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlagsWithDeadline(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(
 					gomock.Any(),
 					gomock.Cond(func(x any) bool {
 						req, ok := x.(*model.GetFeatureFlagsRequest)
@@ -233,7 +233,7 @@ func TestUpdateCache(t *testing.T) {
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsIDKey).Return("feature-flags-id-1", nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return(int64(10), nil)
 
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlagsWithDeadline(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(
 					gomock.Any(),
 					gomock.Cond(func(x any) bool {
 						req, ok := x.(*model.GetFeatureFlagsRequest)
@@ -277,7 +277,7 @@ func TestUpdateCache(t *testing.T) {
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsIDKey).Return("feature-flags-id-1", nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return(int64(10), nil)
 
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlagsWithDeadline(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(
 					gomock.Any(),
 					gomock.Cond(func(x any) bool {
 						req, ok := x.(*model.GetFeatureFlagsRequest)
@@ -323,7 +323,7 @@ func TestUpdateCache(t *testing.T) {
 				p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsIDKey, "", cacheTTL).Return(nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsRequestedAtKey, int64(0), cacheTTL).Return(nil)
 
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlagsWithDeadline(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(
 					gomock.Any(),
 					gomock.Cond(func(x any) bool {
 						req, ok := x.(*model.GetFeatureFlagsRequest)
@@ -350,7 +350,7 @@ func TestUpdateCache(t *testing.T) {
 				p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsIDKey, "", cacheTTL).Return(nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsRequestedAtKey, int64(0), cacheTTL).Return(nil)
 
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlagsWithDeadline(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(
 					gomock.Any(),
 					gomock.Cond(func(x any) bool {
 						req, ok := x.(*model.GetFeatureFlagsRequest)
@@ -387,7 +387,7 @@ func TestUpdateCache(t *testing.T) {
 				p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsIDKey, "feature-flags-id-2", cacheTTL).Return(nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsRequestedAtKey, int64(20), cacheTTL).Return(nil)
 
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlagsWithDeadline(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(
 					gomock.Any(),
 					gomock.Cond(func(x any) bool {
 						req, ok := x.(*model.GetFeatureFlagsRequest)
@@ -419,7 +419,7 @@ func TestUpdateCache(t *testing.T) {
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsIDKey).Return("feature-flags-id-1", nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return(int64(10), nil)
 
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlagsWithDeadline(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(
 					gomock.Any(),
 					gomock.Cond(func(x any) bool {
 						req, ok := x.(*model.GetFeatureFlagsRequest)

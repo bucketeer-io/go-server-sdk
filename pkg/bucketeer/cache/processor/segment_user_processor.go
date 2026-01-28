@@ -176,9 +176,9 @@ func (p *segmentUserProcessor) updateCache(ctx context.Context) error {
 		p.sdkVersion,
 		p.sourceID,
 	)
-	// Get the latest cache from the server with deadline-aware retry
+	// Get the latest cache from the server with retry support
 	reqStart := time.Now()
-	resp, size, err := p.apiClient.GetSegmentUsersWithDeadline(ctx, req, deadline)
+	resp, size, err := p.apiClient.GetSegmentUsers(ctx, req, deadline)
 	if err != nil {
 		p.pushErrorEvent(p.newInternalError(err), model.GetSegmentUsers)
 		return err

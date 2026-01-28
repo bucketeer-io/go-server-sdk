@@ -50,7 +50,7 @@ func TestSegmentUsersPollingInterval(t *testing.T) {
 	p.cache.(*mockcache.MockCache).EXPECT().Get(segmentUsersRequestedAtKey).Return(int64(0), nil).Times(maxTimes)
 	p.cache.(*mockcache.MockCache).EXPECT().Put(segmentUsersRequestedAtKey, int64(0), segmentUserCacheTTL).Return(nil).Times(maxTimes)
 
-	p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsersWithDeadline(
+	p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(
 		gomock.Any(),
 		gomock.Cond(func(x any) bool {
 			req, ok := x.(*model.GetSegmentUsersRequest)
@@ -154,7 +154,7 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().GetSegmentIDs().Return(make([]string, 0), nil)
 				p.cache.(*mockcache.MockCache).EXPECT().Get(segmentUsersRequestedAtKey).Return(int64(10), nil)
 
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsersWithDeadline(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(
 					gomock.Any(),
 					gomock.Cond(func(x any) bool {
 						req, ok := x.(*model.GetSegmentUsersRequest)
@@ -181,7 +181,7 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Get(segmentUsersRequestedAtKey).Return(int64(10), nil)
 
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsersWithDeadline(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(
 					gomock.Any(),
 					gomock.Cond(func(x any) bool {
 						req, ok := x.(*model.GetSegmentUsersRequest)
@@ -227,7 +227,7 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Get(segmentUsersRequestedAtKey).Return(int64(10), nil)
 
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsersWithDeadline(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(
 					gomock.Any(),
 					gomock.Cond(func(x any) bool {
 						req, ok := x.(*model.GetSegmentUsersRequest)
@@ -271,7 +271,7 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Get(segmentUsersRequestedAtKey).Return(int64(10), nil)
 
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsersWithDeadline(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(
 					gomock.Any(),
 					gomock.Cond(func(x any) bool {
 						req, ok := x.(*model.GetSegmentUsersRequest)
@@ -313,7 +313,7 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Get(segmentUsersRequestedAtKey).Return(int64(0), cache.ErrNotFound)
 
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsersWithDeadline(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(
 					gomock.Any(),
 					gomock.Cond(func(x any) bool {
 						req, ok := x.(*model.GetSegmentUsersRequest)
@@ -357,7 +357,7 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				// Call in the processor cache
 				p.cache.(*mockcache.MockCache).EXPECT().Get(segmentUsersRequestedAtKey).Return(int64(10), nil)
 
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsersWithDeadline(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(
 					gomock.Any(),
 					gomock.Cond(func(x any) bool {
 						req, ok := x.(*model.GetSegmentUsersRequest)
@@ -406,7 +406,7 @@ func TestSegmentUsersUpdateCache(t *testing.T) {
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().Delete(deletedSegmentIDs[0])
 				p.segmentUsersCache.(*mockcache.MockSegmentUsersCache).EXPECT().Delete(deletedSegmentIDs[1])
 
-				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsersWithDeadline(
+				p.apiClient.(*mockapi.MockClient).EXPECT().GetSegmentUsers(
 					gomock.Any(),
 					gomock.Cond(func(x any) bool {
 						req, ok := x.(*model.GetSegmentUsersRequest)
