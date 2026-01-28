@@ -28,6 +28,12 @@ type options struct {
 	eventFlushSize        int
 	enableDebugLog        bool
 	errorLogger           log.BaseLogger
+
+	// Retry configuration (global)
+	maxRetries           int           // Maximum retry attempts per HTTP request (Default: 3)
+	retryInitialInterval time.Duration // Initial wait between retries (Default: 1s)
+	retryMaxInterval     time.Duration // Maximum wait between retries (Default: 10s)
+	retryMultiplier      float64       // Exponential backoff multiplier (Default: 2.0, internal, not exposed)
 }
 
 var defaultOptions = options{
@@ -47,6 +53,12 @@ var defaultOptions = options{
 	eventFlushSize:        100,
 	enableDebugLog:        false,
 	errorLogger:           log.DefaultErrorLogger,
+
+	// Retry configuration defaults
+	maxRetries:           3,
+	retryInitialInterval: 1 * time.Second,
+	retryMaxInterval:     10 * time.Second,
+	retryMultiplier:      2.0,
 }
 
 // WithEnableLocalEvaluation sets whether the user will be evaluated locally or not. (Default: false)
@@ -190,5 +202,38 @@ func WithEnableDebugLog(enableDebugLog bool) Option {
 func WithErrorLogger(errorLogger log.BaseLogger) Option {
 	return func(opts *options) {
 		opts.errorLogger = errorLogger
+	}
+}
+
+// WithMaxRetries sets the maximum number of retry attempts for HTTP requests. (Default: 3)
+//
+// When an HTTP request fails due to a retryable error (network errors, timeouts,
+// or specific HTTP status codes like 429, 500, 502, 503, 504), the SDK will
+// automatically retry up to this many times.
+// Set to 0 to disable retries.
+func WithMaxRetries(maxRetries int) Option {
+	return func(opts *options) {
+		opts.maxRetries = maxRetries
+	}
+}
+
+// WithRetryInitialInterval sets the initial interval between retries. (Default: 1s)
+//
+// The SDK uses exponential backoff for retries:
+// interval = initialInterval * (multiplier ^ attemptNumber)
+// with ±25% jitter added to prevent thundering herd issues.
+func WithRetryInitialInterval(interval time.Duration) Option {
+	return func(opts *options) {
+		opts.retryInitialInterval = interval
+	}
+}
+
+// WithRetryMaxInterval sets the maximum interval between retries. (Default: 10s)
+//
+// The exponential backoff interval is capped at this value.
+// This prevents excessively long waits between retry attempts.
+func WithRetryMaxInterval(interval time.Duration) Option {
+	return func(opts *options) {
+		opts.retryMaxInterval = interval
 	}
 }
