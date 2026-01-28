@@ -104,11 +104,11 @@ func (c *client) GetSegmentUsers(req *model.GetSegmentUsersRequest) (*model.GetS
 	if err != nil {
 		return nil, 0, err
 	}
-	var gfr model.GetSegmentUsersResponse
-	if err := json.Unmarshal(resp, &gfr); err != nil {
+	var gsur model.GetSegmentUsersResponse
+	if err := json.Unmarshal(resp, &gsur); err != nil {
 		return nil, 0, err
 	}
-	return &gfr, size, nil
+	return &gsur, size, nil
 }
 
 func (c *client) sendHTTPRequest(url string, body any) ([]byte, int, error) {
@@ -230,11 +230,11 @@ func (c *client) GetSegmentUsersWithDeadline(
 		return nil, 0, err
 	}
 
-	var gfr model.GetSegmentUsersResponse
-	if err := json.Unmarshal(resp, &gfr); err != nil {
+	var gsur model.GetSegmentUsersResponse
+	if err := json.Unmarshal(resp, &gsur); err != nil {
 		return nil, 0, err
 	}
-	return &gfr, size, nil
+	return &gsur, size, nil
 }
 
 // RegisterEventsWithDeadline registers events with retry support and deadline.
