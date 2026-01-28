@@ -163,8 +163,13 @@ func (c *client) sendHTTPRequestWithRetry(
 	body any,
 	deadline time.Time,
 ) ([]byte, int, error) {
-	cfg := c.retryConfig
-	cfg.Deadline = deadline
+	cfg := retry.Config{
+		MaxRetries:      c.retryConfig.MaxRetries,
+		InitialInterval: c.retryConfig.InitialInterval,
+		MaxInterval:     c.retryConfig.MaxInterval,
+		Multiplier:      c.retryConfig.Multiplier,
+		Deadline:        deadline,
+	}
 
 	var respData []byte
 	var respSize int
