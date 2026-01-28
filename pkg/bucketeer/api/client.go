@@ -2,9 +2,12 @@
 package api
 
 import (
+	"context"
 	"errors"
+	"time"
 
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/retry"
 )
 
 var (
@@ -15,16 +18,37 @@ var (
 
 // Client is the client interface for the Bucketeer APIGateway service.
 type Client interface {
+	// Existing methods (backward compatible, use background context)
 	GetEvaluation(req *model.GetEvaluationRequest) (*model.GetEvaluationResponse, int, error)
 	GetFeatureFlags(req *model.GetFeatureFlagsRequest) (*model.GetFeatureFlagsResponse, int, error)
 	GetSegmentUsers(req *model.GetSegmentUsersRequest) (*model.GetSegmentUsersResponse, int, error)
 	RegisterEvents(req *model.RegisterEventsRequest) (*model.RegisterEventsResponse, int, error)
+
+	// New methods with context and deadline support for retry logic
+	GetFeatureFlagsWithDeadline(
+		ctx context.Context,
+		req *model.GetFeatureFlagsRequest,
+		deadline time.Time,
+	) (*model.GetFeatureFlagsResponse, int, error)
+	GetSegmentUsersWithDeadline(
+		ctx context.Context,
+		req *model.GetSegmentUsersRequest,
+		deadline time.Time,
+	) (*model.GetSegmentUsersResponse, int, error)
+	RegisterEventsWithDeadline(
+		ctx context.Context,
+		req *model.RegisterEventsRequest,
+		deadline time.Time,
+	) (*model.RegisterEventsResponse, int, error)
 }
 
 type client struct {
 	apiKey      string
 	apiEndpoint string
 	scheme      string
+
+	// Retry configuration
+	retryConfig retry.Config
 }
 
 // ClientConfig is the config for Client.
@@ -37,6 +61,12 @@ type ClientConfig struct {
 
 	// Scheme is the scheme of the target service. This must be "http" or "https".
 	Scheme string
+
+	// Retry settings
+	MaxRetries           int
+	RetryInitialInterval time.Duration
+	RetryMaxInterval     time.Duration
+	RetryMultiplier      float64
 }
 
 // Validate validates the ClientConfig.
@@ -55,13 +85,38 @@ func (c *ClientConfig) Validate() error {
 
 // NewClient creates a new Client.
 func NewClient(conf *ClientConfig) (Client, error) {
+	if err := conf.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Set default retry values if not provided
+	maxRetries := conf.MaxRetries
+	if maxRetries == 0 {
+		maxRetries = 3
+	}
+	initialInterval := conf.RetryInitialInterval
+	if initialInterval == 0 {
+		initialInterval = 1 * time.Second
+	}
+	maxInterval := conf.RetryMaxInterval
+	if maxInterval == 0 {
+		maxInterval = 10 * time.Second
+	}
+	multiplier := conf.RetryMultiplier
+	if multiplier == 0 {
+		multiplier = 2.0
+	}
+
 	client := &client{
 		scheme:      string(conf.Scheme),
 		apiKey:      conf.APIKey,
 		apiEndpoint: conf.APIEndpoint,
-	}
-	if err := conf.Validate(); err != nil {
-		return nil, err
+		retryConfig: retry.Config{
+			MaxRetries:      maxRetries,
+			InitialInterval: initialInterval,
+			MaxInterval:     maxInterval,
+			Multiplier:      multiplier,
+		},
 	}
 	return client, nil
 }

@@ -10,11 +10,12 @@
 package api
 
 import (
+	context "context"
 	reflect "reflect"
-
-	gomock "go.uber.org/mock/gomock"
+	time "time"
 
 	model "github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockClient is a mock of Client interface.
@@ -72,6 +73,22 @@ func (mr *MockClientMockRecorder) GetFeatureFlags(req any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureFlags", reflect.TypeOf((*MockClient)(nil).GetFeatureFlags), req)
 }
 
+// GetFeatureFlagsWithDeadline mocks base method.
+func (m *MockClient) GetFeatureFlagsWithDeadline(ctx context.Context, req *model.GetFeatureFlagsRequest, deadline time.Time) (*model.GetFeatureFlagsResponse, int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFeatureFlagsWithDeadline", ctx, req, deadline)
+	ret0, _ := ret[0].(*model.GetFeatureFlagsResponse)
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetFeatureFlagsWithDeadline indicates an expected call of GetFeatureFlagsWithDeadline.
+func (mr *MockClientMockRecorder) GetFeatureFlagsWithDeadline(ctx, req, deadline any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFeatureFlagsWithDeadline", reflect.TypeOf((*MockClient)(nil).GetFeatureFlagsWithDeadline), ctx, req, deadline)
+}
+
 // GetSegmentUsers mocks base method.
 func (m *MockClient) GetSegmentUsers(req *model.GetSegmentUsersRequest) (*model.GetSegmentUsersResponse, int, error) {
 	m.ctrl.T.Helper()
@@ -88,6 +105,22 @@ func (mr *MockClientMockRecorder) GetSegmentUsers(req any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSegmentUsers", reflect.TypeOf((*MockClient)(nil).GetSegmentUsers), req)
 }
 
+// GetSegmentUsersWithDeadline mocks base method.
+func (m *MockClient) GetSegmentUsersWithDeadline(ctx context.Context, req *model.GetSegmentUsersRequest, deadline time.Time) (*model.GetSegmentUsersResponse, int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSegmentUsersWithDeadline", ctx, req, deadline)
+	ret0, _ := ret[0].(*model.GetSegmentUsersResponse)
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetSegmentUsersWithDeadline indicates an expected call of GetSegmentUsersWithDeadline.
+func (mr *MockClientMockRecorder) GetSegmentUsersWithDeadline(ctx, req, deadline any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSegmentUsersWithDeadline", reflect.TypeOf((*MockClient)(nil).GetSegmentUsersWithDeadline), ctx, req, deadline)
+}
+
 // RegisterEvents mocks base method.
 func (m *MockClient) RegisterEvents(req *model.RegisterEventsRequest) (*model.RegisterEventsResponse, int, error) {
 	m.ctrl.T.Helper()
@@ -102,4 +135,20 @@ func (m *MockClient) RegisterEvents(req *model.RegisterEventsRequest) (*model.Re
 func (mr *MockClientMockRecorder) RegisterEvents(req any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEvents", reflect.TypeOf((*MockClient)(nil).RegisterEvents), req)
+}
+
+// RegisterEventsWithDeadline mocks base method.
+func (m *MockClient) RegisterEventsWithDeadline(ctx context.Context, req *model.RegisterEventsRequest, deadline time.Time) (*model.RegisterEventsResponse, int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RegisterEventsWithDeadline", ctx, req, deadline)
+	ret0, _ := ret[0].(*model.RegisterEventsResponse)
+	ret1, _ := ret[1].(int)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// RegisterEventsWithDeadline indicates an expected call of RegisterEventsWithDeadline.
+func (mr *MockClientMockRecorder) RegisterEventsWithDeadline(ctx, req, deadline any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RegisterEventsWithDeadline", reflect.TypeOf((*MockClient)(nil).RegisterEventsWithDeadline), ctx, req, deadline)
 }
