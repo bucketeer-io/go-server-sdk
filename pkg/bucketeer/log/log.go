@@ -45,7 +45,7 @@ var (
 	DiscardErrorLogger = stdlog.New(io.Discard, "[ERROR] ", flags)
 )
 
-// Loggers is a logging compornent used in the Bucketeer SDK.
+// Loggers is a logging component used in the Bucketeer SDK.
 //
 // Debug logs are for Bucketeer SDK developers.
 // Info logs are for important operational events (e.g., healing, initialization).

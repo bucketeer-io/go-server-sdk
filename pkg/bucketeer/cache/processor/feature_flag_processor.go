@@ -212,8 +212,11 @@ func (p *processor) updateCache(ctx context.Context) error {
 	// - If forceUpdate=false and featuresCount=0, server detected no changes (check server-side caching)
 	// - If featureFlagsId matches previous ftsID, incremental update path is taken
 	// - If archivedCount > 0, flags are being deleted from cache
-	p.loggers.Debugf("bucketeer/cache: GetFeatureFlags response - forceUpdate=%v, newFtsID=%s, featuresCount=%d, archivedCount=%d, requestedAt=%d, size=%d",
-		pbResp.ForceUpdate, pbResp.FeatureFlagsId, len(pbResp.Features), len(pbResp.ArchivedFeatureFlagIds), pbResp.RequestedAt, size)
+	p.loggers.Debugf(
+		"bucketeer/cache: GetFeatureFlags response - forceUpdate=%v, newFtsID=%s, "+
+			"featuresCount=%d, archivedCount=%d, requestedAt=%d, size=%d",
+		pbResp.ForceUpdate, pbResp.FeatureFlagsId, len(pbResp.Features),
+		len(pbResp.ArchivedFeatureFlagIds), pbResp.RequestedAt, size)
 
 	// Delete all the local cache and save the new one
 	if pbResp.ForceUpdate {
@@ -224,7 +227,9 @@ func (p *processor) updateCache(ctx context.Context) error {
 		p.ready.Store(true)
 		// Log healing completion for observability
 		if p.healingInProgress.Load() {
-			p.loggers.Infof("bucketeer/cache: HEALING COMPLETED successfully via force update, featuresCount=%d", len(pbResp.Features))
+			p.loggers.Infof(
+				"bucketeer/cache: HEALING COMPLETED via force update, featuresCount=%d",
+				len(pbResp.Features))
 		}
 		p.healingInProgress.Store(false)
 		return nil
