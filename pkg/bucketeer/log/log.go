@@ -29,6 +29,9 @@ var (
 	defaultDebugLogger = stdlog.New(os.Stdout, "[DEBUG] ", flags)
 	discardDebugLogger = stdlog.New(io.Discard, "[DEBUG] ", flags)
 
+	defaultInfoLogger = stdlog.New(os.Stdout, "[INFO] ", flags)
+	discardInfoLogger = stdlog.New(io.Discard, "[INFO] ", flags)
+
 	// DefaultErrorLogger is a default logger for Bucketeer SDK error logs.
 	// For example, DefaultErrorLogger outputs,
 	//   [ERROR] 2021/01/01 10:00:00 message
@@ -45,9 +48,11 @@ var (
 // Loggers is a logging compornent used in the Bucketeer SDK.
 //
 // Debug logs are for Bucketeer SDK developers.
+// Info logs are for important operational events (e.g., healing, initialization).
 // Error logs are for Bucketeer SDK users.
 type Loggers struct {
 	debugLogger BaseLogger
+	infoLogger  BaseLogger
 	errorLogger BaseLogger
 }
 
@@ -55,6 +60,10 @@ type Loggers struct {
 type LoggersConfig struct {
 	// EnableDebugLog enables debug logs if true.
 	EnableDebugLog bool
+
+	// EnableInfoLog enables info logs if true. Defaults to true if not set.
+	// Info logs report important operational events like cache healing.
+	EnableInfoLog *bool
 
 	// ErrorLogger is used to output error logs.
 	ErrorLogger BaseLogger
@@ -66,9 +75,15 @@ func NewLoggers(conf *LoggersConfig) *Loggers {
 	if conf.EnableDebugLog {
 		dbgLogger = defaultDebugLogger
 	}
+	// Info logs are enabled by default (nil or true)
+	infoLogger := defaultInfoLogger
+	if conf.EnableInfoLog != nil && !*conf.EnableInfoLog {
+		infoLogger = discardInfoLogger
+	}
 	errLogger := conf.ErrorLogger
 	return &Loggers{
 		debugLogger: dbgLogger,
+		infoLogger:  infoLogger,
 		errorLogger: errLogger,
 	}
 }
@@ -81,6 +96,16 @@ func (l *Loggers) Debug(values ...interface{}) {
 // Debugf outputs a formatted debug log.
 func (l *Loggers) Debugf(format string, values ...interface{}) {
 	l.debugLogger.Printf(format, values...)
+}
+
+// Info outputs an info log.
+func (l *Loggers) Info(values ...interface{}) {
+	l.infoLogger.Print(values...)
+}
+
+// Infof outputs a formatted info log.
+func (l *Loggers) Infof(format string, values ...interface{}) {
+	l.infoLogger.Printf(format, values...)
 }
 
 // Error outputs a error log.
