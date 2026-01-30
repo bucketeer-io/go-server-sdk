@@ -2,10 +2,15 @@ package event
 
 import (
 	"context"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
+	"net"
 	"net/http"
-	"os"
+	"net/url"
+	"syscall"
 	"testing"
 	"time"
 
@@ -113,6 +118,7 @@ func TestPushTimeoutErrorMetricsEvent(t *testing.T) {
 	tecMetricsEvt := &model.TimeoutErrorMetricsEvent{}
 	err = json.Unmarshal(metricsEvt.Event, tecMetricsEvt)
 	assert.NoError(t, err)
+	assert.Equal(t, model.GetEvaluation, tecMetricsEvt.APIID)
 }
 
 func TestPushInternalSDKErrorMetricsEvent(t *testing.T) {
@@ -268,12 +274,52 @@ func TestPushErrorEventWhenNetworkError(t *testing.T) {
 		err  error
 	}{
 		{
-			desc: "connection refused",
-			err:  errors.New("Get \"http://localhost:9999\": dial tcp [::1]:9999: connect: connection refused"),
+			desc: "connection refused (net.OpError)",
+			err: &net.OpError{
+				Op:  "dial",
+				Net: "tcp",
+				Err: syscall.ECONNREFUSED,
+			},
 		},
 		{
-			desc: "no route to host",
-			err:  errors.New("Get \"https://example.com\": dial tcp: lookup https://example.com: connect: no route to host"),
+			desc: "host unreachable (net.OpError)",
+			err: &net.OpError{
+				Op:  "dial",
+				Net: "tcp",
+				Err: syscall.EHOSTUNREACH,
+			},
+		},
+		{
+			desc: "url.Error wrapping net.OpError",
+			err: &url.Error{
+				Op:  "Get",
+				URL: "http://localhost:9999",
+				Err: &net.OpError{
+					Op:  "dial",
+					Net: "tcp",
+					Err: syscall.ECONNREFUSED,
+				},
+			},
+		},
+		{
+			desc: "DNS error",
+			err: &net.DNSError{
+				Err:        "no such host",
+				Name:       "example.invalid",
+				IsNotFound: true,
+			},
+		},
+		{
+			desc: "context.Canceled",
+			err:  context.Canceled,
+		},
+		{
+			desc: "wrapped syscall ECONNRESET",
+			err:  fmt.Errorf("connection error: %w", syscall.ECONNRESET),
+		},
+		{
+			desc: "wrapped syscall ENETUNREACH",
+			err:  fmt.Errorf("network error: %w", syscall.ENETUNREACH),
 		},
 	}
 	for _, pt := range patterns {
@@ -323,6 +369,15 @@ func TestPushErrorEventWhenInternalSDKError(t *testing.T) {
 	}
 }
 
+// mockTimeoutError implements net.Error with Timeout() returning true
+type mockTimeoutError struct {
+	msg string
+}
+
+func (e *mockTimeoutError) Error() string   { return e.msg }
+func (e *mockTimeoutError) Timeout() bool   { return true }
+func (e *mockTimeoutError) Temporary() bool { return true }
+
 func TestPushErrorEventWhenTimeoutErr(t *testing.T) {
 	t.Parallel()
 	patterns := []struct {
@@ -334,8 +389,40 @@ func TestPushErrorEventWhenTimeoutErr(t *testing.T) {
 			err:  api.NewErrStatus(http.StatusGatewayTimeout),
 		},
 		{
-			desc: "err deadline exceeded",
-			err:  os.ErrDeadlineExceeded,
+			desc: "context.DeadlineExceeded",
+			err:  context.DeadlineExceeded,
+		},
+		{
+			desc: "wrapped context.DeadlineExceeded",
+			err:  fmt.Errorf("operation failed: %w", context.DeadlineExceeded),
+		},
+		{
+			desc: "net.Error with Timeout() true",
+			err:  &mockTimeoutError{msg: "connection timed out"},
+		},
+		{
+			desc: "url.Error with Timeout",
+			err: &url.Error{
+				Op:  "Get",
+				URL: "http://example.com",
+				Err: &mockTimeoutError{msg: "i/o timeout"},
+			},
+		},
+		{
+			desc: "DNS timeout error",
+			err: &net.DNSError{
+				Err:       "lookup timed out",
+				Name:      "example.com",
+				IsTimeout: true,
+			},
+		},
+		{
+			desc: "net.OpError with timeout",
+			err: &net.OpError{
+				Op:  "read",
+				Net: "tcp",
+				Err: &mockTimeoutError{msg: "i/o timeout"},
+			},
 		},
 	}
 	for _, pt := range patterns {
@@ -381,6 +468,299 @@ func TestPushErrorEventWhenOtherStatus(t *testing.T) {
 			assert.Equal(t, model.RegisterEvents, actual.APIID)
 			assert.Equal(t, p.tag, actual.Labels["tag"])
 			assert.Equal(t, model.InternalServerErrorMetricsEventType, actual.Type)
+		})
+	}
+}
+
+func TestClassifyError(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc           string
+		err            error
+		expectedType   errorType
+		expectedStatus int
+	}{
+		// Nil error
+		{
+			desc:           "nil error returns unknown",
+			err:            nil,
+			expectedType:   errorTypeUnknown,
+			expectedStatus: 0,
+		},
+		// HTTP status code errors
+		{
+			desc:           "HTTP 500 returns statusCode",
+			err:            api.NewErrStatus(http.StatusInternalServerError),
+			expectedType:   errorTypeStatusCode,
+			expectedStatus: http.StatusInternalServerError,
+		},
+		{
+			desc:           "HTTP 502 returns statusCode",
+			err:            api.NewErrStatus(http.StatusBadGateway),
+			expectedType:   errorTypeStatusCode,
+			expectedStatus: http.StatusBadGateway,
+		},
+		{
+			desc:           "HTTP 503 returns statusCode",
+			err:            api.NewErrStatus(http.StatusServiceUnavailable),
+			expectedType:   errorTypeStatusCode,
+			expectedStatus: http.StatusServiceUnavailable,
+		},
+		{
+			desc:           "HTTP 504 returns statusCode",
+			err:            api.NewErrStatus(http.StatusGatewayTimeout),
+			expectedType:   errorTypeStatusCode,
+			expectedStatus: http.StatusGatewayTimeout,
+		},
+		{
+			desc:           "HTTP 429 returns statusCode",
+			err:            api.NewErrStatus(http.StatusTooManyRequests),
+			expectedType:   errorTypeStatusCode,
+			expectedStatus: http.StatusTooManyRequests,
+		},
+		// Context errors
+		{
+			desc:           "context.DeadlineExceeded returns timeout",
+			err:            context.DeadlineExceeded,
+			expectedType:   errorTypeTimeout,
+			expectedStatus: 0,
+		},
+		{
+			desc:           "wrapped context.DeadlineExceeded returns timeout",
+			err:            fmt.Errorf("operation failed: %w", context.DeadlineExceeded),
+			expectedType:   errorTypeTimeout,
+			expectedStatus: 0,
+		},
+		{
+			desc:           "context.Canceled returns network",
+			err:            context.Canceled,
+			expectedType:   errorTypeNetwork,
+			expectedStatus: 0,
+		},
+		{
+			desc:           "wrapped context.Canceled returns network",
+			err:            fmt.Errorf("request canceled: %w", context.Canceled),
+			expectedType:   errorTypeNetwork,
+			expectedStatus: 0,
+		},
+		// net.Error with Timeout
+		{
+			desc:           "net.Error with Timeout() true returns timeout",
+			err:            &mockTimeoutError{msg: "connection timed out"},
+			expectedType:   errorTypeTimeout,
+			expectedStatus: 0,
+		},
+		// net.OpError
+		{
+			desc: "net.OpError returns network",
+			err: &net.OpError{
+				Op:  "dial",
+				Net: "tcp",
+				Err: syscall.ECONNREFUSED,
+			},
+			expectedType:   errorTypeNetwork,
+			expectedStatus: 0,
+		},
+		{
+			desc: "net.OpError with timeout returns timeout",
+			err: &net.OpError{
+				Op:  "read",
+				Net: "tcp",
+				Err: &mockTimeoutError{msg: "i/o timeout"},
+			},
+			expectedType:   errorTypeTimeout,
+			expectedStatus: 0,
+		},
+		// url.Error
+		{
+			desc: "url.Error returns network",
+			err: &url.Error{
+				Op:  "Get",
+				URL: "http://localhost:9999",
+				Err: &net.OpError{
+					Op:  "dial",
+					Net: "tcp",
+					Err: syscall.ECONNREFUSED,
+				},
+			},
+			expectedType:   errorTypeNetwork,
+			expectedStatus: 0,
+		},
+		{
+			desc: "url.Error with timeout returns timeout",
+			err: &url.Error{
+				Op:  "Get",
+				URL: "http://example.com",
+				Err: &mockTimeoutError{msg: "i/o timeout"},
+			},
+			expectedType:   errorTypeTimeout,
+			expectedStatus: 0,
+		},
+		// DNS errors
+		{
+			desc: "net.DNSError returns network",
+			err: &net.DNSError{
+				Err:        "no such host",
+				Name:       "example.invalid",
+				IsNotFound: true,
+			},
+			expectedType:   errorTypeNetwork,
+			expectedStatus: 0,
+		},
+		{
+			desc: "net.DNSError with IsTimeout returns timeout",
+			err: &net.DNSError{
+				Err:       "lookup timed out",
+				Name:      "example.com",
+				IsTimeout: true,
+			},
+			expectedType:   errorTypeTimeout,
+			expectedStatus: 0,
+		},
+		// Syscall errors
+		{
+			desc:           "syscall.ECONNREFUSED returns network",
+			err:            syscall.ECONNREFUSED,
+			expectedType:   errorTypeNetwork,
+			expectedStatus: 0,
+		},
+		{
+			desc:           "syscall.ECONNRESET returns network",
+			err:            syscall.ECONNRESET,
+			expectedType:   errorTypeNetwork,
+			expectedStatus: 0,
+		},
+		{
+			desc:           "syscall.ECONNABORTED returns network",
+			err:            syscall.ECONNABORTED,
+			expectedType:   errorTypeNetwork,
+			expectedStatus: 0,
+		},
+		{
+			desc:           "syscall.EHOSTUNREACH returns network",
+			err:            syscall.EHOSTUNREACH,
+			expectedType:   errorTypeNetwork,
+			expectedStatus: 0,
+		},
+		{
+			desc:           "syscall.ENETUNREACH returns network",
+			err:            syscall.ENETUNREACH,
+			expectedType:   errorTypeNetwork,
+			expectedStatus: 0,
+		},
+		{
+			desc:           "syscall.ETIMEDOUT returns timeout",
+			err:            syscall.ETIMEDOUT,
+			expectedType:   errorTypeTimeout,
+			expectedStatus: 0,
+		},
+		{
+			desc:           "wrapped syscall.ECONNREFUSED returns network",
+			err:            fmt.Errorf("connection failed: %w", syscall.ECONNREFUSED),
+			expectedType:   errorTypeNetwork,
+			expectedStatus: 0,
+		},
+		// Additional syscall errors (new)
+		{
+			desc:           "syscall.EPIPE returns network",
+			err:            syscall.EPIPE,
+			expectedType:   errorTypeNetwork,
+			expectedStatus: 0,
+		},
+		{
+			desc:           "syscall.ENETDOWN returns network",
+			err:            syscall.ENETDOWN,
+			expectedType:   errorTypeNetwork,
+			expectedStatus: 0,
+		},
+		{
+			desc:           "syscall.ENETRESET returns network",
+			err:            syscall.ENETRESET,
+			expectedType:   errorTypeNetwork,
+			expectedStatus: 0,
+		},
+		{
+			desc:           "wrapped syscall.EPIPE returns network",
+			err:            fmt.Errorf("write failed: %w", syscall.EPIPE),
+			expectedType:   errorTypeNetwork,
+			expectedStatus: 0,
+		},
+		// EOF errors (new)
+		{
+			desc:           "io.EOF returns network",
+			err:            io.EOF,
+			expectedType:   errorTypeNetwork,
+			expectedStatus: 0,
+		},
+		{
+			desc:           "io.ErrUnexpectedEOF returns network",
+			err:            io.ErrUnexpectedEOF,
+			expectedType:   errorTypeNetwork,
+			expectedStatus: 0,
+		},
+		{
+			desc:           "wrapped io.EOF returns network",
+			err:            fmt.Errorf("read failed: %w", io.EOF),
+			expectedType:   errorTypeNetwork,
+			expectedStatus: 0,
+		},
+		// TLS/certificate errors (new)
+		{
+			desc:           "x509.CertificateInvalidError returns network",
+			err:            x509.CertificateInvalidError{Reason: x509.Expired},
+			expectedType:   errorTypeNetwork,
+			expectedStatus: 0,
+		},
+		{
+			desc:           "x509.UnknownAuthorityError returns network",
+			err:            x509.UnknownAuthorityError{},
+			expectedType:   errorTypeNetwork,
+			expectedStatus: 0,
+		},
+		{
+			desc:           "x509.HostnameError returns network",
+			err:            x509.HostnameError{Host: "example.com"},
+			expectedType:   errorTypeNetwork,
+			expectedStatus: 0,
+		},
+		{
+			desc:           "wrapped x509 error returns network",
+			err:            fmt.Errorf("handshake failed: %w", x509.CertificateInvalidError{Reason: x509.Expired}),
+			expectedType:   errorTypeNetwork,
+			expectedStatus: 0,
+		},
+		{
+			desc:           "TLS error string returns network",
+			err:            errors.New("tls: bad certificate"),
+			expectedType:   errorTypeNetwork,
+			expectedStatus: 0,
+		},
+		{
+			desc:           "x509 error string returns network",
+			err:            errors.New("x509: certificate has expired"),
+			expectedType:   errorTypeNetwork,
+			expectedStatus: 0,
+		},
+		// Unknown errors
+		{
+			desc:           "generic error returns internal",
+			err:            errors.New("some internal error"),
+			expectedType:   errorTypeInternal,
+			expectedStatus: 0,
+		},
+		{
+			desc:           "wrapped generic error returns internal",
+			err:            fmt.Errorf("wrapped: %w", errors.New("some internal error")),
+			expectedType:   errorTypeInternal,
+			expectedStatus: 0,
+		},
+	}
+
+	for _, pt := range patterns {
+		t.Run(pt.desc, func(t *testing.T) {
+			errType, statusCode := classifyError(pt.err)
+			assert.Equal(t, pt.expectedType, errType, "error type mismatch")
+			assert.Equal(t, pt.expectedStatus, statusCode, "status code mismatch")
 		})
 	}
 }
