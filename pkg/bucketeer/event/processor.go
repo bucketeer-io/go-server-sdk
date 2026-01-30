@@ -603,11 +603,12 @@ func isTLSError(err error) bool {
 	}
 
 	// Fallback: check error message for TLS-related strings
-	// This catches TLS errors that may be wrapped or have custom types
+	// This catches TLS errors that may be wrapped or have custom types.
+	// Only use specific prefixes (tls:, x509:) to avoid false positives
+	// from generic words like "certificate" in unrelated error messages.
 	errMsg := err.Error()
 	return strings.Contains(errMsg, "tls:") ||
-		strings.Contains(errMsg, "x509:") ||
-		strings.Contains(errMsg, "certificate")
+		strings.Contains(errMsg, "x509:")
 }
 
 // isNetworkSyscallError checks if the error is a network-related syscall error.
@@ -623,7 +624,9 @@ func isNetworkSyscallError(err error) bool {
 	// Network unreachable errors
 	case syscall.EHOSTUNREACH, syscall.ENETUNREACH, syscall.ENETDOWN, syscall.ENETRESET:
 		return true
-	// Timeout errors (backup detection)
+	// Network-layer timeout errors: treat ETIMEDOUT as a network error since
+	// it is raised by the underlying syscall layer; this also acts as a
+	// fallback detection for timeouts not caught by higher-level logic.
 	case syscall.ETIMEDOUT:
 		return true
 	default:
