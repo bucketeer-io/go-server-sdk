@@ -79,6 +79,9 @@ func (q *queue) pop() (*model.Event, bool) {
 }
 
 // len returns the current number of events in the queue.
+// Used by tests to verify queue state.
+//
+//nolint:unused
 func (q *queue) len() int {
 	return q.ring.Len()
 }
