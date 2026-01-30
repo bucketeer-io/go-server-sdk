@@ -48,30 +48,52 @@ func TestPollingInterval(t *testing.T) {
 		3*time.Second,
 	)
 
-	maxTimes := 8
+	// Test runs for 10 seconds with 3s polling interval
+	// Expected polls per run: 3-5 (timing dependent)
+	// - Minimum: T=0, T=3, T=6 = 3 polls
+	// - Maximum: T=0, T=3, T=6, T=9, T=12 = 5 polls
+	// Two runs total, so 6-10 polls total
+	minPolls := 6
+	maxPolls := 10
 
-	p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsIDKey).Return("", nil).Times(maxTimes)
-	p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return(int64(0), nil).Times(maxTimes)
-	p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsIDKey, "", cacheTTL).Return(nil).Times(maxTimes)
-	p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsRequestedAtKey, int64(0), cacheTTL).Return(nil).Times(maxTimes)
+	// Each updateCache() call makes:
+	// 1. checkAndHealStaleCache() -> Get(requestedAt) IF ready=true
+	// 2. getFeatureFlagsID() -> Get(featureFlagsIDKey)
+	// 3. getFeatureFlagsRequestedAt() -> Get(requestedAt)
+	//
+	// First poll of each run: ready=false, so only 1 Get(requestedAt)
+	// Subsequent polls: ready=true, so 2 Get(requestedAt) each
+	//
+	// Min: 2 first polls (2*1) + 4 subsequent polls (4*2) = 10 calls
+	// Max: 2 first polls (2*1) + 8 subsequent polls (8*2) = 18 calls
+
+	// Return fresh timestamp on each call to prevent healing from triggering
+	p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).DoAndReturn(func(key string) (interface{}, error) {
+		return time.Now().Unix(), nil
+	}).MinTimes(10).MaxTimes(18)
+	p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsIDKey).Return("", nil).MinTimes(minPolls).MaxTimes(maxPolls)
+	p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsIDKey, "", cacheTTL).Return(nil).MinTimes(minPolls).MaxTimes(maxPolls)
+	p.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsRequestedAtKey, int64(0), cacheTTL).Return(nil).MinTimes(minPolls).MaxTimes(maxPolls)
 
 	p.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(gomock.Any(), gomock.Any(), gomock.Any()).Return(
 		&model.GetFeatureFlagsResponse{},
 		1,
 		nil,
-	).Times(maxTimes)
+	).MinTimes(minPolls).MaxTimes(maxPolls)
 
-	p.MockProcessor.EXPECT().PushLatencyMetricsEvent(gomock.Any(), model.GetFeatureFlags).Times(maxTimes)
-	p.MockProcessor.EXPECT().PushSizeMetricsEvent(1, model.GetFeatureFlags).Times(maxTimes)
+	p.MockProcessor.EXPECT().PushLatencyMetricsEvent(gomock.Any(), model.GetFeatureFlags).MinTimes(minPolls).MaxTimes(maxPolls)
+	p.MockProcessor.EXPECT().PushSizeMetricsEvent(1, model.GetFeatureFlags).MinTimes(minPolls).MaxTimes(maxPolls)
 
 	p.processor.Run()
 	time.Sleep(10 * time.Second)
 	p.processor.Close()
+	time.Sleep(100 * time.Millisecond) // Wait for goroutine to fully stop
 
 	// Run it again after closing
 	p.Run()
 	time.Sleep(10 * time.Second)
 	p.processor.Close()
+	time.Sleep(100 * time.Millisecond) // Wait for goroutine to fully stop
 }
 
 func TestUpdateCache(t *testing.T) {
@@ -509,4 +531,244 @@ func newMockFeatureFlagProcessor(
 		},
 		MockProcessor: mockEventProcessor,
 	}
+}
+
+func TestCheckAndHealStaleCache(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc                           string
+		setup                          func(*testFeatureFlagProcessor)
+		expectedHealingInProgress      bool
+		expectedReady                  bool
+		expectMetadataDeleted          bool
+		expectHealingInProgressChanged bool
+	}{
+		{
+			desc: "no action: ready is false (not initialized)",
+			setup: func(p *testFeatureFlagProcessor) {
+				// Don't set ready to true
+				p.ready.Store(false)
+			},
+			expectedReady:             false,
+			expectedHealingInProgress: false,
+			expectMetadataDeleted:     false,
+		},
+		{
+			desc: "no action: cache is fresh (within threshold)",
+			setup: func(p *testFeatureFlagProcessor) {
+				p.ready.Store(true)
+				// Recent timestamp (10 seconds old, threshold is 120s for 60s interval)
+				recentTime := time.Now().Unix() - 10
+				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return(recentTime, nil)
+			},
+			expectedReady:             true,
+			expectedHealingInProgress: false,
+			expectMetadataDeleted:     false,
+		},
+		{
+			desc: "triggers healing: cache is stale (beyond threshold)",
+			setup: func(p *testFeatureFlagProcessor) {
+				p.ready.Store(true)
+				// Old timestamp (150 seconds old, threshold is 120s for 60s interval)
+				staleTime := time.Now().Unix() - 150
+				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return(staleTime, nil)
+
+				// Expect metadata to be deleted
+				p.cache.(*mockcache.MockCache).EXPECT().Delete(featureFlagsIDKey)
+				p.cache.(*mockcache.MockCache).EXPECT().Delete(featureFlagsRequestedAtKey)
+			},
+			expectedReady:             true,
+			expectedHealingInProgress: true,
+			expectMetadataDeleted:     true,
+		},
+		{
+			desc: "no action: healing already in progress",
+			setup: func(p *testFeatureFlagProcessor) {
+				p.ready.Store(true)
+				p.healingInProgress.Store(true)
+				// Metadata missing but healing in progress (expected state)
+				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return(int64(0), cache.ErrNotFound)
+			},
+			expectedReady:             true,
+			expectedHealingInProgress: true,
+			expectMetadataDeleted:     false,
+		},
+		{
+			desc: "triggers healing: unexpected missing metadata",
+			setup: func(p *testFeatureFlagProcessor) {
+				p.ready.Store(true)
+				p.healingInProgress.Store(false)
+				// Metadata missing but healing NOT in progress (unexpected state)
+				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return(int64(0), cache.ErrNotFound)
+
+				// Now also deletes metadata to ensure full refresh (consistency fix)
+				p.cache.(*mockcache.MockCache).EXPECT().Delete(featureFlagsIDKey)
+				p.cache.(*mockcache.MockCache).EXPECT().Delete(featureFlagsRequestedAtKey)
+			},
+			expectedReady:             true,
+			expectedHealingInProgress: true,
+			expectMetadataDeleted:     true,
+		},
+		{
+			desc: "triggers healing: corrupted metadata (wrong type)",
+			setup: func(p *testFeatureFlagProcessor) {
+				p.ready.Store(true)
+				p.healingInProgress.Store(false)
+				// Metadata exists but corrupted to wrong type
+				p.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return("corrupted-string", nil)
+
+				// Now also deletes metadata to ensure full refresh (consistency fix)
+				p.cache.(*mockcache.MockCache).EXPECT().Delete(featureFlagsIDKey)
+				p.cache.(*mockcache.MockCache).EXPECT().Delete(featureFlagsRequestedAtKey)
+			},
+			expectedReady:             true,
+			expectedHealingInProgress: true,
+			expectMetadataDeleted:     true,
+		},
+	}
+
+	for _, pt := range patterns {
+		t.Run(pt.desc, func(t *testing.T) {
+			processor := newMockFeatureFlagProcessor(
+				t,
+				mockController,
+				"tag",
+				60*time.Second, // 60s polling interval
+			)
+
+			pt.setup(processor)
+
+			err := processor.checkAndHealStaleCache()
+			assert.NoError(t, err)
+			assert.Equal(t, pt.expectedReady, processor.ready.Load())
+			assert.Equal(t, pt.expectedHealingInProgress, processor.healingInProgress.Load())
+		})
+	}
+}
+
+func TestHealingFlagClearedOnSuccess(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	patterns := []struct {
+		desc        string
+		forceUpdate bool
+	}{
+		{
+			desc:        "healing flag cleared after successful force update",
+			forceUpdate: true,
+		},
+		{
+			desc:        "healing flag cleared after successful incremental update",
+			forceUpdate: false,
+		},
+	}
+
+	for _, pt := range patterns {
+		t.Run(pt.desc, func(t *testing.T) {
+			processor := newMockFeatureFlagProcessor(
+				t,
+				mockController,
+				"tag",
+				60*time.Second,
+			)
+
+			// Set up initial state: ready and healing in progress
+			processor.ready.Store(true)
+			processor.healingInProgress.Store(true)
+
+			// Mock checkAndHealStaleCache call at the beginning of updateCache
+			// With healing in progress, it expects to find missing metadata
+			processor.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return(int64(0), cache.ErrNotFound)
+
+			// Mock the rest of updateCache
+			processor.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsIDKey).Return("old-id", nil)
+			processor.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return(int64(100), nil)
+
+			processor.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(
+				gomock.Any(),
+				gomock.Any(),
+				gomock.Any(),
+			).Return(
+				&model.GetFeatureFlagsResponse{
+					FeatureFlagsID:         "new-id",
+					RequestedAt:            "123",
+					Features:               []model.Feature{{ID: "feature-1"}},
+					ForceUpdate:            pt.forceUpdate,
+					ArchivedFeatureFlagIDs: []string{"archived-flag-1"},
+				},
+				1,
+				nil,
+			)
+
+			processor.MockProcessor.EXPECT().PushLatencyMetricsEvent(gomock.Any(), model.GetFeatureFlags)
+			processor.MockProcessor.EXPECT().PushSizeMetricsEvent(1, model.GetFeatureFlags)
+
+			if pt.forceUpdate {
+				// Force update path
+				processor.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().DeleteAll().Return(nil)
+				processor.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Put(gomock.Any()).Return(nil)
+			} else {
+				// Incremental update path
+				processor.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Put(gomock.Any()).Return(nil)
+				processor.featureFlagsCache.(*mockcache.MockFeaturesCache).EXPECT().Delete("archived-flag-1")
+			}
+
+			processor.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsIDKey, "new-id", cacheTTL).Return(nil)
+			processor.cache.(*mockcache.MockCache).EXPECT().Put(featureFlagsRequestedAtKey, int64(123), cacheTTL).Return(nil)
+
+			// Execute updateCache
+			err := processor.updateCache(context.Background())
+
+			// Assert
+			assert.NoError(t, err)
+			assert.True(t, processor.ready.Load(), "ready should be true")
+			assert.False(t, processor.healingInProgress.Load(), "healingInProgress should be cleared after success")
+		})
+	}
+}
+
+func TestHealingFlagNotClearedOnFailure(t *testing.T) {
+	t.Parallel()
+	mockController := gomock.NewController(t)
+	defer mockController.Finish()
+
+	processor := newMockFeatureFlagProcessor(
+		t,
+		mockController,
+		"tag",
+		60*time.Second,
+	)
+
+	// Set up initial state: healing in progress
+	processor.ready.Store(true)
+	processor.healingInProgress.Store(true)
+
+	// Mock checkAndHealStaleCache call - should skip due to healing in progress
+	processor.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return(int64(0), cache.ErrNotFound)
+
+	// Mock the rest of updateCache to fail
+	processor.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsIDKey).Return("old-id", nil)
+	processor.cache.(*mockcache.MockCache).EXPECT().Get(featureFlagsRequestedAtKey).Return(int64(100), nil)
+
+	internalErr := errors.New("network error")
+	processor.apiClient.(*mockapi.MockClient).EXPECT().GetFeatureFlags(
+		gomock.Any(),
+		gomock.Any(),
+		gomock.Any(),
+	).Return(nil, 0, internalErr)
+
+	processor.MockProcessor.EXPECT().PushErrorEvent(gomock.Any(), model.GetFeatureFlags)
+
+	// Execute updateCache
+	err := processor.updateCache(context.Background())
+
+	// Assert
+	assert.Error(t, err)
+	assert.True(t, processor.ready.Load(), "ready should still be true")
+	assert.True(t, processor.healingInProgress.Load(), "healingInProgress should NOT be cleared on failure")
 }
