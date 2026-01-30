@@ -3,10 +3,14 @@ package event
 
 import (
 	"context"
+	"crypto/x509"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
+	"net"
 	"net/http"
-	"os"
+	"net/url"
 	"strings"
 	"sync"
 	"syscall"
@@ -475,23 +479,176 @@ func (p *processor) flushEvents(ctx context.Context, events []*model.Event) {
 	}
 }
 
-func (p *processor) PushErrorEvent(err error, apiID model.APIID) {
-	code, ok := api.GetStatusCode(err)
-	if !ok {
-		switch {
-		case strings.Contains(err.Error(), syscall.EHOSTUNREACH.Error()) ||
-			strings.Contains(err.Error(), syscall.ECONNREFUSED.Error()):
-			p.PushNetworkErrorMetricsEvent(apiID)
-		case os.IsTimeout(err):
-			p.pushTimeoutErrorMetricsEvent(apiID)
-		default:
-			p.pushInternalSDKErrorMetricsEvent(apiID, err)
-		}
-		return
+// errorType represents the classification of an error for metrics reporting.
+type errorType int
+
+const (
+	errorTypeUnknown errorType = iota
+	errorTypeNetwork
+	errorTypeTimeout
+	errorTypeStatusCode
+	errorTypeInternal
+)
+
+// classifyError determines the type of error for metrics reporting.
+// Uses proper Go error type assertions instead of string matching.
+func classifyError(err error) (errorType, int) {
+	if err == nil {
+		return errorTypeUnknown, 0
 	}
-	if code == http.StatusGatewayTimeout {
+	// Check HTTP status code first (highest priority)
+	if errType, code := classifyHTTPStatusError(err); errType != errorTypeUnknown {
+		return errType, code
+	}
+	// Check context errors (deadline/cancellation)
+	if errType := classifyContextError(err); errType != errorTypeUnknown {
+		return errType, 0
+	}
+	// Check network-related errors
+	if errType := classifyNetworkError(err); errType != errorTypeUnknown {
+		return errType, 0
+	}
+	return errorTypeInternal, 0
+}
+
+// classifyHTTPStatusError checks for HTTP status code errors from the API client.
+func classifyHTTPStatusError(err error) (errorType, int) {
+	code, ok := api.GetStatusCode(err)
+	if ok && code != http.StatusOK {
+		return errorTypeStatusCode, code
+	}
+	return errorTypeUnknown, 0
+}
+
+// classifyContextError checks for context-related errors (deadline exceeded, canceled).
+func classifyContextError(err error) errorType {
+	switch {
+	case errors.Is(err, context.DeadlineExceeded):
+		return errorTypeTimeout
+	case errors.Is(err, context.Canceled):
+		return errorTypeNetwork // Treat cancellation as network issue
+	default:
+		return errorTypeUnknown
+	}
+}
+
+// classifyNetworkError checks for network-related errors (net.Error, DNS, syscall, TLS, EOF).
+func classifyNetworkError(err error) errorType {
+	// Check for EOF errors (connection closed unexpectedly)
+	if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
+		return errorTypeNetwork
+	}
+
+	// Check TLS/certificate errors (x509 errors are network-layer issues)
+	if isTLSError(err) {
+		return errorTypeNetwork
+	}
+
+	// Check net.Error interface (includes timeout check)
+	var netErr net.Error
+	if errors.As(err, &netErr) {
+		if netErr.Timeout() {
+			return errorTypeTimeout
+		}
+		return errorTypeNetwork
+	}
+
+	// Check url.Error (wraps network errors from http.Client)
+	var urlErr *url.Error
+	if errors.As(err, &urlErr) {
+		if urlErr.Timeout() {
+			return errorTypeTimeout
+		}
+		// Recursively check the wrapped error
+		if urlErr.Err != nil {
+			return classifyNetworkError(urlErr.Err)
+		}
+		return errorTypeNetwork
+	}
+
+	// Check DNS errors
+	var dnsErr *net.DNSError
+	if errors.As(err, &dnsErr) {
+		if dnsErr.IsTimeout {
+			return errorTypeTimeout
+		}
+		return errorTypeNetwork
+	}
+
+	// Check syscall errors (connection refused, reset, broken pipe, etc.)
+	if isNetworkSyscallError(err) {
+		return errorTypeNetwork
+	}
+
+	return errorTypeUnknown
+}
+
+// isTLSError checks if the error is a TLS/certificate-related error.
+// These are classified as network errors since they prevent connection establishment.
+func isTLSError(err error) bool {
+	// Check for x509 certificate errors
+	var x509Err x509.CertificateInvalidError
+	if errors.As(err, &x509Err) {
+		return true
+	}
+
+	var x509UnknownErr x509.UnknownAuthorityError
+	if errors.As(err, &x509UnknownErr) {
+		return true
+	}
+
+	var x509HostErr x509.HostnameError
+	if errors.As(err, &x509HostErr) {
+		return true
+	}
+
+	// Fallback: check error message for TLS-related strings
+	// This catches TLS errors that may be wrapped or have custom types.
+	// Only use specific prefixes (tls:, x509:) to avoid false positives
+	// from generic words like "certificate" in unrelated error messages.
+	errMsg := err.Error()
+	return strings.Contains(errMsg, "tls:") ||
+		strings.Contains(errMsg, "x509:")
+}
+
+// isNetworkSyscallError checks if the error is a network-related syscall error.
+func isNetworkSyscallError(err error) bool {
+	var syscallErr syscall.Errno
+	if !errors.As(err, &syscallErr) {
+		return false
+	}
+	switch syscallErr {
+	// Connection errors
+	case syscall.ECONNREFUSED, syscall.ECONNRESET, syscall.ECONNABORTED, syscall.EPIPE:
+		return true
+	// Network unreachable errors
+	case syscall.EHOSTUNREACH, syscall.ENETUNREACH, syscall.ENETDOWN, syscall.ENETRESET:
+		return true
+	// Network-layer timeout errors: treat ETIMEDOUT as a network error since
+	// it is raised by the underlying syscall layer; this also acts as a
+	// fallback detection for timeouts not caught by higher-level logic.
+	case syscall.ETIMEDOUT:
+		return true
+	default:
+		return false
+	}
+}
+
+func (p *processor) PushErrorEvent(err error, apiID model.APIID) {
+	errType, statusCode := classifyError(err)
+
+	switch errType {
+	case errorTypeNetwork:
+		p.PushNetworkErrorMetricsEvent(apiID)
+	case errorTypeTimeout:
 		p.pushTimeoutErrorMetricsEvent(apiID)
-	} else {
-		p.pushErrorStatusCodeMetricsEvent(apiID, code, err)
+	case errorTypeStatusCode:
+		if statusCode == http.StatusGatewayTimeout {
+			p.pushTimeoutErrorMetricsEvent(apiID)
+		} else {
+			p.pushErrorStatusCodeMetricsEvent(apiID, statusCode, err)
+		}
+	case errorTypeInternal, errorTypeUnknown:
+		p.pushInternalSDKErrorMetricsEvent(apiID, err)
 	}
 }
