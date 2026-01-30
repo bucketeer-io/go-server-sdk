@@ -38,7 +38,8 @@ func TestPushEvaluationEvent(t *testing.T) {
 	user := newUser(t, processorUserID)
 	evaluation := newEvaluation(t, processorFeatureID, processorVariationID)
 	p.PushEvaluationEvent(user, evaluation)
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	e := model.NewEvaluationEvent(p.tag, processorFeatureID, "", version.SDKVersion, 0, model.SourceIDGoServer, user, &model.Reason{Type: model.ReasonErrorFlagNotFound})
 	err := json.Unmarshal(evt.Event, e)
 	assert.NoError(t, err)
@@ -58,7 +59,8 @@ func TestPushGoalEvent(t *testing.T) {
 	p := newProcessorForTestPushEvent(t, 10)
 	user := newUser(t, processorUserID)
 	p.PushGoalEvent(user, processorGoalID, 1.1)
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	e := model.NewGoalEvent(p.tag, processorGoalID, version.SDKVersion, 1.1, model.SourceIDGoServer, user)
 	err := json.Unmarshal(evt.Event, e)
 	assert.NoError(t, err)
@@ -77,7 +79,8 @@ func TestPushLatencyMetricsEvent(t *testing.T) {
 	t1 := time.Date(2020, 12, 25, 0, 0, 0, 0, time.UTC)
 	t2 := time.Date(2020, 12, 26, 0, 0, 0, 0, time.UTC)
 	p.PushLatencyMetricsEvent(t2.Sub(t1), model.GetEvaluation)
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
@@ -94,7 +97,8 @@ func TestPushSizeMetricsEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.PushSizeMetricsEvent(1, model.GetEvaluation)
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
@@ -111,7 +115,8 @@ func TestPushTimeoutErrorMetricsEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushTimeoutErrorMetricsEvent(model.GetEvaluation)
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
@@ -125,7 +130,8 @@ func TestPushInternalSDKErrorMetricsEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushInternalSDKErrorMetricsEvent(model.GetEvaluation, errors.New("error"))
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
@@ -140,33 +146,30 @@ func TestUnauthorizedError(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, http.StatusUnauthorized, errors.New("StatusUnauthorized"))
-	select {
-	case evt := <-p.evtQueue.eventCh():
-		// If we receive an event, the test should fail
-		t.Errorf("Expected no event for unauthorized error, but got: %v", evt)
-	case <-time.After(time.Millisecond * 300):
-		// No event received
-	}
+	// Unauthorized errors should not push events to the queue
+	time.Sleep(time.Millisecond * 50) // Give time for any async processing
+	evt, ok := p.evtQueue.pop()
+	assert.False(t, ok, "Expected no event for unauthorized error")
+	assert.Nil(t, evt)
 }
 
 func TestStatusForbiddenError(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, http.StatusForbidden, errors.New("StatusForbidden"))
-	select {
-	case evt := <-p.evtQueue.eventCh():
-		// If we receive an event, the test should fail
-		t.Errorf("Expected no event for forbidden error, but got: %v", evt)
-	case <-time.After(time.Millisecond * 300):
-		// No event received
-	}
+	// Forbidden errors should not push events to the queue
+	time.Sleep(time.Millisecond * 50) // Give time for any async processing
+	evt, ok := p.evtQueue.pop()
+	assert.False(t, ok, "Expected no event for forbidden error")
+	assert.Nil(t, evt)
 }
 
 func TestPushErrorStatusCodeMetricsEventInternalServerError(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, http.StatusInternalServerError, errors.New("InternalServerError"))
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
@@ -181,7 +184,8 @@ func TestPushErrorStatusCodeMetricsEventMethodNotAllowed(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, http.StatusMethodNotAllowed, errors.New("MethodNotAllowed"))
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
@@ -196,7 +200,8 @@ func TestPushErrorStatusCodeMetricsEventRequestTimeout(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, http.StatusRequestTimeout, errors.New("StatusRequestTimeout"))
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
@@ -211,7 +216,8 @@ func TestPushErrorStatusCodeMetricsEventRequestEntityTooLarge(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, http.StatusRequestEntityTooLarge, errors.New("StatusRequestEntityTooLarge"))
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
@@ -226,7 +232,8 @@ func TestPushErrorStatusCodeMetricsEventBadGateway(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, http.StatusBadGateway, errors.New("StatusBadGateway"))
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
@@ -241,7 +248,8 @@ func TestPushErrorStatusCodeMetricsEventRedirectionRequestError(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, 333, errors.New("333 error"))
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
@@ -256,7 +264,8 @@ func TestPushErrorStatusCodeMetricsEventUnknownError(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, 999, errors.New("999 error"))
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
@@ -326,7 +335,8 @@ func TestPushErrorEventWhenNetworkError(t *testing.T) {
 		t.Run(pt.desc, func(t *testing.T) {
 			p := newProcessorForTestPushEvent(t, 10)
 			p.PushErrorEvent(pt.err, model.RegisterEvents)
-			evt := <-p.evtQueue.eventCh()
+			evt, ok := p.evtQueue.pop()
+			assert.True(t, ok)
 			metricsEvt := &model.MetricsEvent{}
 			err := json.Unmarshal(evt.Event, metricsEvt)
 			assert.NoError(t, err)
@@ -355,7 +365,8 @@ func TestPushErrorEventWhenInternalSDKError(t *testing.T) {
 		t.Run(pt.desc, func(t *testing.T) {
 			p := newProcessorForTestPushEvent(t, 10)
 			p.PushErrorEvent(pt.err, model.RegisterEvents)
-			evt := <-p.evtQueue.eventCh()
+			evt, ok := p.evtQueue.pop()
+			assert.True(t, ok)
 			metricsEvt := &model.MetricsEvent{}
 			err := json.Unmarshal(evt.Event, metricsEvt)
 			assert.NoError(t, err)
@@ -429,7 +440,8 @@ func TestPushErrorEventWhenTimeoutErr(t *testing.T) {
 		t.Run(pt.desc, func(t *testing.T) {
 			p := newProcessorForTestPushEvent(t, 10)
 			p.PushErrorEvent(pt.err, model.RegisterEvents)
-			evt := <-p.evtQueue.eventCh()
+			evt, ok := p.evtQueue.pop()
+			assert.True(t, ok)
 			metricsEvt := &model.MetricsEvent{}
 			err := json.Unmarshal(evt.Event, metricsEvt)
 			assert.NoError(t, err)
@@ -458,7 +470,8 @@ func TestPushErrorEventWhenOtherStatus(t *testing.T) {
 		t.Run(pt.desc, func(t *testing.T) {
 			p := newProcessorForTestPushEvent(t, 10)
 			p.PushErrorEvent(pt.err, model.RegisterEvents)
-			evt := <-p.evtQueue.eventCh()
+			evt, ok := p.evtQueue.pop()
+			assert.True(t, ok)
 			metricsEvt := &model.MetricsEvent{}
 			err := json.Unmarshal(evt.Event, metricsEvt)
 			assert.NoError(t, err)
@@ -767,40 +780,28 @@ func TestClassifyError(t *testing.T) {
 
 func TestPushEvent(t *testing.T) {
 	t.Parallel()
-	tests := []struct {
-		desc               string
-		eventQueueCapacity int
-		encodedEvt         []byte
-		isErr              bool
-	}{
-		{
-			desc:               "return error when failed to push event",
-			eventQueueCapacity: 0,
-			encodedEvt:         newEncodedEvaluationEvent(t, processorFeatureID),
-			isErr:              true,
-		},
-		{
-			desc:               "success",
-			eventQueueCapacity: 10,
-			encodedEvt:         newEncodedEvaluationEvent(t, processorFeatureID),
-			isErr:              false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			p := newProcessorForTestPushEvent(t, tt.eventQueueCapacity)
-			err := p.PushEvent(tt.encodedEvt)
-			if tt.isErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				evt := <-p.evtQueue.eventCh()
-				evalationEvt := &model.EvaluationEvent{}
-				err := json.Unmarshal(evt.Event, evalationEvt)
-				assert.NoError(t, err)
-			}
-		})
-	}
+	t.Run("return error when queue is full", func(t *testing.T) {
+		// Create processor with minimum capacity (1)
+		p := newProcessorForTestPushEvent(t, 1)
+		encodedEvt := newEncodedEvaluationEvent(t, processorFeatureID)
+		// First push should succeed
+		err := p.PushEvent(encodedEvt)
+		assert.NoError(t, err)
+		// Second push should fail because queue is full
+		err = p.PushEvent(encodedEvt)
+		assert.Error(t, err)
+	})
+	t.Run("success", func(t *testing.T) {
+		p := newProcessorForTestPushEvent(t, 10)
+		encodedEvt := newEncodedEvaluationEvent(t, processorFeatureID)
+		err := p.PushEvent(encodedEvt)
+		assert.NoError(t, err)
+		evt, ok := p.evtQueue.pop()
+		assert.True(t, ok)
+		evalationEvt := &model.EvaluationEvent{}
+		err = json.Unmarshal(evt.Event, evalationEvt)
+		assert.NoError(t, err)
+	})
 }
 
 func newProcessorForTestPushEvent(t *testing.T, eventQueueCapacity int) *processor {
@@ -943,7 +944,7 @@ func TestFlushEvents(t *testing.T) {
 				tt.setup(p, tt.events)
 			}
 			p.flushEvents(ctx, tt.events)
-			assert.Len(t, p.evtQueue.eventCh(), tt.expectedQueueLen)
+			assert.Equal(t, tt.expectedQueueLen, p.evtQueue.len())
 		})
 	}
 }

@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -23,6 +24,14 @@ import (
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/uuid"
 )
+
+// ProcessorStats contains event processing statistics.
+type ProcessorStats struct {
+	EventsCreated int64 // Events successfully pushed to queue
+	EventsSent    int64 // Events successfully sent to server
+	EventsDropped int64 // Events dropped due to queue full
+	EventsRetried int64 // Events re-pushed after API error
+}
 
 // Processor defines the interface for processing events.
 //
@@ -55,6 +64,9 @@ type Processor interface {
 
 	// PushEvent pushes events to the queue.
 	PushEvent(encoded []byte) error
+
+	// Stats returns current event processing statistics.
+	Stats() ProcessorStats
 }
 
 type processor struct {
@@ -70,6 +82,13 @@ type processor struct {
 	tag             string
 	sdkVersion      string
 	sourceID        model.SourceIDType
+
+	// Stats tracking
+	enableStats   bool
+	eventsCreated int64 // atomic
+	eventsSent    int64 // atomic
+	eventsDropped int64 // atomic
+	eventsRetried int64 // atomic
 }
 
 // ProcessorConfig is the config for Processor.
@@ -111,6 +130,10 @@ type ProcessorConfig struct {
 
 	// SourceID is the source ID of the SDK.
 	SourceID model.SourceIDType
+
+	// EnableStats enables event processing statistics tracking.
+	// When true, the processor tracks event counts (created, sent, dropped, retried).
+	EnableStats bool
 }
 
 // NewProcessor creates a new Processor.
@@ -131,6 +154,7 @@ func NewProcessor(ctx context.Context, conf *ProcessorConfig) Processor {
 		tag:             conf.Tag,
 		sdkVersion:      conf.SDKVersion,
 		sourceID:        conf.SourceID,
+		enableStats:     conf.EnableStats,
 	}
 	go p.startWorkers(ctx)
 	return p
@@ -379,9 +403,25 @@ func (p *processor) PushEvent(encoded []byte) error {
 	}
 	evt := model.NewEvent(id.String(), encoded)
 	if err := p.evtQueue.push(evt); err != nil {
+		if p.enableStats {
+			atomic.AddInt64(&p.eventsDropped, 1)
+		}
 		return fmt.Errorf("failed to push event: %w", err)
 	}
+	if p.enableStats {
+		atomic.AddInt64(&p.eventsCreated, 1)
+	}
 	return nil
+}
+
+// Stats returns current event processing statistics.
+func (p *processor) Stats() ProcessorStats {
+	return ProcessorStats{
+		EventsCreated: atomic.LoadInt64(&p.eventsCreated),
+		EventsSent:    atomic.LoadInt64(&p.eventsSent),
+		EventsDropped: atomic.LoadInt64(&p.eventsDropped),
+		EventsRetried: atomic.LoadInt64(&p.eventsRetried),
+	}
 }
 
 func (p *processor) Close(ctx context.Context) error {
@@ -413,20 +453,34 @@ func (p *processor) runWorkerProcessLoop(ctx context.Context) {
 	defer ticker.Stop()
 	for {
 		select {
-		case evt, ok := <-p.evtQueue.eventCh():
-			if !ok {
-				p.flushEvents(ctx, events)
-				return
+		case <-p.evtQueue.notifyCh():
+			// Drain available events from ring buffer
+			for {
+				evt, ok := p.evtQueue.pop()
+				if !ok {
+					break
+				}
+				events = append(events, evt)
+				if len(events) >= p.flushSize {
+					p.flushEvents(ctx, events)
+					events = make([]*model.Event, 0, p.flushSize)
+				}
 			}
-			events = append(events, evt)
-			if len(events) < p.flushSize {
-				continue
-			}
-			p.flushEvents(ctx, events)
-			events = make([]*model.Event, 0, p.flushSize)
 		case <-ticker.C:
+			// Flush any accumulated events on timer
 			p.flushEvents(ctx, events)
 			events = make([]*model.Event, 0, p.flushSize)
+		case <-p.evtQueue.doneCh():
+			// Queue is closed, drain remaining events and exit
+			for {
+				evt, ok := p.evtQueue.pop()
+				if !ok {
+					break
+				}
+				events = append(events, evt)
+			}
+			p.flushEvents(ctx, events)
+			return
 		}
 	}
 }
@@ -452,30 +506,53 @@ func (p *processor) flushEvents(ctx context.Context, events []*model.Event) {
 	if err != nil {
 		p.loggers.Debugf("bucketeer/event: failed to register events: %v", err)
 		// Re-push all events to the event queue.
+		var retriedCount int64
 		for _, evt := range events {
 			if err := p.evtQueue.push(evt); err != nil {
 				p.loggers.Errorf("bucketeer/event: failed to re-push event: %v", err)
+			} else {
+				retriedCount++
 			}
+		}
+		if p.enableStats {
+			atomic.AddInt64(&p.eventsRetried, retriedCount)
 		}
 		p.PushErrorEvent(err, model.RegisterEvents)
 		return
 	}
+
+	// Count successful sends and handle partial errors
+	var sentCount int64
+	var retriedCount int64
 	if len(res.Errors) > 0 {
 		p.loggers.Debugf("bucketeer/event: register events response contains errors, len: %d", len(res.Errors))
 		// Re-push events returned retriable error to the event queue.
 		for _, evt := range events {
 			resErr, ok := res.Errors[evt.ID]
 			if !ok {
+				// No error for this event, it was sent successfully
+				sentCount++
 				continue
 			}
 			if !resErr.Retriable {
 				p.loggers.Errorf("bucketeer/event: non retriable error: %s", resErr.Message)
+				// Non-retriable errors are counted as sent (won't be retried)
+				sentCount++
 				continue
 			}
 			if err := p.evtQueue.push(evt); err != nil {
 				p.loggers.Errorf("bucketeer/event: failed to re-push retriable event: %v", err)
+			} else {
+				retriedCount++
 			}
 		}
+	} else {
+		// All events sent successfully
+		sentCount = int64(len(events))
+	}
+	if p.enableStats {
+		atomic.AddInt64(&p.eventsSent, sentCount)
+		atomic.AddInt64(&p.eventsRetried, retriedCount)
 	}
 }
 

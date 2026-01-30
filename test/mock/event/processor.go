@@ -14,10 +14,10 @@ import (
 	reflect "reflect"
 	time "time"
 
-	gomock "go.uber.org/mock/gomock"
-
+	event "github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/event"
 	model "github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 	user "github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"
+	gomock "go.uber.org/mock/gomock"
 )
 
 // MockProcessor is a mock of Processor interface.
@@ -141,4 +141,18 @@ func (m *MockProcessor) PushSizeMetricsEvent(sizeByte int, api model.APIID) {
 func (mr *MockProcessorMockRecorder) PushSizeMetricsEvent(sizeByte, api any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PushSizeMetricsEvent", reflect.TypeOf((*MockProcessor)(nil).PushSizeMetricsEvent), sizeByte, api)
+}
+
+// Stats mocks base method.
+func (m *MockProcessor) Stats() event.ProcessorStats {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Stats")
+	ret0, _ := ret[0].(event.ProcessorStats)
+	return ret0
+}
+
+// Stats indicates an expected call of Stats.
+func (mr *MockProcessorMockRecorder) Stats() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stats", reflect.TypeOf((*MockProcessor)(nil).Stats))
 }
