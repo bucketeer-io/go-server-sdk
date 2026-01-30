@@ -114,6 +114,10 @@ type SDK interface {
 	//
 	// After calling this, the SDK should no longer be used.
 	Close(ctx context.Context) error
+
+	// EventStats returns current event processing statistics.
+	// This is useful for monitoring and debugging event delivery.
+	EventStats() event.ProcessorStats
 }
 
 type sdk struct {
@@ -171,6 +175,7 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		Tag:             dopts.tag,
 		SDKVersion:      dopts.sdkVersion,
 		SourceID:        model.SourceIDType(dopts.sourceID),
+		EnableStats:     dopts.enableEventStats,
 	}
 	processor := event.NewProcessor(ctx, processorConf)
 	if !dopts.enableLocalEvaluation {
@@ -677,6 +682,11 @@ func (s *sdk) Close(ctx context.Context) error {
 	return nil
 }
 
+// EventStats returns current event processing statistics.
+func (s *sdk) EventStats() event.ProcessorStats {
+	return s.eventProcessor.Stats()
+}
+
 type nopSDK struct{}
 
 // NewNopSDK creates a new no-op Bucketeer SDK.
@@ -848,4 +858,8 @@ func (s *nopSDK) TrackValue(ctx context.Context, user *user.User, GoalID string,
 
 func (s *nopSDK) Close(ctx context.Context) error {
 	return nil
+}
+
+func (s *nopSDK) EventStats() event.ProcessorStats {
+	return event.ProcessorStats{}
 }

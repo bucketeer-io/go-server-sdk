@@ -2,7 +2,10 @@ package e2e
 
 import (
 	"context"
+	"fmt"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
@@ -590,6 +593,92 @@ func TestObjectVariationDetails(t *testing.T) {
 	}
 }
 
+// TestHighVolumeEventsConcurrent simulates production load with multiple goroutines
+// making concurrent variation calls, exercising the event queue under realistic conditions.
+// It verifies that events are created and sent to the server with no dropped events.
+func TestHighVolumeEventsConcurrent(t *testing.T) {
+	t.Parallel()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+	defer cancel()
+
+	// Use larger queue and more workers for high volume
+	sdk, err := bucketeer.NewSDK(
+		ctx,
+		bucketeer.WithTag(tag),
+		bucketeer.WithAPIKey(*apiKey),
+		bucketeer.WithAPIEndpoint(*apiEndpoint),
+		bucketeer.WithScheme(*scheme),
+		bucketeer.WithEventQueueCapacity(10000),
+		bucketeer.WithNumEventFlushWorkers(10),
+		bucketeer.WithEventFlushSize(100),
+		bucketeer.WithEnableDebugLog(false), // Reduce noise
+		bucketeer.WithWrapperSourceID(sourceID),
+		bucketeer.WithWrapperSDKVersion("1.6.0"),
+	)
+	assert.NoError(t, err)
+
+	const (
+		numGoroutines     = 50
+		callsPerGoroutine = 100
+	)
+
+	var wg sync.WaitGroup
+
+	// Simulate production: multiple goroutines making concurrent flag evaluations
+	for g := 0; g < numGoroutines; g++ {
+		wg.Add(1)
+		go func(goroutineID int) {
+			defer wg.Done()
+			user := newUser(t, fmt.Sprintf("concurrent-user-%d", goroutineID))
+			for i := 0; i < callsPerGoroutine; i++ {
+				// Mix of different variation types
+				switch i % 3 {
+				case 0:
+					sdk.BoolVariation(ctx, user, featureIDBoolean, false)
+				case 1:
+					sdk.StringVariation(ctx, user, featureIDString, "default")
+				case 2:
+					sdk.IntVariation(ctx, user, featureIDInt, -1)
+				}
+			}
+		}(g)
+	}
+
+	wg.Wait()
+
+	// Get stats before Close() flushes remaining events
+	statsBefore := sdk.EventStats()
+	t.Logf("Stats before Close: created=%d, sent=%d, dropped=%d, retried=%d",
+		statsBefore.EventsCreated, statsBefore.EventsSent,
+		statsBefore.EventsDropped, statsBefore.EventsRetried)
+
+	// Close() will flush all remaining events
+	err = sdk.Close(ctx)
+	assert.NoError(t, err)
+
+	// Get final stats after Close()
+	statsAfter := sdk.EventStats()
+	t.Logf("Stats after Close: created=%d, sent=%d, dropped=%d, retried=%d",
+		statsAfter.EventsCreated, statsAfter.EventsSent,
+		statsAfter.EventsDropped, statsAfter.EventsRetried)
+
+	// Verify no events were dropped
+	assert.Zero(t, statsAfter.EventsDropped, "expected no dropped events")
+
+	// Verify exact event counts
+	// Each variation call creates 3 events: evaluation + latency metrics + size metrics
+	totalCalls := int64(numGoroutines * callsPerGoroutine)
+	expectedEvents := totalCalls * 3 // 3 events per variation call
+	assert.Equal(t, expectedEvents, statsAfter.EventsCreated,
+		"expected exactly %d events created", expectedEvents)
+	assert.Equal(t, expectedEvents, statsAfter.EventsSent,
+		"expected exactly %d events sent", expectedEvents)
+
+	t.Logf("Successfully processed %d concurrent variation calls: created=%d, sent=%d",
+		totalCalls, statsAfter.EventsCreated, statsAfter.EventsSent)
+}
+
 func newSDK(t *testing.T, ctx context.Context) bucketeer.SDK {
 	t.Helper()
 	sdk, err := bucketeer.NewSDK(
@@ -603,7 +692,7 @@ func newSDK(t *testing.T, ctx context.Context) bucketeer.SDK {
 		bucketeer.WithEventFlushSize(1),
 		bucketeer.WithEnableDebugLog(true),
 		bucketeer.WithWrapperSourceID(sourceID),
-		bucketeer.WithWrapperSDKVersion("1.5.5"),
+		bucketeer.WithWrapperSDKVersion("1.6.0"),
 	)
 	assert.NoError(t, err)
 	return sdk

@@ -27,6 +27,7 @@ type options struct {
 	eventFlushInterval    time.Duration
 	eventFlushSize        int
 	enableDebugLog        bool
+	enableEventStats      bool
 	errorLogger           log.BaseLogger
 
 	// Retry configuration (global)
@@ -49,9 +50,10 @@ var defaultOptions = options{
 	eventQueueCapacity:    100_000,
 	numEventFlushWorkers:  50,
 	sourceID:              model.SourceIDGoServer.Int32(),
-	eventFlushInterval:    1 * time.Minute,
+	eventFlushInterval:    10 * time.Second,
 	eventFlushSize:        100,
 	enableDebugLog:        false,
+	enableEventStats:      true,
 	errorLogger:           log.DefaultErrorLogger,
 
 	// Retry configuration defaults
@@ -167,7 +169,7 @@ func WithNumEventFlushWorkers(numEventFlushWorkers int) Option {
 	}
 }
 
-// WithEventFlushInterval sets a interval of flushing events. (Default: 1 min)
+// WithEventFlushInterval sets a interval of flushing events. (Default: 10s)
 //
 // Each worker sends the events to Bucketeer service every time eventFlushInterval elapses or
 // its buffer exceeds eventFlushSize.
@@ -184,6 +186,17 @@ func WithEventFlushInterval(eventFlushInterval time.Duration) Option {
 func WithEventFlushSize(eventFlushSize int) Option {
 	return func(opts *options) {
 		opts.eventFlushSize = eventFlushSize
+	}
+}
+
+// WithEnableEventStats enables or disables event processing statistics tracking. (Default: true)
+//
+// When enabled, the SDK tracks event counts (created, sent, dropped, retried) which can be
+// retrieved via sdk.EventStats(). The overhead is minimal (~1-2ns per event using atomic operations),
+// but can be disabled for zero overhead if not needed.
+func WithEnableEventStats(enable bool) Option {
+	return func(opts *options) {
+		opts.enableEventStats = enable
 	}
 }
 
