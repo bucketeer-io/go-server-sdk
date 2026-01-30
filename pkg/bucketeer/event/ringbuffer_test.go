@@ -1,6 +1,7 @@
 package event
 
 import (
+	"fmt"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -31,7 +32,7 @@ func TestNextPowerOf2(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run("", func(t *testing.T) {
+		t.Run(fmt.Sprintf("input_%d_expected_%d", tt.input, tt.expected), func(t *testing.T) {
 			result := nextPowerOf2(tt.input)
 			assert.Equal(t, tt.expected, result)
 		})
