@@ -445,9 +445,59 @@ func (p *processor) startWorkers(ctx context.Context) {
 
 // Adaptive polling intervals for work-stealing
 const (
-	minPollInterval = 100 * time.Millisecond // Fast polling under load
-	maxPollInterval = 1 * time.Second        // Low CPU when idle
+	minPollInterval   = 100 * time.Millisecond // Fast polling under load
+	maxPollInterval   = 1 * time.Second        // Low CPU when idle
+	backoffThreshold  = 5                      // Empty polls before backoff starts
+	backoffMultiplier = 2                      // Exponential backoff multiplier
 )
+
+// adaptiveBackoff manages polling interval based on queue activity.
+// It increases the interval exponentially when idle and resets to minimum when active.
+type adaptiveBackoff struct {
+	current    time.Duration
+	min        time.Duration
+	max        time.Duration
+	threshold  int
+	multiplier int
+	emptyPolls int
+}
+
+func newAdaptiveBackoff() *adaptiveBackoff {
+	return &adaptiveBackoff{
+		current:    minPollInterval,
+		min:        minPollInterval,
+		max:        maxPollInterval,
+		threshold:  backoffThreshold,
+		multiplier: backoffMultiplier,
+		emptyPolls: 0,
+	}
+}
+
+// recordPoll updates the backoff state based on whether events were drained.
+// Returns true if the polling interval changed and ticker should be reset.
+func (b *adaptiveBackoff) recordPoll(drained int) bool {
+	if drained == 0 {
+		b.emptyPolls++
+		if b.emptyPolls > b.threshold && b.current < b.max {
+			// Slow down when idle (exponential backoff)
+			b.current = min(b.current*time.Duration(b.multiplier), b.max)
+			return true
+		}
+		return false
+	}
+	// Events found - reset to fast polling
+	b.emptyPolls = 0
+	if b.current > b.min {
+		b.current = b.min
+		return true
+	}
+	return false
+}
+
+// interval returns the current polling interval.
+func (b *adaptiveBackoff) interval() time.Duration {
+	return b.current
+}
 
 func (p *processor) runWorkerProcessLoop(ctx context.Context) {
 	defer func() {
@@ -458,15 +508,13 @@ func (p *processor) runWorkerProcessLoop(ctx context.Context) {
 	events := make([]*model.Event, 0, p.flushSize)
 
 	// Adaptive poll ticker - all workers compete for events (work-stealing)
-	pollInterval := minPollInterval
-	pollTicker := time.NewTicker(pollInterval)
+	backoff := newAdaptiveBackoff()
+	pollTicker := time.NewTicker(backoff.interval())
 	defer pollTicker.Stop()
 
 	// User-configured flush ticker for partial batches
 	flushTicker := time.NewTicker(p.flushInterval)
 	defer flushTicker.Stop()
-
-	emptyPolls := 0
 
 	for {
 		select {
@@ -486,21 +534,9 @@ func (p *processor) runWorkerProcessLoop(ctx context.Context) {
 				}
 			}
 
-			// Simple adaptive backoff based on consecutive empty polls
-			if drained == 0 {
-				emptyPolls++
-				if emptyPolls > 5 && pollInterval < maxPollInterval {
-					// Slow down when idle  to reduce CPU usage (exponential backoff)
-					pollInterval = min(pollInterval*2, maxPollInterval)
-					pollTicker.Reset(pollInterval)
-				}
-			} else {
-				// Events found - reset to fast polling
-				emptyPolls = 0
-				if pollInterval > minPollInterval {
-					pollInterval = minPollInterval
-					pollTicker.Reset(pollInterval)
-				}
+			// Update adaptive backoff and reset ticker if interval changed
+			if backoff.recordPoll(drained) {
+				pollTicker.Reset(backoff.interval())
 			}
 
 		case <-flushTicker.C:

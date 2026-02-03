@@ -32,6 +32,111 @@ const (
 	processorGoalID      = "goal-id"
 )
 
+func TestAdaptiveBackoff(t *testing.T) {
+	t.Parallel()
+
+	t.Run("initial state", func(t *testing.T) {
+		b := newAdaptiveBackoff()
+		assert.Equal(t, minPollInterval, b.interval())
+		assert.Equal(t, 0, b.emptyPolls)
+	})
+
+	t.Run("no backoff within threshold", func(t *testing.T) {
+		b := newAdaptiveBackoff()
+
+		// First 5 empty polls should not trigger backoff
+		for i := 0; i < backoffThreshold; i++ {
+			changed := b.recordPoll(0)
+			assert.False(t, changed, "poll %d should not trigger backoff", i+1)
+			assert.Equal(t, minPollInterval, b.interval())
+		}
+		assert.Equal(t, backoffThreshold, b.emptyPolls)
+	})
+
+	t.Run("backoff after threshold exceeded", func(t *testing.T) {
+		b := newAdaptiveBackoff()
+
+		// Exceed threshold
+		for i := 0; i < backoffThreshold; i++ {
+			b.recordPoll(0)
+		}
+
+		// 6th empty poll should trigger first backoff: 100ms -> 200ms
+		changed := b.recordPoll(0)
+		assert.True(t, changed)
+		assert.Equal(t, 200*time.Millisecond, b.interval())
+
+		// 7th empty poll: 200ms -> 400ms
+		changed = b.recordPoll(0)
+		assert.True(t, changed)
+		assert.Equal(t, 400*time.Millisecond, b.interval())
+
+		// 8th empty poll: 400ms -> 800ms
+		changed = b.recordPoll(0)
+		assert.True(t, changed)
+		assert.Equal(t, 800*time.Millisecond, b.interval())
+
+		// 9th empty poll: 800ms -> 1s (capped at max)
+		changed = b.recordPoll(0)
+		assert.True(t, changed)
+		assert.Equal(t, maxPollInterval, b.interval())
+
+		// 10th empty poll: stays at 1s (already at max)
+		changed = b.recordPoll(0)
+		assert.False(t, changed)
+		assert.Equal(t, maxPollInterval, b.interval())
+	})
+
+	t.Run("reset on events found", func(t *testing.T) {
+		b := newAdaptiveBackoff()
+
+		// Backoff to 400ms
+		for i := 0; i < backoffThreshold+2; i++ {
+			b.recordPoll(0)
+		}
+		assert.Equal(t, 400*time.Millisecond, b.interval())
+
+		// Finding events should reset to min
+		changed := b.recordPoll(1)
+		assert.True(t, changed)
+		assert.Equal(t, minPollInterval, b.interval())
+		assert.Equal(t, 0, b.emptyPolls)
+	})
+
+	t.Run("no change when already at min and events found", func(t *testing.T) {
+		b := newAdaptiveBackoff()
+
+		// Already at min, finding events should not change
+		changed := b.recordPoll(5)
+		assert.False(t, changed)
+		assert.Equal(t, minPollInterval, b.interval())
+	})
+
+	t.Run("empty polls counter resets on activity", func(t *testing.T) {
+		b := newAdaptiveBackoff()
+
+		// 4 empty polls (not yet at threshold)
+		for i := 0; i < 4; i++ {
+			b.recordPoll(0)
+		}
+		assert.Equal(t, 4, b.emptyPolls)
+
+		// Activity resets counter
+		b.recordPoll(1)
+		assert.Equal(t, 0, b.emptyPolls)
+
+		// Need to exceed threshold again for backoff
+		for i := 0; i < backoffThreshold; i++ {
+			changed := b.recordPoll(0)
+			assert.False(t, changed)
+		}
+		// Now backoff kicks in
+		changed := b.recordPoll(0)
+		assert.True(t, changed)
+		assert.Equal(t, 200*time.Millisecond, b.interval())
+	})
+}
+
 func TestPushEvaluationEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
