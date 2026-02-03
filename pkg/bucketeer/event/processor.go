@@ -486,18 +486,18 @@ func (p *processor) runWorkerProcessLoop(ctx context.Context) {
 				}
 			}
 
-			// Adaptive interval adjustment
+			// Simple adaptive backoff based on consecutive empty polls
 			if drained == 0 {
 				emptyPolls++
 				if emptyPolls > 5 && pollInterval < maxPollInterval {
-					// Slow down when idle to reduce CPU usage
+					// Slow down when idle  to reduce CPU usage (exponential backoff)
 					pollInterval = min(pollInterval*2, maxPollInterval)
 					pollTicker.Reset(pollInterval)
 				}
 			} else {
+				// Events found - reset to fast polling
 				emptyPolls = 0
 				if pollInterval > minPollInterval {
-					// Speed up under load for responsiveness
 					pollInterval = minPollInterval
 					pollTicker.Reset(pollInterval)
 				}
