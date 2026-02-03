@@ -27,7 +27,7 @@ func TestQueueHighPressure_FillAndDrain(t *testing.T) {
 	q := newQueue(&queueConfig{capacity: capacity})
 
 	// Verify actual capacity matches
-	assert.Equal(t, capacity, q.ring.Cap(), "capacity should be exact power of 2")
+	assert.Equal(t, capacity, q.cap(), "capacity should be exact power of 2")
 
 	// Fill queue to capacity
 	for i := 0; i < capacity; i++ {
@@ -162,7 +162,7 @@ func TestQueueHighPressure_BurstTraffic(t *testing.T) {
 	q := newQueue(&queueConfig{capacity: queueSize})
 
 	// Verify actual capacity
-	actualCap := q.ring.Cap()
+	actualCap := q.cap()
 	assert.Equal(t, queueSize, actualCap, "should be exact power of 2")
 
 	var (
