@@ -3,6 +3,7 @@ package event
 import (
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 )
@@ -56,17 +57,19 @@ func BenchmarkQueueContention(b *testing.B) {
 		b.Run(bm.name, func(b *testing.B) {
 			q := newQueue(&queueConfig{capacity: 100000})
 
-			// Start consumers
+			// Start consumers with polling
 			var consumerWG sync.WaitGroup
 			stopConsumers := make(chan struct{})
 			for c := 0; c < bm.consumers; c++ {
 				consumerWG.Add(1)
 				go func() {
 					defer consumerWG.Done()
+					ticker := time.NewTicker(100 * time.Microsecond)
+					defer ticker.Stop()
 					for {
 						select {
-						case <-q.notifyCh():
-							// Drain all available events
+						case <-ticker.C:
+							// Drain all available events (work-stealing)
 							for {
 								if _, ok := q.pop(); !ok {
 									break
@@ -110,12 +113,14 @@ func BenchmarkQueueContention(b *testing.B) {
 func BenchmarkQueueThroughput(b *testing.B) {
 	q := newQueue(&queueConfig{capacity: 10000})
 
-	// Start a consumer goroutine
+	// Start a consumer goroutine with polling
 	done := make(chan struct{})
 	go func() {
+		ticker := time.NewTicker(100 * time.Microsecond)
+		defer ticker.Stop()
 		for {
 			select {
-			case <-q.notifyCh():
+			case <-ticker.C:
 				// Drain all available events
 				for {
 					if _, ok := q.pop(); !ok {

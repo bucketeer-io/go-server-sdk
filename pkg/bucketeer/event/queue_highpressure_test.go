@@ -77,16 +77,18 @@ func TestQueueHighPressure_ConcurrentProducersConsumers(t *testing.T) {
 		stopConsumers = make(chan struct{})
 	)
 
-	// Start consumers
+	// Start consumers with polling (work-stealing pattern)
 	for c := 0; c < numConsumers; c++ {
 		consumerWG.Add(1)
 		go func() {
 			defer consumerWG.Done()
 			localPopped := int64(0)
+			ticker := time.NewTicker(time.Millisecond)
+			defer ticker.Stop()
 			for {
 				select {
-				case <-q.notifyCh():
-					// Drain all available events
+				case <-ticker.C:
+					// Drain all available events (work-stealing)
 					for {
 						_, ok := q.pop()
 						if !ok {
@@ -279,13 +281,15 @@ func TestQueueHighPressure_ConsumerKeepsUp(t *testing.T) {
 		done       = make(chan struct{})
 	)
 
-	// Start aggressive consumer
+	// Start aggressive consumer with polling
 	consumerWG.Add(1)
 	go func() {
 		defer consumerWG.Done()
+		ticker := time.NewTicker(100 * time.Microsecond)
+		defer ticker.Stop()
 		for {
 			select {
-			case <-q.notifyCh():
+			case <-ticker.C:
 				for {
 					_, ok := q.pop()
 					if !ok {
@@ -336,12 +340,14 @@ func TestQueueHighPressure_ConsumerKeepsUp(t *testing.T) {
 func BenchmarkQueueHighPressure(b *testing.B) {
 	q := newQueue(&queueConfig{capacity: 100000})
 
-	// Start consumer
+	// Start consumer with polling
 	done := make(chan struct{})
 	go func() {
+		ticker := time.NewTicker(100 * time.Microsecond)
+		defer ticker.Stop()
 		for {
 			select {
-			case <-q.notifyCh():
+			case <-ticker.C:
 				for {
 					if _, ok := q.pop(); !ok {
 						break

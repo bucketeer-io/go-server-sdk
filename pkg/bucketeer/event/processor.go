@@ -443,33 +443,73 @@ func (p *processor) startWorkers(ctx context.Context) {
 	close(p.closeCh)
 }
 
+// Adaptive polling intervals for work-stealing
+const (
+	minPollInterval = 100 * time.Millisecond // Fast polling under load
+	maxPollInterval = 1 * time.Second        // Low CPU when idle
+)
+
 func (p *processor) runWorkerProcessLoop(ctx context.Context) {
 	defer func() {
 		p.loggers.Debug("bucketeer/event: runWorkerProcessLoop done")
 		p.workerWG.Done()
 	}()
+
 	events := make([]*model.Event, 0, p.flushSize)
-	ticker := time.NewTicker(p.flushInterval)
-	defer ticker.Stop()
+
+	// Adaptive poll ticker - all workers compete for events (work-stealing)
+	pollInterval := minPollInterval
+	pollTicker := time.NewTicker(pollInterval)
+	defer pollTicker.Stop()
+
+	// User-configured flush ticker for partial batches
+	flushTicker := time.NewTicker(p.flushInterval)
+	defer flushTicker.Stop()
+
+	emptyPolls := 0
+
 	for {
 		select {
-		case <-p.evtQueue.notifyCh():
-			// Drain available events from ring buffer
+		case <-pollTicker.C:
+			// Work-stealing: all workers try to drain events
+			drained := 0
 			for {
 				evt, ok := p.evtQueue.pop()
 				if !ok {
 					break
 				}
+				drained++
 				events = append(events, evt)
 				if len(events) >= p.flushSize {
 					p.flushEvents(ctx, events)
 					events = make([]*model.Event, 0, p.flushSize)
 				}
 			}
-		case <-ticker.C:
-			// Flush any accumulated events on timer
-			p.flushEvents(ctx, events)
-			events = make([]*model.Event, 0, p.flushSize)
+
+			// Adaptive interval adjustment
+			if drained == 0 {
+				emptyPolls++
+				if emptyPolls > 5 && pollInterval < maxPollInterval {
+					// Slow down when idle to reduce CPU usage
+					pollInterval = min(pollInterval*2, maxPollInterval)
+					pollTicker.Reset(pollInterval)
+				}
+			} else {
+				emptyPolls = 0
+				if pollInterval > minPollInterval {
+					// Speed up under load for responsiveness
+					pollInterval = minPollInterval
+					pollTicker.Reset(pollInterval)
+				}
+			}
+
+		case <-flushTicker.C:
+			// User-configured interval: flush partial batches
+			if len(events) > 0 {
+				p.flushEvents(ctx, events)
+				events = make([]*model.Event, 0, p.flushSize)
+			}
+
 		case <-p.evtQueue.doneCh():
 			// Queue is closed, drain remaining events and exit
 			for {

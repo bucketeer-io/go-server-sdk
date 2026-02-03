@@ -7,13 +7,12 @@ import (
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 )
 
-// queue is a thread-safe event queue using a ring buffer for storage
-// with a notification channel for consumer signaling.
+// queue is a thread-safe event queue using a ring buffer for storage.
 // This design provides:
 // - Reduced GC pressure through pre-allocated ring buffer slots
-// - Lower push latency by avoiding channel send operations for data
-// - Compatibility with Go's select statement for consumer notification
-// - We use a single mutex instead of RWMutex for all operations to avoid double-locking overhead)
+// - Lower push latency (no channel operations on push)
+// - Single mutex for all operations (no double-locking overhead)
+// - Workers poll the queue using adaptive ticker intervals
 type queue struct {
 	// Ring buffer fields
 	buffer   []*model.Event // Pre-allocated slots
@@ -22,9 +21,8 @@ type queue struct {
 	mask     uint64         // capacity - 1 (for power-of-2 indexing)
 	capacity uint64
 
-	// Signaling channels
-	notify chan struct{} // Signal-only channel (capacity 1) for wake-up
-	done   chan struct{} // Close signaling channel
+	// Close signaling channel
+	done chan struct{}
 
 	// Single mutex protects all state (buffer, head, tail, closed)
 	mu     sync.Mutex
@@ -41,7 +39,6 @@ func newQueue(conf *queueConfig) *queue {
 		buffer:   make([]*model.Event, cap64),
 		capacity: cap64,
 		mask:     cap64 - 1,
-		notify:   make(chan struct{}, 1),
 		done:     make(chan struct{}),
 	}
 }
@@ -86,22 +83,7 @@ func (q *queue) push(evt *model.Event) error {
 	q.buffer[q.head&q.mask] = evt
 	q.head++
 
-	// Non-blocking signal to notify consumers that data is available.
-	// We use a buffered channel of size 1, so at most one signal is queued.
-	// If a signal is already pending, this select will fall through to default,
-	// which is fine because the consumer will drain all available events.
-	select {
-	case q.notify <- struct{}{}:
-	default:
-	}
-
 	return nil
-}
-
-// notifyCh returns the notification channel for consumers to select on.
-// Consumers should drain the ring buffer when they receive a notification.
-func (q *queue) notifyCh() <-chan struct{} {
-	return q.notify
 }
 
 // doneCh returns the done channel for consumers to detect queue closure.
@@ -146,6 +128,16 @@ func (q *queue) cap() int {
 	return int(q.capacity)
 }
 
+// isClosed returns whether the queue is closed.
+// Used by tests to verify queue state.
+//
+//nolint:unused
+func (q *queue) isClosed() bool {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	return q.closed
+}
+
 // close closes the queue and signals all consumers to stop.
 func (q *queue) close() {
 	q.mu.Lock()
@@ -157,10 +149,4 @@ func (q *queue) close() {
 
 	q.closed = true
 	close(q.done)
-
-	// Send final notification to wake up any waiting consumers
-	select {
-	case q.notify <- struct{}{}:
-	default:
-	}
 }
