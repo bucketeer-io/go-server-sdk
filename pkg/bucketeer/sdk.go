@@ -161,6 +161,7 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		APIKey:      dopts.apiKey,
 		APIEndpoint: apiEndpoint,
 		Scheme:      dopts.scheme,
+		MaxConns:    dopts.numEventFlushWorkers,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("bucketeer: failed to new api client: %w", err)

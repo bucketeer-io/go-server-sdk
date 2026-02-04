@@ -3,7 +3,9 @@ package api
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
+	"net/http"
 	"time"
 
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
@@ -53,6 +55,10 @@ type client struct {
 	apiEndpoint string
 	scheme      string
 
+	// HTTP client with connection pooling for efficient request handling.
+	// Reusing connections avoids TCP/TLS handshake overhead per request.
+	httpClient *http.Client
+
 	// Retry configuration
 	retryConfig retry.Config
 }
@@ -73,6 +79,9 @@ type ClientConfig struct {
 	RetryInitialInterval time.Duration
 	RetryMaxInterval     time.Duration
 	RetryMultiplier      float64
+
+	// MaxConns is the maximum number of concurrent connections to the Bucketeer service.
+	MaxConns int
 }
 
 // Validate validates the ClientConfig.
@@ -113,10 +122,27 @@ func NewClient(conf *ClientConfig) (Client, error) {
 		multiplier = 2.0
 	}
 
+	// Configure HTTP transport with connection pooling.
+	// MaxIdleConnsPerHost should match the expected concurrency (number of workers).
+	transport := &http.Transport{
+		MaxIdleConns:        conf.MaxConns,
+		MaxIdleConnsPerHost: conf.MaxConns, // Match the number of flush workers
+		IdleConnTimeout:     90 * time.Second,
+	}
+
+	// For local development with HTTP scheme, skip TLS verification.
+	if conf.Scheme == "http" {
+		transport.TLSClientConfig = &tls.Config{InsecureSkipVerify: true} //nolint:gosec
+	}
+
 	client := &client{
 		scheme:      string(conf.Scheme),
 		apiKey:      conf.APIKey,
 		apiEndpoint: conf.APIEndpoint,
+		httpClient: &http.Client{
+			Timeout:   60 * time.Second,
+			Transport: transport,
+		},
 		retryConfig: retry.Config{
 			MaxRetries:      maxRetries,
 			InitialInterval: initialInterval,
