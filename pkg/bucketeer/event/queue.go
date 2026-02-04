@@ -112,23 +112,25 @@ func (q *queue) pop() (*model.Event, bool) {
 	return evt, true
 }
 
-// popMany removes and returns up to n events from the queue.
-// Returns an empty slice if the queue is empty.
-// This is more efficient than calling pop() n times as it only acquires the lock once.
-func (q *queue) popMany(n int) []*model.Event {
+// popMany removes and returns events from the queue.
+// - min: minimum number of events required (returns nil if queue has fewer)
+// - max: maximum number of events to return
+// Returns nil if queue has fewer than min events.
+// This is more efficient than calling pop() multiple times as it only acquires the lock once.
+func (q *queue) popMany(min, max int) []*model.Event {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
 	// Calculate how many events are available
 	available := int(q.head - q.tail)
-	if available == 0 {
+	if available < min {
 		return nil
 	}
 
-	// Take the minimum of available and requested
+	// Take the minimum of available and max
 	count := available
-	if n < count {
-		count = n
+	if max < count {
+		count = max
 	}
 
 	// Pre-allocate result slice
@@ -161,16 +163,6 @@ func (q *queue) len() int {
 //nolint:unused
 func (q *queue) cap() int {
 	return int(q.capacity)
-}
-
-// isClosed returns whether the queue is closed.
-// Used by tests to verify queue state.
-//
-//nolint:unused
-func (q *queue) isClosed() bool {
-	q.mu.Lock()
-	defer q.mu.Unlock()
-	return q.closed
 }
 
 // close closes the queue and signals all consumers to stop.

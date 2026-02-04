@@ -457,38 +457,36 @@ func (p *processor) runDispatcher(ctx context.Context) {
 	defer flushTicker.Stop()
 
 	for {
-		// Use flags to determine action and drain behavior
-		var isPoll, isFlush, isShutdown bool
+		var isShutdown bool
+		minFlushSize := 1 // Default: accept partial batches (flush/shutdown)
 
 		select {
 		case <-pollTicker.C:
-			if p.evtQueue.len() >= p.flushSize {
-				isPoll = true // Only send full batches
-			}
+			minFlushSize = p.flushSize // Poll: only full batches
 		case <-flushTicker.C:
-			isFlush = true // Send everything including partial batches
+			// Keep minFlushSize = 1 (partial batches ok)
 		case <-p.evtQueue.doneCh():
-			isShutdown = true // Drain all and exit
+			isShutdown = true
 		}
 
-		// Common logic: drain queue in batches
-		// For poll: only send full batches (stop when < flushSize)
-		// For flush/shutdown: send everything including partial batches
-		for isPoll || isFlush || isShutdown {
-			if isPoll && p.evtQueue.len() < p.flushSize {
-				break // Poll: stop when not enough for full batch
-			}
-			events := p.evtQueue.popMany(p.flushSize)
+		// Drain queue in batches
+		// - minFlushSize = flushSize: only get full batches (poll)
+		// - minFlushSize = 1: get any events (flush/shutdown)
+		var submitted bool
+		for {
+			events := p.evtQueue.popMany(minFlushSize, p.flushSize)
 			if len(events) == 0 {
 				break
 			}
 			p.submitBatch(ctx, events)
-			if !isShutdown {
-				flushTicker.Reset(p.flushInterval)
-			}
+			submitted = true
 		}
 
-		// Shutdown: wait for workers and exit
+		// Reset flush ticker if we sent events (but not during shutdown)
+		if submitted && !isShutdown {
+			flushTicker.Reset(p.flushInterval)
+		}
+
 		if isShutdown {
 			p.waitForWorkers()
 			close(p.closeCh)
@@ -517,10 +515,6 @@ func (p *processor) waitForWorkers() {
 // Note: batch ownership is transferred to this function (no copy needed since
 // popMany already returns a new slice).
 func (p *processor) submitBatch(ctx context.Context, batch []*model.Event) {
-	if len(batch) == 0 {
-		return
-	}
-
 	select {
 	case p.workerSem <- struct{}{}: // Acquire semaphore permit (blocks if all busy)
 		go func() {

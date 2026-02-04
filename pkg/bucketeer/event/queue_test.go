@@ -112,7 +112,7 @@ func TestQueue_CapacityRounding(t *testing.T) {
 func TestQueue_PopMany(t *testing.T) {
 	t.Run("empty queue returns nil", func(t *testing.T) {
 		q := newQueue(&queueConfig{capacity: 10})
-		events := q.popMany(5)
+		events := q.popMany(1, 5)
 		assert.Nil(t, events)
 	})
 
@@ -122,7 +122,7 @@ func TestQueue_PopMany(t *testing.T) {
 			q.push(model.NewEvent(fmt.Sprintf("%d", i), []byte("data")))
 		}
 
-		events := q.popMany(3)
+		events := q.popMany(1, 3)
 		assert.Len(t, events, 3)
 		assert.Equal(t, "0", events[0].ID)
 		assert.Equal(t, "1", events[1].ID)
@@ -130,18 +130,30 @@ func TestQueue_PopMany(t *testing.T) {
 		assert.Equal(t, 2, q.len())
 	})
 
-	t.Run("pop more than available", func(t *testing.T) {
+	t.Run("pop more than available with min=1", func(t *testing.T) {
 		q := newQueue(&queueConfig{capacity: 10})
 		for i := 0; i < 3; i++ {
 			q.push(model.NewEvent(fmt.Sprintf("%d", i), []byte("data")))
 		}
 
-		events := q.popMany(10) // Request more than available
+		events := q.popMany(1, 10) // Request more than available, min=1
 		assert.Len(t, events, 3)
 		assert.Equal(t, "0", events[0].ID)
 		assert.Equal(t, "1", events[1].ID)
 		assert.Equal(t, "2", events[2].ID)
 		assert.Equal(t, 0, q.len())
+	})
+
+	t.Run("returns nil when below minimum", func(t *testing.T) {
+		q := newQueue(&queueConfig{capacity: 10})
+		for i := 0; i < 3; i++ {
+			q.push(model.NewEvent(fmt.Sprintf("%d", i), []byte("data")))
+		}
+
+		// Request minimum 5, but only 3 available
+		events := q.popMany(5, 10)
+		assert.Nil(t, events)
+		assert.Equal(t, 3, q.len()) // Events remain in queue
 	})
 
 	t.Run("pop exact count", func(t *testing.T) {
@@ -150,7 +162,7 @@ func TestQueue_PopMany(t *testing.T) {
 			q.push(model.NewEvent(fmt.Sprintf("%d", i), []byte("data")))
 		}
 
-		events := q.popMany(5)
+		events := q.popMany(5, 5) // min=max=5
 		assert.Len(t, events, 5)
 		assert.Equal(t, 0, q.len())
 	})
@@ -162,11 +174,11 @@ func TestQueue_PopMany(t *testing.T) {
 		}
 
 		// Pop in batches
-		batch1 := q.popMany(10)
+		batch1 := q.popMany(1, 10)
 		assert.Len(t, batch1, 10)
 		assert.Equal(t, "0", batch1[0].ID)
 
-		batch2 := q.popMany(10)
+		batch2 := q.popMany(1, 10)
 		assert.Len(t, batch2, 10)
 		assert.Equal(t, "10", batch2[0].ID)
 
@@ -178,7 +190,7 @@ func TestQueue_PopMany(t *testing.T) {
 		evt := model.NewEvent("1", []byte("data"))
 		q.push(evt)
 
-		events := q.popMany(1)
+		events := q.popMany(1, 1)
 		assert.Len(t, events, 1)
 
 		// The slot should be cleared (nil) after pop
