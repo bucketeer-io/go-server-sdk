@@ -10,9 +10,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
-
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/event"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"
 )
 
@@ -594,207 +594,152 @@ func TestObjectVariationDetails(t *testing.T) {
 	}
 }
 
-// TestHighVolumeEventsConcurrent simulates production load with multiple goroutines
-// making concurrent variation calls, exercising the event queue under realistic conditions.
-// It verifies that events are created and sent to the server with no dropped events.
-func TestHighVolumeEventsConcurrent(t *testing.T) {
-	t.Parallel()
-
-	startTime := time.Now()
-	defer func() {
-		log.Printf("=== TestHighVolumeEventsConcurrent elapsed: %s ===", time.Since(startTime))
-	}()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
-	defer cancel()
-
-	// Use larger queue and more workers for high volume
-	sdk, err := bucketeer.NewSDK(
-		ctx,
-		bucketeer.WithTag(tag),
-		bucketeer.WithAPIKey(*apiKey),
-		bucketeer.WithAPIEndpoint(*apiEndpoint),
-		bucketeer.WithScheme(*scheme),
-		bucketeer.WithEventQueueCapacity(100000),
-		bucketeer.WithNumEventFlushWorkers(50),
-		bucketeer.WithEventFlushSize(100),
-		bucketeer.WithEnableDebugLog(false), // Reduce noise
-		bucketeer.WithWrapperSourceID(sourceID),
-		bucketeer.WithWrapperSDKVersion("1.6.0"),
-	)
-	assert.NoError(t, err)
-
-	const (
-		numGoroutines     = 25
-		callsPerGoroutine = 100
-	)
-
-	var wg sync.WaitGroup
-
-	// Simulate production: multiple goroutines making concurrent flag evaluations
-	for g := 0; g < numGoroutines; g++ {
-		wg.Add(1)
-		go func(goroutineID int) {
-			defer wg.Done()
-			user := newUser(t, fmt.Sprintf("concurrent-user-%d", goroutineID))
-			for i := 0; i < callsPerGoroutine; i++ {
-				// Mix of different variation types
-				switch i % 3 {
-				case 0:
-					sdk.BoolVariation(ctx, user, featureIDBoolean, false)
-				case 1:
-					sdk.StringVariation(ctx, user, featureIDString, "default")
-				case 2:
-					sdk.IntVariation(ctx, user, featureIDInt, -1)
-				}
-			}
-		}(g)
-	}
-
-	wg.Wait()
-
-	// Get stats before Close() flushes remaining events
-	statsBefore := sdk.EventStats()
-	t.Logf("Stats before Close: created=%d, sent=%d, dropped=%d, retried=%d",
-		statsBefore.EventsCreated, statsBefore.EventsSent,
-		statsBefore.EventsDropped, statsBefore.EventsRetried)
-
-	// Close() will flush all remaining events
-	err = sdk.Close(ctx)
-	assert.NoError(t, err)
-
-	// Get final stats after Close()
-	statsAfter := sdk.EventStats()
-	t.Logf("Stats after Close: created=%d, sent=%d, dropped=%d, retried=%d",
-		statsAfter.EventsCreated, statsAfter.EventsSent,
-		statsAfter.EventsDropped, statsAfter.EventsRetried)
-
-	// Verify no events were dropped
-	assert.Zero(t, statsAfter.EventsDropped, "expected no dropped events")
-
-	// Verify exact event counts
-	// Each variation call creates 3 events: evaluation + latency metrics + size metrics
-	totalCalls := int64(numGoroutines * callsPerGoroutine)
-	expectedEvents := totalCalls * 3 // 3 events per variation call
-	assert.Equal(t, expectedEvents, statsAfter.EventsCreated,
-		"expected exactly %d events created", expectedEvents)
-	assert.Equal(t, expectedEvents, statsAfter.EventsSent,
-		"expected exactly %d events sent", expectedEvents)
-
-	t.Logf("Successfully processed %d concurrent variation calls: created=%d, sent=%d",
-		totalCalls, statsAfter.EventsCreated, statsAfter.EventsSent)
-}
-
-// TestHighVolumeEventsConcurrentLocalEvaluation tests local evaluation mode under high load.
-// Local evaluation performs flag evaluations in-memory using cached feature flags,
-// without making API calls for each evaluation. This is significantly faster than
-// server-side evaluation.
+// TestHighVolume tests event processing under high load with different configurations.
+// It runs 4 subtests covering local/remote evaluation with/without explicit Close().
 //
-// This test verifies:
-// - Local evaluation can handle high concurrent load
-// - Events are queued and sent correctly with no drops
-// - Expected event count matches (2 per call + 4 init metrics)
-func TestHighVolumeEventsConcurrentLocalEvaluation(t *testing.T) {
+// Event counts:
+// - Remote: 3 per call (evaluation + latency metrics + size metrics)
+// - Local: 2 per call (evaluation + latency metrics) + 4 init metrics
+func TestHighVolume(t *testing.T) {
 	t.Parallel()
-
-	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
-	defer cancel()
-
-	// Local evaluation SDK configuration:
-	// - EnableLocalEvaluation: evaluates flags in-memory using cached data
-	// - CachePollingInterval: set high (2min) to prevent additional cache refreshes
-	//   during test, which would generate extra metrics events
-	// - Large queue and workers to handle high volume efficiently
-	sdk, err := bucketeer.NewSDK(
-		ctx,
-		bucketeer.WithTag(tag),
-		bucketeer.WithAPIKey(*apiKeyServer),
-		bucketeer.WithAPIEndpoint(*apiEndpoint),
-		bucketeer.WithScheme(*scheme),
-		bucketeer.WithEnableLocalEvaluation(true),
-		bucketeer.WithCachePollingInterval(2*time.Minute), // Prevent extra cache polls during test
-		bucketeer.WithEventQueueCapacity(100000),
-		bucketeer.WithNumEventFlushWorkers(50),
-		bucketeer.WithEventFlushSize(100),
-		bucketeer.WithEnableDebugLog(false),
-		bucketeer.WithWrapperSourceID(sourceID),
-		bucketeer.WithWrapperSDKVersion("1.6.0"),
-	)
-	assert.NoError(t, err)
-
-	// Wait for initial cache population (GetFeatureFlags + GetSegmentUsers APIs)
-	time.Sleep(5 * time.Second)
-
-	// Start timing after cache is ready (measures only evaluation + event sending)
-	startTime := time.Now()
-	defer func() {
-		log.Printf("=== TestHighVolumeEventsConcurrentLocalEvaluation elapsed: %s ===", time.Since(startTime))
-	}()
 
 	const (
 		numGoroutines     = 25
 		callsPerGoroutine = 100
+		numWorkers        = 50
+		queueCapacity     = 100000
+		flushSize         = 100
+		fastFlushInterval = 10 * time.Second
 	)
 
-	var wg sync.WaitGroup
-
-	// Simulate production: concurrent goroutines making local flag evaluations
-	// Local evaluation is fast (in-memory) so this generates events rapidly
-	for g := 0; g < numGoroutines; g++ {
-		wg.Add(1)
-		go func(goroutineID int) {
-			defer wg.Done()
-			user := newUser(t, fmt.Sprintf("local-eval-user-%d", goroutineID))
-			for i := 0; i < callsPerGoroutine; i++ {
-				// Mix of different variation types (all evaluated locally)
-				switch i % 3 {
-				case 0:
-					sdk.BoolVariation(ctx, user, featureIDBoolean, false)
-				case 1:
-					sdk.StringVariation(ctx, user, featureIDString, "default")
-				case 2:
-					sdk.IntVariation(ctx, user, featureIDInt, -1)
-				}
-			}
-		}(g)
+	tests := []struct {
+		name            string
+		localEvaluation bool
+		callClose       bool
+	}{
+		{"RemoteWithClose", false, true},
+		{"RemoteWithoutClose", false, false},
+		{"LocalWithClose", true, true},
+		{"LocalWithoutClose", true, false},
 	}
 
-	wg.Wait()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-	// Check stats before Close() to see how many events were sent during evaluation
-	statsBefore := sdk.EventStats()
-	t.Logf("Stats before Close: created=%d, sent=%d, dropped=%d, retried=%d",
-		statsBefore.EventsCreated, statsBefore.EventsSent,
-		statsBefore.EventsDropped, statsBefore.EventsRetried)
+			ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+			defer cancel()
 
-	// Close() flushes all remaining events in the queue
-	err = sdk.Close(ctx)
-	assert.NoError(t, err)
+			// Build SDK options
+			opts := []bucketeer.Option{
+				bucketeer.WithTag(tag),
+				bucketeer.WithAPIEndpoint(*apiEndpoint),
+				bucketeer.WithScheme(*scheme),
+				bucketeer.WithEventQueueCapacity(queueCapacity),
+				bucketeer.WithNumEventFlushWorkers(numWorkers),
+				bucketeer.WithEventFlushSize(flushSize),
+				bucketeer.WithEnableDebugLog(false),
+				bucketeer.WithWrapperSourceID(sourceID),
+				bucketeer.WithWrapperSDKVersion("1.6.0"),
+			}
 
-	// Final stats after all events are flushed
-	statsAfter := sdk.EventStats()
-	t.Logf("Stats after Close: created=%d, sent=%d, dropped=%d, retried=%d",
-		statsAfter.EventsCreated, statsAfter.EventsSent,
-		statsAfter.EventsDropped, statsAfter.EventsRetried)
+			if tt.localEvaluation {
+				opts = append(opts,
+					bucketeer.WithAPIKey(*apiKeyServer),
+					bucketeer.WithEnableLocalEvaluation(true),
+					bucketeer.WithCachePollingInterval(2*time.Minute),
+				)
+			} else {
+				opts = append(opts, bucketeer.WithAPIKey(*apiKey))
+			}
 
-	// Verify no events were dropped (queue capacity was sufficient)
-	assert.Zero(t, statsAfter.EventsDropped, "expected no dropped events")
+			if !tt.callClose {
+				opts = append(opts, bucketeer.WithEventFlushInterval(fastFlushInterval))
+			}
 
-	// Expected event counts for local evaluation:
-	// - 2 events per variation call: evaluation event + latency metrics event
-	// - 4 init metrics from initial cache fetch:
-	//   - 2 from GetFeatureFlags API (latency + size)
-	//   - 2 from GetSegmentUsers API (latency + size)
-	// Note: CachePollingInterval is 2min to prevent additional polls during test
-	totalCalls := int64(numGoroutines * callsPerGoroutine)
-	expectedEvents := totalCalls*2 + 4
-	assert.Equal(t, expectedEvents, statsAfter.EventsCreated,
-		"expected exactly %d events created", expectedEvents)
-	assert.Equal(t, expectedEvents, statsAfter.EventsSent,
-		"expected exactly %d events sent", expectedEvents)
+			sdk, err := bucketeer.NewSDK(ctx, opts...)
+			assert.NoError(t, err)
 
-	t.Logf("Successfully processed %d local evaluation calls: created=%d, sent=%d",
-		totalCalls, statsAfter.EventsCreated, statsAfter.EventsSent)
+			if tt.localEvaluation {
+				time.Sleep(5 * time.Second) // Wait for cache population
+			}
+
+			startTime := time.Now()
+
+			// Generate events concurrently
+			var wg sync.WaitGroup
+			for g := 0; g < numGoroutines; g++ {
+				wg.Add(1)
+				go func(goroutineID int) {
+					defer wg.Done()
+					user := newUser(t, fmt.Sprintf("%s-user-%d", tt.name, goroutineID))
+					for i := 0; i < callsPerGoroutine; i++ {
+						switch i % 3 {
+						case 0:
+							sdk.BoolVariation(ctx, user, featureIDBoolean, false)
+						case 1:
+							sdk.StringVariation(ctx, user, featureIDString, "default")
+						case 2:
+							sdk.IntVariation(ctx, user, featureIDInt, -1)
+						}
+					}
+				}(g)
+			}
+			wg.Wait()
+
+			// Calculate expected events
+			totalCalls := int64(numGoroutines * callsPerGoroutine)
+			var expectedEvents int64
+			if tt.localEvaluation {
+				expectedEvents = totalCalls*2 + 4 // 2 per call + 4 init metrics
+			} else {
+				expectedEvents = totalCalls * 3 // 3 per remote call
+			}
+
+			var finalStats event.ProcessorStats
+			if tt.callClose {
+				statsBefore := sdk.EventStats()
+				t.Logf("Stats before Close: created=%d, sent=%d, dropped=%d, retried=%d",
+					statsBefore.EventsCreated, statsBefore.EventsSent,
+					statsBefore.EventsDropped, statsBefore.EventsRetried)
+
+				err = sdk.Close(ctx)
+				assert.NoError(t, err)
+				finalStats = sdk.EventStats()
+			} else {
+				defer sdk.Close(ctx)
+				// Poll until all events are sent
+				pollStart := time.Now()
+				for {
+					stats := sdk.EventStats()
+					if stats.EventsSent >= expectedEvents {
+						finalStats = stats
+						break
+					}
+					if time.Since(pollStart) > 60*time.Second {
+						t.Fatalf("Timeout: sent=%d, expected=%d", stats.EventsSent, expectedEvents)
+					}
+					time.Sleep(100 * time.Millisecond)
+				}
+			}
+
+			elapsed := time.Since(startTime)
+			t.Logf("Stats: created=%d, sent=%d, dropped=%d, retried=%d",
+				finalStats.EventsCreated, finalStats.EventsSent,
+				finalStats.EventsDropped, finalStats.EventsRetried)
+
+			assert.Zero(t, finalStats.EventsDropped, "expected no dropped events")
+			assert.Equal(t, expectedEvents, finalStats.EventsCreated)
+			if tt.callClose {
+				assert.Equal(t, expectedEvents, finalStats.EventsSent)
+			} else {
+				assert.GreaterOrEqual(t, finalStats.EventsSent, expectedEvents)
+			}
+
+			t.Logf("Processed %d calls in %s", totalCalls, elapsed)
+			log.Printf("=== TestHighVolume/%s elapsed: %s ===", tt.name, elapsed)
+		})
+	}
 }
 
 func newSDK(t *testing.T, ctx context.Context) bucketeer.SDK {
