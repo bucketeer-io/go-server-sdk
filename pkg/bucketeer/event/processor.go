@@ -12,7 +12,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -77,9 +76,8 @@ type processor struct {
 	flushTimeout    time.Duration
 	apiClient       api.Client
 	loggers         *log.Loggers
-	closeCh         chan struct{}
-	dispatcherWG    sync.WaitGroup // Tracks the single dispatcher goroutine
-	workerSem       chan struct{}  // Semaphore: limits concurrent workers AND tracks completion
+	closeCh         chan struct{} // Signals dispatcher completion to Close()
+	workerSem       chan struct{} // Semaphore: limits concurrent workers AND tracks completion
 	tag             string
 	sdkVersion      string
 	sourceID        model.SourceIDType
@@ -158,7 +156,6 @@ func NewProcessor(ctx context.Context, conf *ProcessorConfig) Processor {
 		sourceID:        conf.SourceID,
 		enableStats:     conf.EnableStats,
 	}
-	p.dispatcherWG.Add(1)
 	go p.runDispatcher(ctx)
 	return p
 }
@@ -449,10 +446,7 @@ const pollInterval = 1 * time.Second
 // - Under low load: 1 goroutine polling
 // - Under high load: 1 dispatcher + up to numFlushWorkers workers
 func (p *processor) runDispatcher(ctx context.Context) {
-	defer func() {
-		p.loggers.Debug("bucketeer/event: runDispatcher done")
-		p.dispatcherWG.Done()
-	}()
+	defer p.loggers.Debug("bucketeer/event: runDispatcher done")
 
 	// Fixed poll ticker - single dispatcher polls the queue
 	pollTicker := time.NewTicker(pollInterval)

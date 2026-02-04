@@ -969,7 +969,6 @@ func TestClose(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(p *processor) {
-				p.dispatcherWG.Add(1)
 				go p.runDispatcher(ctx)
 			},
 			timeout: 2 * time.Second, // Needs to be > pollInterval (1s)
