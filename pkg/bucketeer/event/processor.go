@@ -509,8 +509,9 @@ func (p *processor) waitForWorkers() {
 	}
 }
 
-// submitBatch submits a batch to a worker goroutine if one is available.
-// If all workers are busy, it flushes synchronously (backpressure).
+// submitBatch submits a batch to a worker goroutine.
+// If all workers are busy, it blocks until one becomes available.
+// This keeps the dispatcher in its coordination role rather than doing I/O work.
 // Note: batch ownership is transferred to this function (no copy needed since
 // popMany already returns a new slice).
 func (p *processor) submitBatch(ctx context.Context, batch []*model.Event) {
@@ -519,16 +520,13 @@ func (p *processor) submitBatch(ctx context.Context, batch []*model.Event) {
 	}
 
 	select {
-	case p.workerSem <- struct{}{}: // Acquire semaphore permit
+	case p.workerSem <- struct{}{}: // Acquire semaphore permit (blocks if all busy)
 		go func() {
-			defer func() {
-				<-p.workerSem // Release semaphore permit
-			}()
+			defer func() { <-p.workerSem }() // Release permit
 			p.flushEvents(ctx, batch)
 		}()
-	default:
-		// All workers busy - flush synchronously (backpressure)
-		p.loggers.Debug("bucketeer/event: all workers busy, flushing synchronously")
+	case <-p.evtQueue.doneCh():
+		// Shutdown while waiting for worker - flush synchronously to not lose events
 		p.flushEvents(ctx, batch)
 	}
 }

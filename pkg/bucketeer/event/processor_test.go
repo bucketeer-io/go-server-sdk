@@ -1045,7 +1045,7 @@ func TestSubmitBatch(t *testing.T) {
 		assert.Len(t, p.workerSem, 0)
 	})
 
-	t.Run("backpressure when all workers busy", func(t *testing.T) {
+	t.Run("blocks until worker available", func(t *testing.T) {
 		p := newProcessorForTestWorker(t, mockCtrl)
 
 		// Fill up semaphore (simulate all workers busy)
@@ -1053,7 +1053,7 @@ func TestSubmitBatch(t *testing.T) {
 			p.workerSem <- struct{}{}
 		}
 
-		// Expect synchronous flush
+		// Expect worker goroutine to flush
 		p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(gomock.Any(), gomock.Any(), gomock.Any()).Return(
 			&model.RegisterEventsResponse{Errors: make(map[string]*model.RegisterEventsResponseError)},
 			0,
@@ -1061,9 +1061,62 @@ func TestSubmitBatch(t *testing.T) {
 		)
 
 		batch := []*model.Event{{ID: "1"}}
-		p.submitBatch(ctx, batch) // Should flush synchronously
+		done := make(chan struct{})
+		go func() {
+			p.submitBatch(ctx, batch) // Should block until worker available
+			close(done)
+		}()
 
-		// Semaphore should still be full
+		// Should be blocked
+		select {
+		case <-done:
+			t.Fatal("submitBatch should block when all workers busy")
+		case <-time.After(50 * time.Millisecond):
+			// Expected - still waiting for worker
+		}
+
+		// Release one permit (simulate worker finishing)
+		<-p.workerSem
+
+		// Now submitBatch should unblock and spawn worker
+		select {
+		case <-done:
+			// Success - submitBatch unblocked
+		case <-time.After(100 * time.Millisecond):
+			t.Fatal("submitBatch should unblock when worker becomes available")
+		}
+
+		// Wait a bit for spawned worker goroutine to complete and release its permit
+		time.Sleep(50 * time.Millisecond)
+
+		// Release remaining 2 permits we held at start
+		for i := 0; i < cap(p.workerSem)-1; i++ {
+			<-p.workerSem
+		}
+	})
+
+	t.Run("flushes synchronously on shutdown", func(t *testing.T) {
+		p := newProcessorForTestWorker(t, mockCtrl)
+
+		// Fill up semaphore (simulate all workers busy)
+		for i := 0; i < cap(p.workerSem); i++ {
+			p.workerSem <- struct{}{}
+		}
+
+		// Expect synchronous flush due to shutdown
+		p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(gomock.Any(), gomock.Any(), gomock.Any()).Return(
+			&model.RegisterEventsResponse{Errors: make(map[string]*model.RegisterEventsResponseError)},
+			0,
+			nil,
+		)
+
+		// Close the queue to trigger doneCh
+		p.evtQueue.close()
+
+		batch := []*model.Event{{ID: "1"}}
+		p.submitBatch(ctx, batch) // Should flush synchronously via doneCh path
+
+		// Semaphore should still be full (no permit acquired)
 		assert.Len(t, p.workerSem, cap(p.workerSem))
 
 		// Release semaphore
