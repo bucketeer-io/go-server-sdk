@@ -21,9 +21,6 @@ type queue struct {
 	mask     uint64         // capacity - 1 (for power-of-2 indexing)
 	capacity uint64
 
-	// Close signaling channel
-	done chan struct{}
-
 	// Single mutex protects all state (buffer, head, tail, closed)
 	mu     sync.Mutex
 	closed bool
@@ -39,7 +36,6 @@ func newQueue(conf *queueConfig) *queue {
 		buffer:   make([]*model.Event, cap64),
 		capacity: cap64,
 		mask:     cap64 - 1,
-		done:     make(chan struct{}),
 	}
 }
 
@@ -84,11 +80,6 @@ func (q *queue) push(evt *model.Event) error {
 	q.head++
 
 	return nil
-}
-
-// doneCh returns the done channel for consumers to detect queue closure.
-func (q *queue) doneCh() <-chan struct{} {
-	return q.done
 }
 
 // pop removes and returns an event from the queue.
@@ -165,15 +156,20 @@ func (q *queue) cap() int {
 	return int(q.capacity)
 }
 
-// close closes the queue and signals all consumers to stop.
+// isClosed returns whether the queue is closed.
+// Used by tests to verify queue state.
+//
+//nolint:unused
+func (q *queue) isClosed() bool {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	return q.closed
+}
+
+// close marks the queue as closed, rejecting any future push() calls.
 func (q *queue) close() {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
-	if q.closed {
-		return
-	}
-
 	q.closed = true
-	close(q.done)
 }

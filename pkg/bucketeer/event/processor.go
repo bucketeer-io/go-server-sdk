@@ -76,8 +76,10 @@ type processor struct {
 	flushTimeout    time.Duration
 	apiClient       api.Client
 	loggers         *log.Loggers
-	closeCh         chan struct{} // Signals dispatcher completion to Close()
-	workerSem       chan struct{} // Semaphore: limits concurrent workers AND tracks completion
+	ctx             context.Context // SDK init context (used for HTTP requests, NOT cancelled on shutdown)
+	shutdownCh      chan struct{}   // Signals shutdown to dispatcher (closed by Close())
+	done            chan struct{}   // Signals dispatcher completion to Close()
+	workerSem       chan struct{}   // Semaphore: limits concurrent workers AND tracks completion
 	tag             string
 	sdkVersion      string
 	sourceID        model.SourceIDType
@@ -149,14 +151,16 @@ func NewProcessor(ctx context.Context, conf *ProcessorConfig) Processor {
 		flushTimeout:    flushTimeout,
 		apiClient:       conf.APIClient,
 		loggers:         conf.Loggers,
-		closeCh:         make(chan struct{}),
+		ctx:             ctx, // SDK init context for HTTP requests
+		shutdownCh:      make(chan struct{}),
+		done:            make(chan struct{}),
 		workerSem:       make(chan struct{}, conf.NumFlushWorkers), // Semaphore limits concurrent workers
 		tag:             conf.Tag,
 		sdkVersion:      conf.SDKVersion,
 		sourceID:        conf.SourceID,
 		enableStats:     conf.EnableStats,
 	}
-	go p.runDispatcher(ctx)
+	go p.runDispatcher()
 	return p
 }
 
@@ -425,9 +429,10 @@ func (p *processor) Stats() ProcessorStats {
 }
 
 func (p *processor) Close(ctx context.Context) error {
-	p.evtQueue.close()
+	p.evtQueue.close()  // Reject future pushes
+	close(p.shutdownCh) // Signal dispatcher to shutdown
 	select {
-	case <-p.closeCh:
+	case <-p.done:
 		return nil
 	case <-ctx.Done():
 		return fmt.Errorf("bucketeer/event: ctx is canceled: %v", ctx.Err())
@@ -445,7 +450,7 @@ const pollInterval = 1 * time.Second
 // - Spawns worker goroutines on-demand via semaphore
 // - Under low load: 1 goroutine polling
 // - Under high load: 1 dispatcher + up to numFlushWorkers workers
-func (p *processor) runDispatcher(ctx context.Context) {
+func (p *processor) runDispatcher() {
 	defer p.loggers.Debug("bucketeer/event: runDispatcher done")
 
 	// Fixed poll ticker - single dispatcher polls the queue
@@ -465,7 +470,7 @@ func (p *processor) runDispatcher(ctx context.Context) {
 			minFlushSize = p.flushSize // Poll: only full batches
 		case <-flushTicker.C:
 			// Keep minFlushSize = 1 (partial batches ok)
-		case <-p.evtQueue.doneCh():
+		case <-p.shutdownCh:
 			isShutdown = true
 		}
 
@@ -478,7 +483,7 @@ func (p *processor) runDispatcher(ctx context.Context) {
 			if len(events) == 0 {
 				break
 			}
-			p.submitBatch(ctx, events)
+			p.submitBatch(events)
 			submitted = true
 		}
 
@@ -489,7 +494,7 @@ func (p *processor) runDispatcher(ctx context.Context) {
 
 		if isShutdown {
 			p.waitForWorkers()
-			close(p.closeCh)
+			close(p.done)
 			return
 		}
 	}
@@ -512,22 +517,23 @@ func (p *processor) waitForWorkers() {
 // submitBatch submits a batch to a worker goroutine.
 // If all workers are busy, it blocks until one becomes available.
 // This keeps the dispatcher in its coordination role rather than doing I/O work.
+// submitBatch dispatches a batch of events to a worker goroutine.
 // Note: batch ownership is transferred to this function (no copy needed since
 // popMany already returns a new slice).
-func (p *processor) submitBatch(ctx context.Context, batch []*model.Event) {
+func (p *processor) submitBatch(batch []*model.Event) {
 	select {
 	case p.workerSem <- struct{}{}: // Acquire semaphore permit (blocks if all busy)
 		go func() {
 			defer func() { <-p.workerSem }() // Release permit
-			p.flushEvents(ctx, batch)
+			p.flushEvents(batch)
 		}()
-	case <-p.evtQueue.doneCh():
+	case <-p.shutdownCh:
 		// Shutdown while waiting for worker - flush synchronously to not lose events
-		p.flushEvents(ctx, batch)
+		p.flushEvents(batch)
 	}
 }
 
-func (p *processor) flushEvents(ctx context.Context, events []*model.Event) {
+func (p *processor) flushEvents(events []*model.Event) {
 	if len(events) == 0 {
 		return
 	}
@@ -544,7 +550,7 @@ func (p *processor) flushEvents(ctx context.Context, events []*model.Event) {
 	}
 	deadline := time.Now().Add(deadlineDuration)
 
-	res, _, err := p.apiClient.RegisterEvents(ctx, model.NewRegisterEventsRequest(events, p.sourceID), deadline)
+	res, _, err := p.apiClient.RegisterEvents(p.ctx, model.NewRegisterEventsRequest(events, p.sourceID), deadline)
 	if err != nil {
 		p.loggers.Debugf("bucketeer/event: failed to register events: %v", err)
 		// Re-push all events to the event queue.

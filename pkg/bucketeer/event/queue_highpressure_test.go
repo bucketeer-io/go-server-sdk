@@ -259,13 +259,8 @@ func TestQueueHighPressure_CloseUnderLoad(t *testing.T) {
 	// Verify pushes after close were rejected
 	assert.Greater(t, pushAfterClose, int64(0), "some pushes should be rejected after close")
 
-	// Verify done channel is closed
-	select {
-	case <-q.doneCh():
-		// Expected - channel is closed
-	default:
-		t.Error("done channel should be closed")
-	}
+	// Verify queue is marked as closed
+	assert.True(t, q.isClosed(), "queue should be closed")
 }
 
 // TestQueueHighPressure_ConsumerKeepsUp tests the scenario where

@@ -848,7 +848,6 @@ func TestFlushEvents(t *testing.T) {
 	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	ctx := context.TODO()
 	tests := []struct {
 		desc             string
 		setup            func(*processor, []*model.Event)
@@ -944,7 +943,7 @@ func TestFlushEvents(t *testing.T) {
 			if tt.setup != nil {
 				tt.setup(p, tt.events)
 			}
-			p.flushEvents(ctx, tt.events)
+			p.flushEvents(tt.events)
 			assert.Equal(t, tt.expectedQueueLen, p.evtQueue.len())
 		})
 	}
@@ -954,7 +953,6 @@ func TestClose(t *testing.T) {
 	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	ctx := context.TODO()
 	tests := []struct {
 		desc    string
 		setup   func(*processor)
@@ -970,7 +968,7 @@ func TestClose(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(p *processor) {
-				go p.runDispatcher(ctx)
+				go p.runDispatcher()
 			},
 			timeout: 2 * time.Second, // Needs to be > pollInterval (1s)
 			isErr:   false,
@@ -1009,9 +1007,11 @@ func newProcessorForTestWorker(t *testing.T, mockCtrl *gomock.Controller) *proce
 			EnableDebugLog: false,
 			ErrorLogger:    log.DiscardErrorLogger,
 		}),
-		closeCh:   make(chan struct{}),
-		workerSem: make(chan struct{}, 3),
-		sourceID:  model.SourceIDGoServer,
+		ctx:        context.Background(),
+		shutdownCh: make(chan struct{}),
+		done:       make(chan struct{}),
+		workerSem:  make(chan struct{}, 3),
+		sourceID:   model.SourceIDGoServer,
 	}
 }
 
@@ -1019,13 +1019,12 @@ func TestSubmitBatch(t *testing.T) {
 	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	ctx := context.TODO()
 
 	t.Run("empty batch does nothing", func(t *testing.T) {
 		p := newProcessorForTestWorker(t, mockCtrl)
 		// Should not panic or do anything
-		p.submitBatch(ctx, nil)
-		p.submitBatch(ctx, []*model.Event{})
+		p.submitBatch(nil)
+		p.submitBatch([]*model.Event{})
 	})
 
 	t.Run("spawns worker goroutine when semaphore available", func(t *testing.T) {
@@ -1037,7 +1036,7 @@ func TestSubmitBatch(t *testing.T) {
 		)
 
 		batch := []*model.Event{{ID: "1"}, {ID: "2"}}
-		p.submitBatch(ctx, batch)
+		p.submitBatch(batch)
 
 		// Wait for worker to complete
 		p.waitForWorkers()
@@ -1064,7 +1063,7 @@ func TestSubmitBatch(t *testing.T) {
 		batch := []*model.Event{{ID: "1"}}
 		done := make(chan struct{})
 		go func() {
-			p.submitBatch(ctx, batch) // Should block until worker available
+			p.submitBatch(batch) // Should block until worker available
 			close(done)
 		}()
 
@@ -1097,7 +1096,27 @@ func TestSubmitBatch(t *testing.T) {
 	})
 
 	t.Run("flushes synchronously on shutdown", func(t *testing.T) {
-		p := newProcessorForTestWorker(t, mockCtrl)
+		// Create processor with shutdown channel
+		shutdownCh := make(chan struct{})
+		p := &processor{
+			evtQueue: newQueue(&queueConfig{
+				capacity: 10,
+			}),
+			numFlushWorkers: 3,
+			flushInterval:   1 * time.Minute,
+			flushSize:       10,
+			flushTimeout:    10 * time.Second,
+			apiClient:       mockapi.NewMockClient(mockCtrl),
+			loggers: log.NewLoggers(&log.LoggersConfig{
+				EnableDebugLog: false,
+				ErrorLogger:    log.DiscardErrorLogger,
+			}),
+			ctx:        context.Background(),
+			shutdownCh: shutdownCh,
+			done:       make(chan struct{}),
+			workerSem:  make(chan struct{}, 3),
+			sourceID:   model.SourceIDGoServer,
+		}
 
 		// Fill up semaphore (simulate all workers busy)
 		for i := 0; i < cap(p.workerSem); i++ {
@@ -1111,11 +1130,11 @@ func TestSubmitBatch(t *testing.T) {
 			nil,
 		)
 
-		// Close the queue to trigger doneCh
-		p.evtQueue.close()
+		// Close shutdown channel to trigger shutdown path
+		close(shutdownCh)
 
 		batch := []*model.Event{{ID: "1"}}
-		p.submitBatch(ctx, batch) // Should flush synchronously via doneCh path
+		p.submitBatch(batch) // Should flush synchronously via shutdownCh path
 
 		// Semaphore should still be full (no permit acquired)
 		assert.Len(t, p.workerSem, cap(p.workerSem))
@@ -1192,7 +1211,6 @@ func TestDispatcherBatchBehavior(t *testing.T) {
 	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	ctx := context.Background()
 
 	tests := []struct {
 		desc            string
@@ -1243,6 +1261,9 @@ func TestDispatcherBatchBehavior(t *testing.T) {
 				},
 			).AnyTimes()
 
+			// Create shutdown channel
+			shutdownCh := make(chan struct{})
+
 			p := &processor{
 				evtQueue:        newQueue(&queueConfig{capacity: 100}),
 				numFlushWorkers: 3,
@@ -1254,9 +1275,11 @@ func TestDispatcherBatchBehavior(t *testing.T) {
 					EnableDebugLog: false,
 					ErrorLogger:    log.DiscardErrorLogger,
 				}),
-				closeCh:   make(chan struct{}),
-				workerSem: make(chan struct{}, 3),
-				sourceID:  model.SourceIDGoServer,
+				ctx:        context.Background(),
+				shutdownCh: shutdownCh,
+				done:       make(chan struct{}),
+				workerSem:  make(chan struct{}, 3),
+				sourceID:   model.SourceIDGoServer,
 			}
 
 			// Push events
@@ -1265,18 +1288,18 @@ func TestDispatcherBatchBehavior(t *testing.T) {
 			}
 
 			// Start the actual dispatcher
-			go p.runDispatcher(ctx)
+			go p.runDispatcher()
 
 			// Wait before closing (allows poll/flush to process)
 			if tt.waitBeforeClose > 0 {
 				time.Sleep(tt.waitBeforeClose)
 			}
 
-			// Close queue to trigger shutdown
-			p.evtQueue.close()
+			// Close shutdown channel to trigger shutdown
+			close(shutdownCh)
 
 			// Wait for dispatcher to finish
-			<-p.closeCh
+			<-p.done
 
 			// Verify (use ElementsMatch since batch order is non-deterministic due to concurrent workers)
 			mu.Lock()
