@@ -78,7 +78,8 @@ type processor struct {
 	apiClient       api.Client
 	loggers         *log.Loggers
 	closeCh         chan struct{}
-	workerWG        sync.WaitGroup
+	dispatcherWG    sync.WaitGroup // Tracks the single dispatcher goroutine
+	workerSem       chan struct{}  // Semaphore: limits concurrent workers AND tracks completion
 	tag             string
 	sdkVersion      string
 	sourceID        model.SourceIDType
@@ -151,12 +152,14 @@ func NewProcessor(ctx context.Context, conf *ProcessorConfig) Processor {
 		apiClient:       conf.APIClient,
 		loggers:         conf.Loggers,
 		closeCh:         make(chan struct{}),
+		workerSem:       make(chan struct{}, conf.NumFlushWorkers), // Semaphore limits concurrent workers
 		tag:             conf.Tag,
 		sdkVersion:      conf.SDKVersion,
 		sourceID:        conf.SourceID,
 		enableStats:     conf.EnableStats,
 	}
-	go p.startWorkers(ctx)
+	p.dispatcherWG.Add(1)
+	go p.runDispatcher(ctx)
 	return p
 }
 
@@ -434,82 +437,25 @@ func (p *processor) Close(ctx context.Context) error {
 	}
 }
 
-func (p *processor) startWorkers(ctx context.Context) {
-	for i := 0; i < p.numFlushWorkers; i++ {
-		p.workerWG.Add(1)
-		go p.runWorkerProcessLoop(ctx)
-	}
-	p.workerWG.Wait()
-	close(p.closeCh)
-}
+// pollInterval is the fixed interval for the dispatcher to poll the queue.
+// 1 second keeps CPU overhead minimal while the shutdown drain handles any
+// remaining events that haven't been polled yet.
+const pollInterval = 1 * time.Second
 
-// Adaptive polling intervals for work-stealing
-const (
-	minPollInterval   = 100 * time.Millisecond // Fast polling under load
-	maxPollInterval   = 1 * time.Second        // Low CPU when idle
-	backoffThreshold  = 5                      // Empty polls before backoff starts
-	backoffMultiplier = 2                      // Exponential backoff multiplier
-)
-
-// adaptiveBackoff manages polling interval based on queue activity.
-// It increases the interval exponentially when idle and resets to minimum when active.
-type adaptiveBackoff struct {
-	current    time.Duration
-	min        time.Duration
-	max        time.Duration
-	threshold  int
-	multiplier int
-	emptyPolls int
-}
-
-func newAdaptiveBackoff() *adaptiveBackoff {
-	return &adaptiveBackoff{
-		current:    minPollInterval,
-		min:        minPollInterval,
-		max:        maxPollInterval,
-		threshold:  backoffThreshold,
-		multiplier: backoffMultiplier,
-		emptyPolls: 0,
-	}
-}
-
-// recordPoll updates the backoff state based on whether events were drained.
-// Returns true if the polling interval changed and ticker should be reset.
-func (b *adaptiveBackoff) recordPoll(drained int) bool {
-	if drained == 0 {
-		b.emptyPolls++
-		if b.emptyPolls > b.threshold && b.current < b.max {
-			// Slow down when idle (exponential backoff)
-			b.current = min(b.current*time.Duration(b.multiplier), b.max)
-			return true
-		}
-		return false
-	}
-	// Events found - reset to fast polling
-	b.emptyPolls = 0
-	if b.current > b.min {
-		b.current = b.min
-		return true
-	}
-	return false
-}
-
-// interval returns the current polling interval.
-func (b *adaptiveBackoff) interval() time.Duration {
-	return b.current
-}
-
-func (p *processor) runWorkerProcessLoop(ctx context.Context) {
+// runDispatcher is the single goroutine that polls the queue and dispatches
+// batches to workers. This design:
+// - Uses only 1 polling goroutine instead of N workers
+// - Spawns worker goroutines on-demand via semaphore
+// - Under low load: 1 goroutine polling
+// - Under high load: 1 dispatcher + up to numFlushWorkers workers
+func (p *processor) runDispatcher(ctx context.Context) {
 	defer func() {
-		p.loggers.Debug("bucketeer/event: runWorkerProcessLoop done")
-		p.workerWG.Done()
+		p.loggers.Debug("bucketeer/event: runDispatcher done")
+		p.dispatcherWG.Done()
 	}()
 
-	events := make([]*model.Event, 0, p.flushSize)
-
-	// Adaptive poll ticker - all workers compete for events (work-stealing)
-	backoff := newAdaptiveBackoff()
-	pollTicker := time.NewTicker(backoff.interval())
+	// Fixed poll ticker - single dispatcher polls the queue
+	pollTicker := time.NewTicker(pollInterval)
 	defer pollTicker.Stop()
 
 	// User-configured flush ticker for partial batches
@@ -519,45 +465,77 @@ func (p *processor) runWorkerProcessLoop(ctx context.Context) {
 	for {
 		select {
 		case <-pollTicker.C:
-			// Work-stealing: all workers try to drain events
-			drained := 0
+			// Drain queue in batches (single lock per batch via popMany)
 			for {
-				evt, ok := p.evtQueue.pop()
-				if !ok {
+				events := p.evtQueue.popMany(p.flushSize)
+				if len(events) == 0 {
 					break
 				}
-				drained++
-				events = append(events, evt)
-				if len(events) >= p.flushSize {
-					p.flushEvents(ctx, events)
-					events = make([]*model.Event, 0, p.flushSize)
-				}
-			}
-
-			// Update adaptive backoff and reset ticker if interval changed
-			if backoff.recordPoll(drained) {
-				pollTicker.Reset(backoff.interval())
+				p.submitBatch(ctx, events)
+				// Reset flush ticker since we just sent a batch
+				flushTicker.Reset(p.flushInterval)
 			}
 
 		case <-flushTicker.C:
-			// User-configured interval: flush partial batches
+			// Flush any events that accumulated (partial batch)
+			events := p.evtQueue.popMany(p.flushSize)
 			if len(events) > 0 {
-				p.flushEvents(ctx, events)
-				events = make([]*model.Event, 0, p.flushSize)
+				p.submitBatch(ctx, events)
 			}
 
 		case <-p.evtQueue.doneCh():
-			// Queue is closed, drain remaining events and exit
+			// Queue is closed, drain remaining events using workers (parallel)
 			for {
-				evt, ok := p.evtQueue.pop()
-				if !ok {
+				events := p.evtQueue.popMany(p.flushSize)
+				if len(events) == 0 {
 					break
 				}
-				events = append(events, evt)
+				p.submitBatch(ctx, events)
 			}
-			p.flushEvents(ctx, events)
+			// Wait for all in-flight workers by acquiring all semaphore permits
+			// When we hold all permits, all workers must have finished
+			p.waitForWorkers()
+			close(p.closeCh)
 			return
 		}
+	}
+}
+
+// waitForWorkers blocks until all in-flight workers complete.
+// It works by acquiring all semaphore permits - when we hold all permits,
+// no workers can be running.
+func (p *processor) waitForWorkers() {
+	for i := 0; i < cap(p.workerSem); i++ {
+		p.workerSem <- struct{}{} // Acquire permit (blocks if worker holds it)
+	}
+	// All permits acquired = all workers done
+	// Release them
+	for i := 0; i < cap(p.workerSem); i++ {
+		<-p.workerSem
+	}
+}
+
+// submitBatch submits a batch to a worker goroutine if one is available.
+// If all workers are busy, it flushes synchronously (backpressure).
+// Note: batch ownership is transferred to this function (no copy needed since
+// popMany already returns a new slice).
+func (p *processor) submitBatch(ctx context.Context, batch []*model.Event) {
+	if len(batch) == 0 {
+		return
+	}
+
+	select {
+	case p.workerSem <- struct{}{}: // Acquire semaphore permit
+		go func() {
+			defer func() {
+				<-p.workerSem // Release semaphore permit
+			}()
+			p.flushEvents(ctx, batch)
+		}()
+	default:
+		// All workers busy - flush synchronously (backpressure)
+		p.loggers.Debug("bucketeer/event: all workers busy, flushing synchronously")
+		p.flushEvents(ctx, batch)
 	}
 }
 

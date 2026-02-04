@@ -109,6 +109,84 @@ func TestQueue_CapacityRounding(t *testing.T) {
 	assert.Equal(t, 1024, q.cap())
 }
 
+func TestQueue_PopMany(t *testing.T) {
+	t.Run("empty queue returns nil", func(t *testing.T) {
+		q := newQueue(&queueConfig{capacity: 10})
+		events := q.popMany(5)
+		assert.Nil(t, events)
+	})
+
+	t.Run("pop fewer than available", func(t *testing.T) {
+		q := newQueue(&queueConfig{capacity: 10})
+		for i := 0; i < 5; i++ {
+			q.push(model.NewEvent(fmt.Sprintf("%d", i), []byte("data")))
+		}
+
+		events := q.popMany(3)
+		assert.Len(t, events, 3)
+		assert.Equal(t, "0", events[0].ID)
+		assert.Equal(t, "1", events[1].ID)
+		assert.Equal(t, "2", events[2].ID)
+		assert.Equal(t, 2, q.len())
+	})
+
+	t.Run("pop more than available", func(t *testing.T) {
+		q := newQueue(&queueConfig{capacity: 10})
+		for i := 0; i < 3; i++ {
+			q.push(model.NewEvent(fmt.Sprintf("%d", i), []byte("data")))
+		}
+
+		events := q.popMany(10) // Request more than available
+		assert.Len(t, events, 3)
+		assert.Equal(t, "0", events[0].ID)
+		assert.Equal(t, "1", events[1].ID)
+		assert.Equal(t, "2", events[2].ID)
+		assert.Equal(t, 0, q.len())
+	})
+
+	t.Run("pop exact count", func(t *testing.T) {
+		q := newQueue(&queueConfig{capacity: 10})
+		for i := 0; i < 5; i++ {
+			q.push(model.NewEvent(fmt.Sprintf("%d", i), []byte("data")))
+		}
+
+		events := q.popMany(5)
+		assert.Len(t, events, 5)
+		assert.Equal(t, 0, q.len())
+	})
+
+	t.Run("multiple popMany calls", func(t *testing.T) {
+		q := newQueue(&queueConfig{capacity: 100})
+		for i := 0; i < 50; i++ {
+			q.push(model.NewEvent(fmt.Sprintf("%d", i), []byte("data")))
+		}
+
+		// Pop in batches
+		batch1 := q.popMany(10)
+		assert.Len(t, batch1, 10)
+		assert.Equal(t, "0", batch1[0].ID)
+
+		batch2 := q.popMany(10)
+		assert.Len(t, batch2, 10)
+		assert.Equal(t, "10", batch2[0].ID)
+
+		assert.Equal(t, 30, q.len())
+	})
+
+	t.Run("clears slots for GC", func(t *testing.T) {
+		q := newQueue(&queueConfig{capacity: 4})
+		evt := model.NewEvent("1", []byte("data"))
+		q.push(evt)
+
+		events := q.popMany(1)
+		assert.Len(t, events, 1)
+
+		// The slot should be cleared (nil) after pop
+		// We can verify this indirectly by checking that a new push works
+		assert.NoError(t, q.push(model.NewEvent("2", []byte("data"))))
+	})
+}
+
 func TestQueue_Close(t *testing.T) {
 	q := newQueue(&queueConfig{capacity: 10})
 

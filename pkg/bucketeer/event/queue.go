@@ -93,6 +93,8 @@ func (q *queue) doneCh() <-chan struct{} {
 
 // pop removes and returns an event from the queue.
 // Returns nil and false if the queue is empty.
+//
+//nolint:unused
 func (q *queue) pop() (*model.Event, bool) {
 	q.mu.Lock()
 	defer q.mu.Unlock()
@@ -108,6 +110,39 @@ func (q *queue) pop() (*model.Event, bool) {
 	q.tail++
 
 	return evt, true
+}
+
+// popMany removes and returns up to n events from the queue.
+// Returns an empty slice if the queue is empty.
+// This is more efficient than calling pop() n times as it only acquires the lock once.
+func (q *queue) popMany(n int) []*model.Event {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	// Calculate how many events are available
+	available := int(q.head - q.tail)
+	if available == 0 {
+		return nil
+	}
+
+	// Take the minimum of available and requested
+	count := available
+	if n < count {
+		count = n
+	}
+
+	// Pre-allocate result slice
+	result := make([]*model.Event, count)
+
+	// Copy events to result
+	for i := 0; i < count; i++ {
+		idx := q.tail & q.mask
+		result[i] = q.buffer[idx]
+		q.buffer[idx] = nil // Clear the slot to allow GC
+		q.tail++
+	}
+
+	return result
 }
 
 // len returns the current number of events in the queue.

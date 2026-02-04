@@ -32,111 +32,6 @@ const (
 	processorGoalID      = "goal-id"
 )
 
-func TestAdaptiveBackoff(t *testing.T) {
-	t.Parallel()
-
-	t.Run("initial state", func(t *testing.T) {
-		b := newAdaptiveBackoff()
-		assert.Equal(t, minPollInterval, b.interval())
-		assert.Equal(t, 0, b.emptyPolls)
-	})
-
-	t.Run("no backoff within threshold", func(t *testing.T) {
-		b := newAdaptiveBackoff()
-
-		// First 5 empty polls should not trigger backoff
-		for i := 0; i < backoffThreshold; i++ {
-			changed := b.recordPoll(0)
-			assert.False(t, changed, "poll %d should not trigger backoff", i+1)
-			assert.Equal(t, minPollInterval, b.interval())
-		}
-		assert.Equal(t, backoffThreshold, b.emptyPolls)
-	})
-
-	t.Run("backoff after threshold exceeded", func(t *testing.T) {
-		b := newAdaptiveBackoff()
-
-		// Exceed threshold
-		for i := 0; i < backoffThreshold; i++ {
-			b.recordPoll(0)
-		}
-
-		// 6th empty poll should trigger first backoff: 100ms -> 200ms
-		changed := b.recordPoll(0)
-		assert.True(t, changed)
-		assert.Equal(t, 200*time.Millisecond, b.interval())
-
-		// 7th empty poll: 200ms -> 400ms
-		changed = b.recordPoll(0)
-		assert.True(t, changed)
-		assert.Equal(t, 400*time.Millisecond, b.interval())
-
-		// 8th empty poll: 400ms -> 800ms
-		changed = b.recordPoll(0)
-		assert.True(t, changed)
-		assert.Equal(t, 800*time.Millisecond, b.interval())
-
-		// 9th empty poll: 800ms -> 1s (capped at max)
-		changed = b.recordPoll(0)
-		assert.True(t, changed)
-		assert.Equal(t, maxPollInterval, b.interval())
-
-		// 10th empty poll: stays at 1s (already at max)
-		changed = b.recordPoll(0)
-		assert.False(t, changed)
-		assert.Equal(t, maxPollInterval, b.interval())
-	})
-
-	t.Run("reset on events found", func(t *testing.T) {
-		b := newAdaptiveBackoff()
-
-		// Backoff to 400ms
-		for i := 0; i < backoffThreshold+2; i++ {
-			b.recordPoll(0)
-		}
-		assert.Equal(t, 400*time.Millisecond, b.interval())
-
-		// Finding events should reset to min
-		changed := b.recordPoll(1)
-		assert.True(t, changed)
-		assert.Equal(t, minPollInterval, b.interval())
-		assert.Equal(t, 0, b.emptyPolls)
-	})
-
-	t.Run("no change when already at min and events found", func(t *testing.T) {
-		b := newAdaptiveBackoff()
-
-		// Already at min, finding events should not change
-		changed := b.recordPoll(5)
-		assert.False(t, changed)
-		assert.Equal(t, minPollInterval, b.interval())
-	})
-
-	t.Run("empty polls counter resets on activity", func(t *testing.T) {
-		b := newAdaptiveBackoff()
-
-		// 4 empty polls (not yet at threshold)
-		for i := 0; i < 4; i++ {
-			b.recordPoll(0)
-		}
-		assert.Equal(t, 4, b.emptyPolls)
-
-		// Activity resets counter
-		b.recordPoll(1)
-		assert.Equal(t, 0, b.emptyPolls)
-
-		// Need to exceed threshold again for backoff
-		for i := 0; i < backoffThreshold; i++ {
-			changed := b.recordPoll(0)
-			assert.False(t, changed)
-		}
-		// Now backoff kicks in
-		changed := b.recordPoll(0)
-		assert.True(t, changed)
-		assert.Equal(t, 200*time.Millisecond, b.interval())
-	})
-}
-
 func TestPushEvaluationEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
@@ -1074,9 +969,10 @@ func TestClose(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(p *processor) {
-				go p.startWorkers(ctx)
+				p.dispatcherWG.Add(1)
+				go p.runDispatcher(ctx)
 			},
-			timeout: 1 * time.Minute,
+			timeout: 2 * time.Second, // Needs to be > pollInterval (1s)
 			isErr:   false,
 		},
 	}
@@ -1113,7 +1009,124 @@ func newProcessorForTestWorker(t *testing.T, mockCtrl *gomock.Controller) *proce
 			EnableDebugLog: false,
 			ErrorLogger:    log.DiscardErrorLogger,
 		}),
-		closeCh:  make(chan struct{}),
-		sourceID: model.SourceIDGoServer,
+		closeCh:   make(chan struct{}),
+		workerSem: make(chan struct{}, 3),
+		sourceID:  model.SourceIDGoServer,
 	}
+}
+
+func TestSubmitBatch(t *testing.T) {
+	t.Parallel()
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ctx := context.TODO()
+
+	t.Run("empty batch does nothing", func(t *testing.T) {
+		p := newProcessorForTestWorker(t, mockCtrl)
+		// Should not panic or do anything
+		p.submitBatch(ctx, nil)
+		p.submitBatch(ctx, []*model.Event{})
+	})
+
+	t.Run("spawns worker goroutine when semaphore available", func(t *testing.T) {
+		p := newProcessorForTestWorker(t, mockCtrl)
+		p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(gomock.Any(), gomock.Any(), gomock.Any()).Return(
+			&model.RegisterEventsResponse{Errors: make(map[string]*model.RegisterEventsResponseError)},
+			0,
+			nil,
+		)
+
+		batch := []*model.Event{{ID: "1"}, {ID: "2"}}
+		p.submitBatch(ctx, batch)
+
+		// Wait for worker to complete
+		p.waitForWorkers()
+
+		// Semaphore should be empty (all permits released)
+		assert.Len(t, p.workerSem, 0)
+	})
+
+	t.Run("backpressure when all workers busy", func(t *testing.T) {
+		p := newProcessorForTestWorker(t, mockCtrl)
+
+		// Fill up semaphore (simulate all workers busy)
+		for i := 0; i < cap(p.workerSem); i++ {
+			p.workerSem <- struct{}{}
+		}
+
+		// Expect synchronous flush
+		p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(gomock.Any(), gomock.Any(), gomock.Any()).Return(
+			&model.RegisterEventsResponse{Errors: make(map[string]*model.RegisterEventsResponseError)},
+			0,
+			nil,
+		)
+
+		batch := []*model.Event{{ID: "1"}}
+		p.submitBatch(ctx, batch) // Should flush synchronously
+
+		// Semaphore should still be full
+		assert.Len(t, p.workerSem, cap(p.workerSem))
+
+		// Release semaphore
+		for i := 0; i < cap(p.workerSem); i++ {
+			<-p.workerSem
+		}
+	})
+}
+
+func TestWaitForWorkers(t *testing.T) {
+	t.Parallel()
+
+	t.Run("returns immediately when no workers", func(t *testing.T) {
+		p := &processor{
+			workerSem: make(chan struct{}, 3),
+		}
+		// Should not block
+		done := make(chan struct{})
+		go func() {
+			p.waitForWorkers()
+			close(done)
+		}()
+
+		select {
+		case <-done:
+			// Success
+		case <-time.After(100 * time.Millisecond):
+			t.Fatal("waitForWorkers should return immediately when no workers")
+		}
+	})
+
+	t.Run("waits for workers to complete", func(t *testing.T) {
+		p := &processor{
+			workerSem: make(chan struct{}, 3),
+		}
+
+		// Simulate worker holding permit
+		p.workerSem <- struct{}{}
+
+		done := make(chan struct{})
+		go func() {
+			p.waitForWorkers()
+			close(done)
+		}()
+
+		// Should be blocked
+		select {
+		case <-done:
+			t.Fatal("waitForWorkers should block while worker holds permit")
+		case <-time.After(50 * time.Millisecond):
+			// Expected - still waiting
+		}
+
+		// Release the permit (worker done)
+		<-p.workerSem
+
+		// Now should complete
+		select {
+		case <-done:
+			// Success
+		case <-time.After(100 * time.Millisecond):
+			t.Fatal("waitForWorkers should complete after worker releases permit")
+		}
+	})
 }
