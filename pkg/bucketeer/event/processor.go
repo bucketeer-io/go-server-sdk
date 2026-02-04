@@ -457,37 +457,39 @@ func (p *processor) runDispatcher(ctx context.Context) {
 	defer flushTicker.Stop()
 
 	for {
+		// Use flags to determine action and drain behavior
+		var isPoll, isFlush, isShutdown bool
+
 		select {
 		case <-pollTicker.C:
-			// Drain queue in batches (single lock per batch via popMany)
-			for {
-				events := p.evtQueue.popMany(p.flushSize)
-				if len(events) == 0 {
-					break
-				}
-				p.submitBatch(ctx, events)
-				// Reset flush ticker since we just sent a batch
+			if p.evtQueue.len() >= p.flushSize {
+				isPoll = true // Only send full batches
+			}
+		case <-flushTicker.C:
+			isFlush = true // Send everything including partial batches
+		case <-p.evtQueue.doneCh():
+			isShutdown = true // Drain all and exit
+		}
+
+		// Common logic: drain queue in batches
+		// For poll: only send full batches (stop when < flushSize)
+		// For flush/shutdown: send everything including partial batches
+		for isPoll || isFlush || isShutdown {
+			if isPoll && p.evtQueue.len() < p.flushSize {
+				break // Poll: stop when not enough for full batch
+			}
+			events := p.evtQueue.popMany(p.flushSize)
+			if len(events) == 0 {
+				break
+			}
+			p.submitBatch(ctx, events)
+			if !isShutdown {
 				flushTicker.Reset(p.flushInterval)
 			}
+		}
 
-		case <-flushTicker.C:
-			// Flush any events that accumulated (partial batch)
-			events := p.evtQueue.popMany(p.flushSize)
-			if len(events) > 0 {
-				p.submitBatch(ctx, events)
-			}
-
-		case <-p.evtQueue.doneCh():
-			// Queue is closed, drain remaining events using workers (parallel)
-			for {
-				events := p.evtQueue.popMany(p.flushSize)
-				if len(events) == 0 {
-					break
-				}
-				p.submitBatch(ctx, events)
-			}
-			// Wait for all in-flight workers by acquiring all semaphore permits
-			// When we hold all permits, all workers must have finished
+		// Shutdown: wait for workers and exit
+		if isShutdown {
 			p.waitForWorkers()
 			close(p.closeCh)
 			return

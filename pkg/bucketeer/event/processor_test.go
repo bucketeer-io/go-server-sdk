@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -1181,4 +1182,107 @@ func TestWaitForWorkers(t *testing.T) {
 			t.Fatal("waitForWorkers should complete after worker releases permit")
 		}
 	})
+}
+
+// TestDispatcherBatchBehavior tests the actual runDispatcher function behavior:
+// - pollTicker only sends full batches (>= flushSize)
+// - flushTicker sends partial batches (< flushSize)
+// - shutdown drains all remaining events
+func TestDispatcherBatchBehavior(t *testing.T) {
+	t.Parallel()
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+	ctx := context.Background()
+
+	tests := []struct {
+		desc            string
+		numEvents       int
+		flushSize       int
+		flushInterval   time.Duration
+		waitBeforeClose time.Duration // time to wait before closing queue
+		expectedBatches []int
+	}{
+		{
+			desc:            "poll sends full batches before shutdown drains partial",
+			numEvents:       25,
+			flushSize:       10,
+			flushInterval:   1 * time.Hour, // Long interval so flush won't trigger
+			waitBeforeClose: 200 * time.Millisecond,
+			expectedBatches: []int{10, 10, 5}, // Poll sends 10+10, shutdown drains 5
+		},
+		{
+			desc:            "flush sends partial batch",
+			numEvents:       5,
+			flushSize:       10,
+			flushInterval:   50 * time.Millisecond, // Short interval to trigger flush
+			waitBeforeClose: 200 * time.Millisecond,
+			expectedBatches: []int{5},
+		},
+		{
+			desc:            "shutdown drains all events immediately",
+			numEvents:       25,
+			flushSize:       10,
+			flushInterval:   1 * time.Hour,
+			waitBeforeClose: 0, // Close immediately
+			expectedBatches: []int{10, 10, 5},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			var sentBatches []int
+			var mu sync.Mutex
+
+			mockClient := mockapi.NewMockClient(mockCtrl)
+			mockClient.EXPECT().RegisterEvents(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+				func(_ context.Context, req *model.RegisterEventsRequest, _ time.Time) (*model.RegisterEventsResponse, int, error) {
+					mu.Lock()
+					sentBatches = append(sentBatches, len(req.Events))
+					mu.Unlock()
+					return &model.RegisterEventsResponse{Errors: make(map[string]*model.RegisterEventsResponseError)}, 0, nil
+				},
+			).AnyTimes()
+
+			p := &processor{
+				evtQueue:        newQueue(&queueConfig{capacity: 100}),
+				numFlushWorkers: 3,
+				flushInterval:   tt.flushInterval,
+				flushSize:       tt.flushSize,
+				flushTimeout:    10 * time.Second,
+				apiClient:       mockClient,
+				loggers: log.NewLoggers(&log.LoggersConfig{
+					EnableDebugLog: false,
+					ErrorLogger:    log.DiscardErrorLogger,
+				}),
+				closeCh:   make(chan struct{}),
+				workerSem: make(chan struct{}, 3),
+				sourceID:  model.SourceIDGoServer,
+			}
+
+			// Push events
+			for i := 0; i < tt.numEvents; i++ {
+				p.evtQueue.push(&model.Event{ID: fmt.Sprintf("event-%d", i)})
+			}
+
+			// Start the actual dispatcher
+			go p.runDispatcher(ctx)
+
+			// Wait before closing (allows poll/flush to process)
+			if tt.waitBeforeClose > 0 {
+				time.Sleep(tt.waitBeforeClose)
+			}
+
+			// Close queue to trigger shutdown
+			p.evtQueue.close()
+
+			// Wait for dispatcher to finish
+			<-p.closeCh
+
+			// Verify (use ElementsMatch since batch order is non-deterministic due to concurrent workers)
+			mu.Lock()
+			assert.ElementsMatch(t, tt.expectedBatches, sentBatches)
+			mu.Unlock()
+			assert.Equal(t, 0, p.evtQueue.len(), "queue should be empty after shutdown")
+		})
+	}
 }
