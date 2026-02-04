@@ -875,9 +875,9 @@ func TestFlushEvents(t *testing.T) {
 			expectedQueueLen: 4,
 		},
 		{
-			desc: "faled to re-push all events when failed to register events if queue is closed",
+			desc: "failed to re-push all events when failed to register events if draining",
 			setup: func(p *processor, events []*model.Event) {
-				p.evtQueue.close()
+				p.isDraining = true
 				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(gomock.Any(), gomock.Any(), gomock.Any()).Return(
 					nil,
 					0,
@@ -905,9 +905,9 @@ func TestFlushEvents(t *testing.T) {
 			expectedQueueLen: 1,
 		},
 		{
-			desc: "faled to re-push events when register events res contains retriable errors if queue is closed",
+			desc: "failed to re-push events when register events res contains retriable errors if draining",
 			setup: func(p *processor, events []*model.Event) {
-				p.evtQueue.close()
+				p.isDraining = true
 				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(gomock.Any(), gomock.Any(), gomock.Any()).Return(
 					&model.RegisterEventsResponse{
 						Errors: map[string]*model.RegisterEventsResponseError{
@@ -949,51 +949,26 @@ func TestFlushEvents(t *testing.T) {
 	}
 }
 
-func TestClose(t *testing.T) {
+func TestDrain(t *testing.T) {
 	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	tests := []struct {
-		desc    string
-		setup   func(*processor)
-		timeout time.Duration
-		isErr   bool
-	}{
-		{
-			desc:    "return error when ctx is canceled",
-			setup:   nil,
-			timeout: 1 * time.Millisecond,
-			isErr:   true,
-		},
-		{
-			desc: "success",
-			setup: func(p *processor) {
-				go p.runDispatcher()
-			},
-			timeout: 2 * time.Second, // Needs to be > pollInterval (1s)
-			isErr:   false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			p := newProcessorForTestWorker(t, mockCtrl)
-			if tt.setup != nil {
-				tt.setup(p)
-			}
-			ctx, cancel := context.WithTimeout(context.Background(), tt.timeout)
-			defer cancel()
-			err := p.Close(ctx)
-			if tt.isErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
+
+	t.Run("success when drain completes", func(t *testing.T) {
+		p := newProcessorForTestWorker(t, mockCtrl)
+		// Start the dispatcher
+		go p.runDispatcher()
+
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		err := p.Drain(ctx)
+		assert.NoError(t, err)
+	})
 }
 
 func newProcessorForTestWorker(t *testing.T, mockCtrl *gomock.Controller) *processor {
 	t.Helper()
+	ctx, cancel := context.WithCancel(context.Background())
 	return &processor{
 		evtQueue: newQueue(&queueConfig{
 			capacity: 10,
@@ -1007,11 +982,12 @@ func newProcessorForTestWorker(t *testing.T, mockCtrl *gomock.Controller) *proce
 			EnableDebugLog: false,
 			ErrorLogger:    log.DiscardErrorLogger,
 		}),
-		ctx:        context.Background(),
-		shutdownCh: make(chan struct{}),
-		done:       make(chan struct{}),
-		workerSem:  make(chan struct{}, 3),
-		sourceID:   model.SourceIDGoServer,
+		ctx:       ctx,
+		cancel:    cancel,
+		drainCh:   make(chan struct{}),
+		done:      make(chan struct{}),
+		workerSem: make(chan struct{}, 3),
+		sourceID:  model.SourceIDGoServer,
 	}
 }
 
@@ -1095,9 +1071,10 @@ func TestSubmitBatch(t *testing.T) {
 		}
 	})
 
-	t.Run("flushes synchronously on shutdown", func(t *testing.T) {
-		// Create processor with shutdown channel
-		shutdownCh := make(chan struct{})
+	t.Run("flushes synchronously on drain", func(t *testing.T) {
+		// Create processor with drain channel
+		ctx, cancel := context.WithCancel(context.Background())
+		drainCh := make(chan struct{})
 		p := &processor{
 			evtQueue: newQueue(&queueConfig{
 				capacity: 10,
@@ -1111,11 +1088,12 @@ func TestSubmitBatch(t *testing.T) {
 				EnableDebugLog: false,
 				ErrorLogger:    log.DiscardErrorLogger,
 			}),
-			ctx:        context.Background(),
-			shutdownCh: shutdownCh,
-			done:       make(chan struct{}),
-			workerSem:  make(chan struct{}, 3),
-			sourceID:   model.SourceIDGoServer,
+			ctx:       ctx,
+			cancel:    cancel,
+			drainCh:   drainCh,
+			done:      make(chan struct{}),
+			workerSem: make(chan struct{}, 3),
+			sourceID:  model.SourceIDGoServer,
 		}
 
 		// Fill up semaphore (simulate all workers busy)
@@ -1131,10 +1109,10 @@ func TestSubmitBatch(t *testing.T) {
 		)
 
 		// Close shutdown channel to trigger shutdown path
-		close(shutdownCh)
+		close(drainCh)
 
 		batch := []*model.Event{{ID: "1"}}
-		p.submitBatch(batch) // Should flush synchronously via shutdownCh path
+		p.submitBatch(batch) // Should flush synchronously via drainCh path
 
 		// Semaphore should still be full (no permit acquired)
 		assert.Len(t, p.workerSem, cap(p.workerSem))
@@ -1261,8 +1239,9 @@ func TestDispatcherBatchBehavior(t *testing.T) {
 				},
 			).AnyTimes()
 
-			// Create shutdown channel
-			shutdownCh := make(chan struct{})
+			// Create drain channel
+			ctx, cancel := context.WithCancel(context.Background())
+			drainCh := make(chan struct{})
 
 			p := &processor{
 				evtQueue:        newQueue(&queueConfig{capacity: 100}),
@@ -1275,11 +1254,12 @@ func TestDispatcherBatchBehavior(t *testing.T) {
 					EnableDebugLog: false,
 					ErrorLogger:    log.DiscardErrorLogger,
 				}),
-				ctx:        context.Background(),
-				shutdownCh: shutdownCh,
-				done:       make(chan struct{}),
-				workerSem:  make(chan struct{}, 3),
-				sourceID:   model.SourceIDGoServer,
+				ctx:       ctx,
+				cancel:    cancel,
+				drainCh:   drainCh,
+				done:      make(chan struct{}),
+				workerSem: make(chan struct{}, 3),
+				sourceID:  model.SourceIDGoServer,
 			}
 
 			// Push events
@@ -1296,7 +1276,7 @@ func TestDispatcherBatchBehavior(t *testing.T) {
 			}
 
 			// Close shutdown channel to trigger shutdown
-			close(shutdownCh)
+			close(drainCh)
 
 			// Wait for dispatcher to finish
 			<-p.done

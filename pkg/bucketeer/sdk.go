@@ -178,7 +178,7 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		SourceID:        model.SourceIDType(dopts.sourceID),
 		EnableStats:     dopts.enableEventStats,
 	}
-	processor := event.NewProcessor(ctx, processorConf)
+	processor := event.NewProcessor(processorConf)
 	if !dopts.enableLocalEvaluation {
 		// Evaluate the end user on the server
 		return &sdk{
@@ -673,8 +673,8 @@ func (s *sdk) TrackValue(ctx context.Context, user *user.User, GoalID string, va
 }
 
 func (s *sdk) Close(ctx context.Context) error {
-	if err := s.eventProcessor.Close(ctx); err != nil {
-		return fmt.Errorf("bucketeer: failed to close event processor: %v", err)
+	if err := s.eventProcessor.Drain(ctx); err != nil {
+		return fmt.Errorf("bucketeer: failed to drain event processor: %v", err)
 	}
 	if s.enableLocalEvaluation {
 		s.featureFlagCacheProcessor.Close()

@@ -43,18 +43,18 @@ func (m *MockProcessor) EXPECT() *MockProcessorMockRecorder {
 	return m.recorder
 }
 
-// Close mocks base method.
-func (m *MockProcessor) Close(ctx context.Context) error {
+// Drain mocks base method.
+func (m *MockProcessor) Drain(ctx context.Context) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Close", ctx)
+	ret := m.ctrl.Call(m, "Drain", ctx)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
-// Close indicates an expected call of Close.
-func (mr *MockProcessorMockRecorder) Close(ctx any) *gomock.Call {
+// Drain indicates an expected call of Drain.
+func (mr *MockProcessorMockRecorder) Drain(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockProcessor)(nil).Close), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Drain", reflect.TypeOf((*MockProcessor)(nil).Drain), ctx)
 }
 
 // PushDefaultEvaluationEvent mocks base method.

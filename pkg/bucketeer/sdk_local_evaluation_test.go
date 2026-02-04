@@ -1369,7 +1369,7 @@ func TestCloseProcessor(t *testing.T) {
 		{
 			desc: "success",
 			setup: func(ctx context.Context, s *sdk) {
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().Close(ctx).Return(nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().Drain(ctx).Return(nil)
 				s.featureFlagCacheProcessor.(*mockprocessor.MockFeatureFlagProcessor).EXPECT().Close()
 				s.segmentUserCacheProcessor.(*mockprocessor.MockSegmentUserProcessor).EXPECT().Close()
 			},

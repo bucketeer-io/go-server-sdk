@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"syscall"
 	"time"
@@ -55,8 +56,9 @@ type Processor interface {
 	// PushSizeMetricsEvent pushes the get evaluation size metrics event to the queue.
 	PushSizeMetricsEvent(sizeByte int, api model.APIID)
 
-	// Close tears down all Processor activities, after ensuring that all events have been delivered.
-	Close(ctx context.Context) error
+	// Drain gracefully shuts down the processor, flushing all queued events.
+	// If ctx expires before draining completes, it forces immediate shutdown.
+	Drain(ctx context.Context) error
 
 	// PushErrorEvent pushes the error event to the queue.
 	PushErrorEvent(err error, api model.APIID)
@@ -76,13 +78,18 @@ type processor struct {
 	flushTimeout    time.Duration
 	apiClient       api.Client
 	loggers         *log.Loggers
-	ctx             context.Context // SDK init context (used for HTTP requests, NOT cancelled on shutdown)
-	shutdownCh      chan struct{}   // Signals shutdown to dispatcher (closed by Close())
-	done            chan struct{}   // Signals dispatcher completion to Close()
-	workerSem       chan struct{}   // Semaphore: limits concurrent workers AND tracks completion
+	workerSem       chan struct{} // Semaphore: limits concurrent workers AND tracks completion
 	tag             string
 	sdkVersion      string
 	sourceID        model.SourceIDType
+
+	// Shutdown coordination
+	mu         sync.Mutex         // Protects isDraining and queue access
+	isDraining bool               // True after Drain() is called
+	drainCh    chan struct{}      // Closed to signal dispatcher to drain
+	done       chan struct{}      // Closed when dispatcher finishes
+	ctx        context.Context    // Internal context for hard shutdown
+	cancel     context.CancelFunc // Cancels ctx for forced shutdown
 
 	// Stats tracking
 	enableStats   bool
@@ -138,10 +145,12 @@ type ProcessorConfig struct {
 }
 
 // NewProcessor creates a new Processor.
-func NewProcessor(ctx context.Context, conf *ProcessorConfig) Processor {
+func NewProcessor(conf *ProcessorConfig) Processor {
 	q := newQueue(&queueConfig{
 		capacity: conf.QueueCapacity,
 	})
+	// Internal context for hard shutdown (force cancel)
+	ctx, cancel := context.WithCancel(context.Background())
 	flushTimeout := 10 * time.Second
 	p := &processor{
 		evtQueue:        q,
@@ -151,10 +160,11 @@ func NewProcessor(ctx context.Context, conf *ProcessorConfig) Processor {
 		flushTimeout:    flushTimeout,
 		apiClient:       conf.APIClient,
 		loggers:         conf.Loggers,
-		ctx:             ctx, // SDK init context for HTTP requests
-		shutdownCh:      make(chan struct{}),
+		workerSem:       make(chan struct{}, conf.NumFlushWorkers),
+		drainCh:         make(chan struct{}),
 		done:            make(chan struct{}),
-		workerSem:       make(chan struct{}, conf.NumFlushWorkers), // Semaphore limits concurrent workers
+		ctx:             ctx,
+		cancel:          cancel,
 		tag:             conf.Tag,
 		sdkVersion:      conf.SDKVersion,
 		sourceID:        conf.SourceID,
@@ -406,11 +416,24 @@ func (p *processor) PushEvent(encoded []byte) error {
 		return fmt.Errorf("failed to model.New uuid v4: %w", err)
 	}
 	evt := model.NewEvent(id.String(), encoded)
-	if err := p.evtQueue.push(evt); err != nil {
+
+	// Lock protects both isDraining check and queue push
+	p.mu.Lock()
+	if p.isDraining {
+		p.mu.Unlock()
 		if p.enableStats {
 			atomic.AddInt64(&p.eventsDropped, 1)
 		}
-		return fmt.Errorf("failed to push event: %w", err)
+		return errors.New("processor is draining")
+	}
+	ok := p.evtQueue.push(evt)
+	p.mu.Unlock()
+
+	if !ok {
+		if p.enableStats {
+			atomic.AddInt64(&p.eventsDropped, 1)
+		}
+		return errors.New("queue is full")
 	}
 	if p.enableStats {
 		atomic.AddInt64(&p.eventsCreated, 1)
@@ -428,15 +451,31 @@ func (p *processor) Stats() ProcessorStats {
 	}
 }
 
-func (p *processor) Close(ctx context.Context) error {
-	p.evtQueue.close()  // Reject future pushes
-	close(p.shutdownCh) // Signal dispatcher to shutdown
+// Drain gracefully shuts down the processor, flushing all queued events.
+// If ctx expires before draining completes, it forces immediate shutdown.
+func (p *processor) Drain(ctx context.Context) error {
+	p.drain() // Signal dispatcher to drain
 	select {
 	case <-p.done:
-		return nil
+		return nil // Graceful shutdown completed
 	case <-ctx.Done():
-		return fmt.Errorf("bucketeer/event: ctx is canceled: %v", ctx.Err())
+		p.cancel() // Force dispatcher to stop
+		<-p.done   // Wait for dispatcher to finish
+		return fmt.Errorf("bucketeer/event: ctx forcefully canceled during shutdown: %v", ctx.Err())
 	}
+}
+
+// drain signals the dispatcher to start draining and rejects new pushes.
+func (p *processor) drain() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.isDraining {
+		return
+	}
+
+	p.isDraining = true
+	close(p.drainCh)
 }
 
 // pollInterval is the fixed interval for the dispatcher to poll the queue.
@@ -462,24 +501,31 @@ func (p *processor) runDispatcher() {
 	defer flushTicker.Stop()
 
 	for {
-		var isShutdown bool
-		minFlushSize := 1 // Default: accept partial batches (flush/shutdown)
+		var isDraining bool
+		minFlushSize := 1 // Default: accept partial batches (flush/drain)
 
 		select {
 		case <-pollTicker.C:
 			minFlushSize = p.flushSize // Poll: only full batches
 		case <-flushTicker.C:
 			// Keep minFlushSize = 1 (partial batches ok)
-		case <-p.shutdownCh:
-			isShutdown = true
+		case <-p.drainCh:
+			isDraining = true
+		case <-p.ctx.Done():
+			// Hard shutdown - stop immediately
+			p.waitForWorkers()
+			close(p.done)
+			return
 		}
 
 		// Drain queue in batches
 		// - minFlushSize = flushSize: only get full batches (poll)
-		// - minFlushSize = 1: get any events (flush/shutdown)
+		// - minFlushSize = 1: get any events (flush/drain)
 		var submitted bool
 		for {
+			p.mu.Lock()
 			events := p.evtQueue.popMany(minFlushSize, p.flushSize)
+			p.mu.Unlock()
 			if len(events) == 0 {
 				break
 			}
@@ -487,12 +533,12 @@ func (p *processor) runDispatcher() {
 			submitted = true
 		}
 
-		// Reset flush ticker if we sent events (but not during shutdown)
-		if submitted && !isShutdown {
+		// Reset flush ticker if we sent events (but not during drain)
+		if submitted && !isDraining {
 			flushTicker.Reset(p.flushInterval)
 		}
 
-		if isShutdown {
+		if isDraining {
 			p.waitForWorkers()
 			close(p.done)
 			return
@@ -527,10 +573,22 @@ func (p *processor) submitBatch(batch []*model.Event) {
 			defer func() { <-p.workerSem }() // Release permit
 			p.flushEvents(batch)
 		}()
-	case <-p.shutdownCh:
-		// Shutdown while waiting for worker - flush synchronously to not lose events
+	case <-p.drainCh:
+		// Draining while waiting for worker - flush synchronously to not lose events
 		p.flushEvents(batch)
 	}
+}
+
+// tryPush attempts to push an event to the queue.
+// Returns true if successful, false if draining or queue is full.
+func (p *processor) tryPush(evt *model.Event) bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.isDraining {
+		return false
+	}
+	return p.evtQueue.push(evt)
 }
 
 func (p *processor) flushEvents(events []*model.Event) {
@@ -553,11 +611,11 @@ func (p *processor) flushEvents(events []*model.Event) {
 	res, _, err := p.apiClient.RegisterEvents(p.ctx, model.NewRegisterEventsRequest(events, p.sourceID), deadline)
 	if err != nil {
 		p.loggers.Debugf("bucketeer/event: failed to register events: %v", err)
-		// Re-push all events to the event queue.
+		// Re-push all events to the event queue (if not draining)
 		var retriedCount int64
 		for _, evt := range events {
-			if err := p.evtQueue.push(evt); err != nil {
-				p.loggers.Errorf("bucketeer/event: failed to re-push event: %v", err)
+			if !p.tryPush(evt) {
+				p.loggers.Errorf("bucketeer/event: failed to re-push event")
 			} else {
 				retriedCount++
 			}
@@ -588,8 +646,8 @@ func (p *processor) flushEvents(events []*model.Event) {
 				sentCount++
 				continue
 			}
-			if err := p.evtQueue.push(evt); err != nil {
-				p.loggers.Errorf("bucketeer/event: failed to re-push retriable event: %v", err)
+			if !p.tryPush(evt) {
+				p.loggers.Errorf("bucketeer/event: failed to re-push retriable event")
 			} else {
 				retriedCount++
 			}

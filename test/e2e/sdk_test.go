@@ -605,7 +605,7 @@ func TestHighVolume(t *testing.T) {
 
 	const (
 		numGoroutines     = 25
-		callsPerGoroutine = 100
+		callsPerGoroutine = 1000
 		numWorkers        = 50
 		queueCapacity     = 100000
 		flushSize         = 100

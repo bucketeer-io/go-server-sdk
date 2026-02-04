@@ -2104,14 +2104,14 @@ func TestClose(t *testing.T) {
 		{
 			desc: "return error when failed to close event processor",
 			setup: func(ctx context.Context, s *sdk) {
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().Close(ctx).Return(errors.New("error"))
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().Drain(ctx).Return(errors.New("error"))
 			},
 			isErr: true,
 		},
 		{
 			desc: "success",
 			setup: func(ctx context.Context, s *sdk) {
-				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().Close(ctx).Return(nil)
+				s.eventProcessor.(*mockevent.MockProcessor).EXPECT().Drain(ctx).Return(nil)
 			},
 			isErr: false,
 		},

@@ -2,8 +2,6 @@ package event
 
 import (
 	"fmt"
-	"sync"
-	"sync/atomic"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -57,18 +55,17 @@ func TestQueue_Basic(t *testing.T) {
 	evt3 := model.NewEvent("3", []byte("data3"))
 	evt4 := model.NewEvent("4", []byte("data4"))
 
-	assert.NoError(t, q.push(evt1))
+	assert.True(t, q.push(evt1))
 	assert.Equal(t, 1, q.len())
 
-	assert.NoError(t, q.push(evt2))
-	assert.NoError(t, q.push(evt3))
-	assert.NoError(t, q.push(evt4))
+	assert.True(t, q.push(evt2))
+	assert.True(t, q.push(evt3))
+	assert.True(t, q.push(evt4))
 
 	// Push when full should fail
 	evt5 := model.NewEvent("5", []byte("data5"))
-	err := q.push(evt5)
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "queue is full")
+	pushed := q.push(evt5)
+	assert.False(t, pushed, "push should fail when queue is full")
 
 	// Pop events in FIFO order
 	poppedEvt, ok := q.pop()
@@ -80,7 +77,7 @@ func TestQueue_Basic(t *testing.T) {
 	assert.Equal(t, "2", poppedEvt.ID)
 
 	// Now we can push again
-	assert.NoError(t, q.push(evt5))
+	assert.True(t, q.push(evt5))
 
 	poppedEvt, ok = q.pop()
 	assert.True(t, ok)
@@ -195,147 +192,11 @@ func TestQueue_PopMany(t *testing.T) {
 
 		// The slot should be cleared (nil) after pop
 		// We can verify this indirectly by checking that a new push works
-		assert.NoError(t, q.push(model.NewEvent("2", []byte("data"))))
+		assert.True(t, q.push(model.NewEvent("2", []byte("data"))))
 	})
 }
 
-func TestQueue_Close(t *testing.T) {
-	q := newQueue(&queueConfig{capacity: 10})
-
-	// Push some events
-	assert.NoError(t, q.push(model.NewEvent("1", []byte("data"))))
-	assert.NoError(t, q.push(model.NewEvent("2", []byte("data"))))
-
-	// Close the queue
-	q.close()
-
-	// Push after close should fail
-	err := q.push(model.NewEvent("3", []byte("data")))
-	assert.Error(t, err)
-	assert.Contains(t, err.Error(), "queue is already closed")
-
-	// Pop should still work (drain remaining events)
-	evt, ok := q.pop()
-	assert.True(t, ok)
-	assert.Equal(t, "1", evt.ID)
-
-	// Double close should be safe
-	q.close()
-}
-
-func TestQueue_Concurrent(t *testing.T) {
-	q := newQueue(&queueConfig{capacity: 1024})
-	numOps := 10000
-
-	var wg sync.WaitGroup
-
-	// Producer
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for i := 0; i < numOps; i++ {
-			evt := model.NewEvent("test", []byte("data"))
-			for q.push(evt) != nil {
-				// Spin until we can push (queue might be full)
-			}
-		}
-	}()
-
-	// Consumer
-	consumed := 0
-	wg.Add(1)
-	go func() {
-		defer wg.Done()
-		for consumed < numOps {
-			if _, ok := q.pop(); ok {
-				consumed++
-			}
-		}
-	}()
-
-	wg.Wait()
-	assert.Equal(t, numOps, consumed)
-	assert.Equal(t, 0, q.len())
-}
-
-func TestQueue_MultipleProducersConsumers(t *testing.T) {
-	q := newQueue(&queueConfig{capacity: 4096})
-	numProducers := 4
-	numConsumers := 2
-	opsPerProducer := 5000
-
-	var producerWG sync.WaitGroup
-	var consumerWG sync.WaitGroup
-
-	produced := int64(0)
-	consumed := int64(0)
-
-	// Start consumers
-	stopConsumers := make(chan struct{})
-	for i := 0; i < numConsumers; i++ {
-		consumerWG.Add(1)
-		go func() {
-			defer consumerWG.Done()
-			localConsumed := int64(0)
-			for {
-				select {
-				case <-stopConsumers:
-					// Drain remaining
-					for {
-						if _, ok := q.pop(); ok {
-							localConsumed++
-						} else {
-							break
-						}
-					}
-					atomicAdd(&consumed, localConsumed)
-					return
-				default:
-					if _, ok := q.pop(); ok {
-						localConsumed++
-					}
-				}
-			}
-		}()
-	}
-
-	// Start producers
-	for i := 0; i < numProducers; i++ {
-		producerWG.Add(1)
-		go func() {
-			defer producerWG.Done()
-			localProduced := int64(0)
-			for j := 0; j < opsPerProducer; j++ {
-				evt := model.NewEvent("test", []byte("data"))
-				for q.push(evt) != nil {
-					// Spin until we can push
-				}
-				localProduced++
-			}
-			atomicAdd(&produced, localProduced)
-		}()
-	}
-
-	producerWG.Wait()
-	close(stopConsumers)
-	consumerWG.Wait()
-
-	totalProduced := atomicLoad(&produced)
-	totalConsumed := atomicLoad(&consumed)
-
-	assert.Equal(t, int64(numProducers*opsPerProducer), totalProduced)
-	assert.Equal(t, totalProduced, totalConsumed)
-}
-
-func atomicAdd(addr *int64, delta int64) {
-	for {
-		old := atomic.LoadInt64(addr)
-		if atomic.CompareAndSwapInt64(addr, old, old+delta) {
-			return
-		}
-	}
-}
-
-func atomicLoad(addr *int64) int64 {
-	return atomic.LoadInt64(addr)
-}
+// Note: TestQueue_Concurrent and TestQueue_MultipleProducersConsumers were removed
+// because the queue is now intentionally NOT thread-safe.
+// The processor owns all synchronization and wraps queue access with its mutex.
+// See processor_test.go for concurrent tests that use proper synchronization.

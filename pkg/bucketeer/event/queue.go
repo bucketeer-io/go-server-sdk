@@ -1,29 +1,17 @@
 package event
 
 import (
-	"errors"
-	"sync"
-
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 )
 
-// queue is a thread-safe event queue using a ring buffer for storage.
-// This design provides:
-// - Reduced GC pressure through pre-allocated ring buffer slots
-// - Lower push latency (no channel operations on push)
-// - Single mutex for all operations (no double-locking overhead)
-// - Workers poll the queue using adaptive ticker intervals
+// queue is a ring buffer for event storage.
+// NOT thread-safe - the processor is responsible for synchronization.
 type queue struct {
-	// Ring buffer fields
 	buffer   []*model.Event // Pre-allocated slots
 	head     uint64         // Write position
 	tail     uint64         // Read position
 	mask     uint64         // capacity - 1 (for power-of-2 indexing)
 	capacity uint64
-
-	// Single mutex protects all state (buffer, head, tail, closed)
-	mu     sync.Mutex
-	closed bool
 }
 
 type queueConfig struct {
@@ -61,35 +49,27 @@ func nextPowerOf2(n uint64) uint64 {
 }
 
 // push adds an event to the queue.
-// Returns an error if the queue is closed or full.
-func (q *queue) push(evt *model.Event) error {
-	q.mu.Lock()
-	defer q.mu.Unlock()
-
-	if q.closed {
-		return errors.New("queue is already closed")
-	}
-
+// Returns false if the queue is full.
+// NOT thread-safe - caller must hold lock.
+func (q *queue) push(evt *model.Event) bool {
 	// Check if buffer is full
 	if q.head-q.tail >= q.capacity {
-		return errors.New("queue is full")
+		return false
 	}
 
 	// Store the event at the head position
 	q.buffer[q.head&q.mask] = evt
 	q.head++
 
-	return nil
+	return true
 }
 
 // pop removes and returns an event from the queue.
 // Returns nil and false if the queue is empty.
+// NOT thread-safe - caller must hold lock.
 //
 //nolint:unused
 func (q *queue) pop() (*model.Event, bool) {
-	q.mu.Lock()
-	defer q.mu.Unlock()
-
 	// Check if buffer is empty
 	if q.head == q.tail {
 		return nil, false
@@ -107,11 +87,8 @@ func (q *queue) pop() (*model.Event, bool) {
 // - min: minimum number of events required (returns nil if queue has fewer)
 // - max: maximum number of events to return
 // Returns nil if queue has fewer than min events.
-// This is more efficient than calling pop() multiple times as it only acquires the lock once.
+// NOT thread-safe - caller must hold lock.
 func (q *queue) popMany(min, max int) []*model.Event {
-	q.mu.Lock()
-	defer q.mu.Unlock()
-
 	// Calculate how many events are available
 	available := int(q.head - q.tail)
 	if available < min {
@@ -139,37 +116,16 @@ func (q *queue) popMany(min, max int) []*model.Event {
 }
 
 // len returns the current number of events in the queue.
-// Used by tests to verify queue state.
 //
 //nolint:unused
 func (q *queue) len() int {
-	q.mu.Lock()
-	defer q.mu.Unlock()
 	return int(q.head - q.tail)
 }
 
 // cap returns the capacity of the queue.
-// This does not require a lock as capacity is immutable after initialization.
+// This is safe to call without locking as capacity is immutable.
 //
 //nolint:unused
 func (q *queue) cap() int {
 	return int(q.capacity)
-}
-
-// isClosed returns whether the queue is closed.
-// Used by tests to verify queue state.
-//
-//nolint:unused
-func (q *queue) isClosed() bool {
-	q.mu.Lock()
-	defer q.mu.Unlock()
-	return q.closed
-}
-
-// close marks the queue as closed, rejecting any future push() calls.
-func (q *queue) close() {
-	q.mu.Lock()
-	defer q.mu.Unlock()
-
-	q.closed = true
 }
