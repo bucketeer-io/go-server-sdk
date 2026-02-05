@@ -417,26 +417,28 @@ func (p *processor) PushEvent(encoded []byte) error {
 	}
 	evt := model.NewEvent(id.String(), encoded)
 
-	// Lock protects both isDraining check and queue push
-	p.mu.Lock()
-	if p.isDraining {
-		p.mu.Unlock()
+	if err := p.pushEvent(evt); err != nil {
 		if p.enableStats {
 			atomic.AddInt64(&p.eventsDropped, 1)
 		}
-		return errors.New("processor is draining")
-	}
-	ok := p.evtQueue.push(evt)
-	p.mu.Unlock()
-
-	if !ok {
-		if p.enableStats {
-			atomic.AddInt64(&p.eventsDropped, 1)
-		}
-		return errors.New("queue is full")
+		return err
 	}
 	if p.enableStats {
 		atomic.AddInt64(&p.eventsCreated, 1)
+	}
+	return nil
+}
+
+// pushEvent takes the lock, pushes to queue, and converts bool to error.
+func (p *processor) pushEvent(evt *model.Event) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.isDraining {
+		return errors.New("processor is draining")
+	}
+	if !p.evtQueue.push(evt) {
+		return errors.New("queue is full")
 	}
 	return nil
 }
@@ -491,36 +493,29 @@ const pollInterval = 1 * time.Second
 // - Under high load: 1 dispatcher + up to numFlushWorkers workers
 func (p *processor) runDispatcher() {
 	defer p.loggers.Debug("bucketeer/event: runDispatcher done")
+	defer close(p.done)
 
-	// Fixed poll ticker - single dispatcher polls the queue
 	pollTicker := time.NewTicker(pollInterval)
 	defer pollTicker.Stop()
 
-	// User-configured flush ticker for partial batches
 	flushTicker := time.NewTicker(p.flushInterval)
 	defer flushTicker.Stop()
 
 	for {
-		var isDraining bool
-		minFlushSize := 1 // Default: accept partial batches (flush/drain)
+		var shouldDrain bool
+		var minFlushSize int
 
 		select {
 		case <-pollTicker.C:
 			minFlushSize = p.flushSize // Poll: only full batches
 		case <-flushTicker.C:
-			// Keep minFlushSize = 1 (partial batches ok)
+			minFlushSize = 1 // Flush: accept partial batches
 		case <-p.drainCh:
-			isDraining = true
-		case <-p.ctx.Done():
-			// Hard shutdown - stop immediately
-			p.waitForWorkers()
-			close(p.done)
-			return
+			minFlushSize = 1 // Drain: accept partial batches
+			shouldDrain = true
 		}
 
 		// Drain queue in batches
-		// - minFlushSize = flushSize: only get full batches (poll)
-		// - minFlushSize = 1: get any events (flush/drain)
 		var submitted bool
 		for {
 			p.mu.Lock()
@@ -529,18 +524,19 @@ func (p *processor) runDispatcher() {
 			if len(events) == 0 {
 				break
 			}
-			p.submitBatch(events)
+			if !p.trySubmitBatch(events) {
+				break // Hard shutdown - stop dispatching
+			}
 			submitted = true
 		}
 
 		// Reset flush ticker if we sent events (but not during drain)
-		if submitted && !isDraining {
+		if submitted && !shouldDrain {
 			flushTicker.Reset(p.flushInterval)
 		}
 
-		if isDraining {
+		if shouldDrain {
 			p.waitForWorkers()
-			close(p.done)
 			return
 		}
 	}
@@ -548,35 +544,40 @@ func (p *processor) runDispatcher() {
 
 // waitForWorkers blocks until all in-flight workers complete.
 // It works by acquiring all semaphore permits - when we hold all permits,
-// no workers can be running.
+// no workers can be running. No need to release since we're shutting down.
 func (p *processor) waitForWorkers() {
 	for i := 0; i < cap(p.workerSem); i++ {
-		p.workerSem <- struct{}{} // Acquire permit (blocks if worker holds it)
-	}
-	// All permits acquired = all workers done
-	// Release them
-	for i := 0; i < cap(p.workerSem); i++ {
-		<-p.workerSem
+		p.workerSem <- struct{}{}
 	}
 }
 
-// submitBatch submits a batch to a worker goroutine.
-// If all workers are busy, it blocks until one becomes available.
-// This keeps the dispatcher in its coordination role rather than doing I/O work.
-// submitBatch dispatches a batch of events to a worker goroutine.
-// Note: batch ownership is transferred to this function (no copy needed since
-// popMany already returns a new slice).
-func (p *processor) submitBatch(batch []*model.Event) {
+// trySubmitBatch tries to submit a batch to a worker.
+// Returns true if batch was submitted, false if hard shutdown (batch lost).
+func (p *processor) trySubmitBatch(batch []*model.Event) bool {
 	select {
-	case p.workerSem <- struct{}{}: // Acquire semaphore permit (blocks if all busy)
-		go func() {
-			defer func() { <-p.workerSem }() // Release permit
-			p.flushEvents(batch)
-		}()
+	case p.workerSem <- struct{}{}:
+		p.submitBatch(batch)
+		return true
 	case <-p.drainCh:
-		// Draining while waiting for worker - flush synchronously to not lose events
-		p.flushEvents(batch)
+		// Graceful shutdown - try to get a worker
+		select {
+		case p.workerSem <- struct{}{}:
+			p.submitBatch(batch)
+			return true
+		case <-p.ctx.Done():
+			// Hard shutdown - batch lost
+			return false
+		}
 	}
+}
+
+// submitBatch dispatches a batch to a worker goroutine.
+// Caller must have already acquired the semaphore permit.
+func (p *processor) submitBatch(batch []*model.Event) {
+	go func() {
+		defer func() { <-p.workerSem }()
+		p.flushEvents(batch)
+	}()
 }
 
 // tryPush attempts to push an event to the queue.

@@ -1012,13 +1012,11 @@ func TestSubmitBatch(t *testing.T) {
 		)
 
 		batch := []*model.Event{{ID: "1"}, {ID: "2"}}
-		p.submitBatch(batch)
+		ok := p.trySubmitBatch(batch)
+		assert.True(t, ok)
 
 		// Wait for worker to complete
 		p.waitForWorkers()
-
-		// Semaphore should be empty (all permits released)
-		assert.Len(t, p.workerSem, 0)
 	})
 
 	t.Run("blocks until worker available", func(t *testing.T) {
@@ -1039,14 +1037,14 @@ func TestSubmitBatch(t *testing.T) {
 		batch := []*model.Event{{ID: "1"}}
 		done := make(chan struct{})
 		go func() {
-			p.submitBatch(batch) // Should block until worker available
+			p.trySubmitBatch(batch) // Should block until worker available
 			close(done)
 		}()
 
 		// Should be blocked
 		select {
 		case <-done:
-			t.Fatal("submitBatch should block when all workers busy")
+			t.Fatal("trySubmitBatch should block when all workers busy")
 		case <-time.After(50 * time.Millisecond):
 			// Expected - still waiting for worker
 		}
@@ -1054,12 +1052,12 @@ func TestSubmitBatch(t *testing.T) {
 		// Release one permit (simulate worker finishing)
 		<-p.workerSem
 
-		// Now submitBatch should unblock and spawn worker
+		// Now trySubmitBatch should unblock and spawn worker
 		select {
 		case <-done:
-			// Success - submitBatch unblocked
+			// Success - trySubmitBatch unblocked
 		case <-time.After(100 * time.Millisecond):
-			t.Fatal("submitBatch should unblock when worker becomes available")
+			t.Fatal("trySubmitBatch should unblock when worker becomes available")
 		}
 
 		// Wait a bit for spawned worker goroutine to complete and release its permit
@@ -1071,7 +1069,7 @@ func TestSubmitBatch(t *testing.T) {
 		}
 	})
 
-	t.Run("flushes synchronously on drain", func(t *testing.T) {
+	t.Run("returns false on hard shutdown during drain", func(t *testing.T) {
 		// Create processor with drain channel
 		ctx, cancel := context.WithCancel(context.Background())
 		drainCh := make(chan struct{})
@@ -1101,23 +1099,36 @@ func TestSubmitBatch(t *testing.T) {
 			p.workerSem <- struct{}{}
 		}
 
-		// Expect synchronous flush due to shutdown
-		p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(gomock.Any(), gomock.Any(), gomock.Any()).Return(
-			&model.RegisterEventsResponse{Errors: make(map[string]*model.RegisterEventsResponseError)},
-			0,
-			nil,
-		)
-
-		// Close shutdown channel to trigger shutdown path
+		// Close drain channel to trigger drain path
 		close(drainCh)
 
 		batch := []*model.Event{{ID: "1"}}
-		p.submitBatch(batch) // Should flush synchronously via drainCh path
+		done := make(chan bool)
+		go func() {
+			result := p.trySubmitBatch(batch)
+			done <- result
+		}()
 
-		// Semaphore should still be full (no permit acquired)
-		assert.Len(t, p.workerSem, cap(p.workerSem))
+		// Should be blocked waiting for worker permit
+		select {
+		case <-done:
+			t.Fatal("trySubmitBatch should block waiting for worker during drain")
+		case <-time.After(50 * time.Millisecond):
+			// Expected - blocked waiting for worker
+		}
 
-		// Release semaphore
+		// Trigger hard shutdown
+		cancel()
+
+		// Now trySubmitBatch should return false (batch lost)
+		select {
+		case result := <-done:
+			assert.False(t, result, "trySubmitBatch should return false on hard shutdown")
+		case <-time.After(100 * time.Millisecond):
+			t.Fatal("trySubmitBatch should unblock on hard shutdown")
+		}
+
+		// Release semaphore for cleanup
 		for i := 0; i < cap(p.workerSem); i++ {
 			<-p.workerSem
 		}
@@ -1243,26 +1254,26 @@ func TestDispatcherBatchBehavior(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			drainCh := make(chan struct{})
 
-			p := &processor{
-				evtQueue:        newQueue(&queueConfig{capacity: 100}),
-				numFlushWorkers: 3,
-				flushInterval:   tt.flushInterval,
-				flushSize:       tt.flushSize,
-				flushTimeout:    10 * time.Second,
-				apiClient:       mockClient,
-				loggers: log.NewLoggers(&log.LoggersConfig{
-					EnableDebugLog: false,
-					ErrorLogger:    log.DiscardErrorLogger,
-				}),
-				ctx:       ctx,
-				cancel:    cancel,
-				drainCh:   drainCh,
-				done:      make(chan struct{}),
-				workerSem: make(chan struct{}, 3),
-				sourceID:  model.SourceIDGoServer,
-			}
+		p := &processor{
+			evtQueue:        newQueue(&queueConfig{capacity: 100}),
+			numFlushWorkers: 3,
+			flushInterval:   tt.flushInterval,
+			flushSize:       tt.flushSize,
+			flushTimeout:    10 * time.Second,
+			apiClient:       mockClient,
+			loggers: log.NewLoggers(&log.LoggersConfig{
+				EnableDebugLog: false,
+				ErrorLogger:    log.DiscardErrorLogger,
+			}),
+			ctx:       ctx,
+			cancel:    cancel,
+			drainCh:   drainCh,
+			done:      make(chan struct{}),
+			workerSem: make(chan struct{}, 3),
+			sourceID:  model.SourceIDGoServer,
+		}
 
-			// Push events
+		// Push events
 			for i := 0; i < tt.numEvents; i++ {
 				p.evtQueue.push(&model.Event{ID: fmt.Sprintf("event-%d", i)})
 			}

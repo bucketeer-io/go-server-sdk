@@ -52,15 +52,12 @@ func nextPowerOf2(n uint64) uint64 {
 // Returns false if the queue is full.
 // NOT thread-safe - caller must hold lock.
 func (q *queue) push(evt *model.Event) bool {
-	// Check if buffer is full
 	if q.head-q.tail >= q.capacity {
 		return false
 	}
 
-	// Store the event at the head position
 	q.buffer[q.head&q.mask] = evt
 	q.head++
-
 	return true
 }
 
