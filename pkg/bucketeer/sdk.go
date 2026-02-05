@@ -117,7 +117,15 @@ type SDK interface {
 
 	// EventStats returns current event processing statistics.
 	// This is useful for monitoring and debugging event delivery.
-	EventStats() event.ProcessorStats
+	EventStats() EventStats
+}
+
+// EventStats contains event processing statistics.
+type EventStats struct {
+	EventsCreated int64 // Events successfully pushed to queue
+	EventsSent    int64 // Events successfully sent to server
+	EventsDropped int64 // Events dropped due to queue full
+	EventsRetried int64 // Events re-pushed after API error
 }
 
 type sdk struct {
@@ -684,8 +692,14 @@ func (s *sdk) Close(ctx context.Context) error {
 }
 
 // EventStats returns current event processing statistics.
-func (s *sdk) EventStats() event.ProcessorStats {
-	return s.eventProcessor.Stats()
+func (s *sdk) EventStats() EventStats {
+	stats := s.eventProcessor.Stats()
+	return EventStats{
+		EventsCreated: stats.EventsCreated,
+		EventsSent:    stats.EventsSent,
+		EventsDropped: stats.EventsDropped,
+		EventsRetried: stats.EventsRetried,
+	}
 }
 
 type nopSDK struct{}
@@ -861,6 +875,6 @@ func (s *nopSDK) Close(ctx context.Context) error {
 	return nil
 }
 
-func (s *nopSDK) EventStats() event.ProcessorStats {
-	return event.ProcessorStats{}
+func (s *nopSDK) EventStats() EventStats {
+	return EventStats{}
 }

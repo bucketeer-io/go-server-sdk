@@ -11,7 +11,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer"
-	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/event"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"
 )
@@ -696,7 +695,7 @@ func TestHighVolume(t *testing.T) {
 				expectedEvents = totalCalls * 3 // 3 per remote call
 			}
 
-			var finalStats event.ProcessorStats
+			var finalStats bucketeer.EventStats
 			if tt.callClose {
 				statsBefore := sdk.EventStats()
 				t.Logf("Stats before Close: created=%d, sent=%d, dropped=%d, retried=%d",
