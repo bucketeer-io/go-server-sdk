@@ -781,28 +781,48 @@ func TestClassifyError(t *testing.T) {
 
 func TestPushEvent(t *testing.T) {
 	t.Parallel()
-	t.Run("return error when queue is full", func(t *testing.T) {
-		// Create processor with minimum capacity (1)
-		p := newProcessorForTestPushEvent(t, 1)
-		encodedEvt := newEncodedEvaluationEvent(t, processorFeatureID)
-		// First push should succeed
-		err := p.PushEvent(encodedEvt)
-		assert.NoError(t, err)
-		// Second push should fail because queue is full
-		err = p.PushEvent(encodedEvt)
-		assert.Error(t, err)
-	})
-	t.Run("success", func(t *testing.T) {
-		p := newProcessorForTestPushEvent(t, 10)
-		encodedEvt := newEncodedEvaluationEvent(t, processorFeatureID)
-		err := p.PushEvent(encodedEvt)
-		assert.NoError(t, err)
-		evt, ok := p.evtQueue.pop()
-		assert.True(t, ok)
-		evalationEvt := &model.EvaluationEvent{}
-		err = json.Unmarshal(evt.Event, evalationEvt)
-		assert.NoError(t, err)
-	})
+	tests := []struct {
+		desc              string
+		queueCapacity     int
+		pushCount         int
+		expectedErrOnPush int // 1-indexed: which push should fail (0 = none)
+	}{
+		{
+			desc:              "return error when queue is full",
+			queueCapacity:     1,
+			pushCount:         2,
+			expectedErrOnPush: 2,
+		},
+		{
+			desc:              "success",
+			queueCapacity:     10,
+			pushCount:         1,
+			expectedErrOnPush: 0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			t.Parallel()
+			p := newProcessorForTestPushEvent(t, tt.queueCapacity)
+			encodedEvt := newEncodedEvaluationEvent(t, processorFeatureID)
+			for i := 1; i <= tt.pushCount; i++ {
+				err := p.PushEvent(encodedEvt)
+				if tt.expectedErrOnPush == i {
+					assert.Error(t, err)
+				} else {
+					assert.NoError(t, err)
+				}
+			}
+			// Verify event can be popped and unmarshaled when no error expected
+			if tt.expectedErrOnPush == 0 {
+				evt, ok := p.evtQueue.pop()
+				assert.True(t, ok)
+				evaluationEvt := &model.EvaluationEvent{}
+				err := json.Unmarshal(evt.Event, evaluationEvt)
+				assert.NoError(t, err)
+			}
+		})
+	}
 }
 
 func newProcessorForTestPushEvent(t *testing.T, eventQueueCapacity int) *processor {
@@ -1254,26 +1274,26 @@ func TestDispatcherBatchBehavior(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
 			drainCh := make(chan struct{})
 
-		p := &processor{
-			evtQueue:        newQueue(&queueConfig{capacity: 100}),
-			numFlushWorkers: 3,
-			flushInterval:   tt.flushInterval,
-			flushSize:       tt.flushSize,
-			flushTimeout:    10 * time.Second,
-			apiClient:       mockClient,
-			loggers: log.NewLoggers(&log.LoggersConfig{
-				EnableDebugLog: false,
-				ErrorLogger:    log.DiscardErrorLogger,
-			}),
-			ctx:       ctx,
-			cancel:    cancel,
-			drainCh:   drainCh,
-			done:      make(chan struct{}),
-			workerSem: make(chan struct{}, 3),
-			sourceID:  model.SourceIDGoServer,
-		}
+			p := &processor{
+				evtQueue:        newQueue(&queueConfig{capacity: 100}),
+				numFlushWorkers: 3,
+				flushInterval:   tt.flushInterval,
+				flushSize:       tt.flushSize,
+				flushTimeout:    10 * time.Second,
+				apiClient:       mockClient,
+				loggers: log.NewLoggers(&log.LoggersConfig{
+					EnableDebugLog: false,
+					ErrorLogger:    log.DiscardErrorLogger,
+				}),
+				ctx:       ctx,
+				cancel:    cancel,
+				drainCh:   drainCh,
+				done:      make(chan struct{}),
+				workerSem: make(chan struct{}, 3),
+				sourceID:  model.SourceIDGoServer,
+			}
 
-		// Push events
+			// Push events
 			for i := 0; i < tt.numEvents; i++ {
 				p.evtQueue.push(&model.Event{ID: fmt.Sprintf("event-%d", i)})
 			}
