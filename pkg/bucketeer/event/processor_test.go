@@ -10,6 +10,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"sync"
 	"syscall"
 	"testing"
 	"time"
@@ -38,7 +39,8 @@ func TestPushEvaluationEvent(t *testing.T) {
 	user := newUser(t, processorUserID)
 	evaluation := newEvaluation(t, processorFeatureID, processorVariationID)
 	p.PushEvaluationEvent(user, evaluation)
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	e := model.NewEvaluationEvent(p.tag, processorFeatureID, "", version.SDKVersion, 0, model.SourceIDGoServer, user, &model.Reason{Type: model.ReasonErrorFlagNotFound})
 	err := json.Unmarshal(evt.Event, e)
 	assert.NoError(t, err)
@@ -58,7 +60,8 @@ func TestPushGoalEvent(t *testing.T) {
 	p := newProcessorForTestPushEvent(t, 10)
 	user := newUser(t, processorUserID)
 	p.PushGoalEvent(user, processorGoalID, 1.1)
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	e := model.NewGoalEvent(p.tag, processorGoalID, version.SDKVersion, 1.1, model.SourceIDGoServer, user)
 	err := json.Unmarshal(evt.Event, e)
 	assert.NoError(t, err)
@@ -77,7 +80,8 @@ func TestPushLatencyMetricsEvent(t *testing.T) {
 	t1 := time.Date(2020, 12, 25, 0, 0, 0, 0, time.UTC)
 	t2 := time.Date(2020, 12, 26, 0, 0, 0, 0, time.UTC)
 	p.PushLatencyMetricsEvent(t2.Sub(t1), model.GetEvaluation)
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
@@ -94,7 +98,8 @@ func TestPushSizeMetricsEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.PushSizeMetricsEvent(1, model.GetEvaluation)
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
@@ -111,7 +116,8 @@ func TestPushTimeoutErrorMetricsEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushTimeoutErrorMetricsEvent(model.GetEvaluation)
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
@@ -125,7 +131,8 @@ func TestPushInternalSDKErrorMetricsEvent(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushInternalSDKErrorMetricsEvent(model.GetEvaluation, errors.New("error"))
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
@@ -140,33 +147,30 @@ func TestUnauthorizedError(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, http.StatusUnauthorized, errors.New("StatusUnauthorized"))
-	select {
-	case evt := <-p.evtQueue.eventCh():
-		// If we receive an event, the test should fail
-		t.Errorf("Expected no event for unauthorized error, but got: %v", evt)
-	case <-time.After(time.Millisecond * 300):
-		// No event received
-	}
+	// Unauthorized errors should not push events to the queue
+	time.Sleep(time.Millisecond * 50) // Give time for any async processing
+	evt, ok := p.evtQueue.pop()
+	assert.False(t, ok, "Expected no event for unauthorized error")
+	assert.Nil(t, evt)
 }
 
 func TestStatusForbiddenError(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, http.StatusForbidden, errors.New("StatusForbidden"))
-	select {
-	case evt := <-p.evtQueue.eventCh():
-		// If we receive an event, the test should fail
-		t.Errorf("Expected no event for forbidden error, but got: %v", evt)
-	case <-time.After(time.Millisecond * 300):
-		// No event received
-	}
+	// Forbidden errors should not push events to the queue
+	time.Sleep(time.Millisecond * 50) // Give time for any async processing
+	evt, ok := p.evtQueue.pop()
+	assert.False(t, ok, "Expected no event for forbidden error")
+	assert.Nil(t, evt)
 }
 
 func TestPushErrorStatusCodeMetricsEventInternalServerError(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, http.StatusInternalServerError, errors.New("InternalServerError"))
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
@@ -181,7 +185,8 @@ func TestPushErrorStatusCodeMetricsEventMethodNotAllowed(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, http.StatusMethodNotAllowed, errors.New("MethodNotAllowed"))
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
@@ -196,7 +201,8 @@ func TestPushErrorStatusCodeMetricsEventRequestTimeout(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, http.StatusRequestTimeout, errors.New("StatusRequestTimeout"))
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
@@ -211,7 +217,8 @@ func TestPushErrorStatusCodeMetricsEventRequestEntityTooLarge(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, http.StatusRequestEntityTooLarge, errors.New("StatusRequestEntityTooLarge"))
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
@@ -226,7 +233,8 @@ func TestPushErrorStatusCodeMetricsEventBadGateway(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, http.StatusBadGateway, errors.New("StatusBadGateway"))
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
@@ -241,7 +249,8 @@ func TestPushErrorStatusCodeMetricsEventRedirectionRequestError(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, 333, errors.New("333 error"))
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
@@ -256,7 +265,8 @@ func TestPushErrorStatusCodeMetricsEventUnknownError(t *testing.T) {
 	t.Parallel()
 	p := newProcessorForTestPushEvent(t, 10)
 	p.pushErrorStatusCodeMetricsEvent(model.GetEvaluation, 999, errors.New("999 error"))
-	evt := <-p.evtQueue.eventCh()
+	evt, ok := p.evtQueue.pop()
+	assert.True(t, ok)
 	metricsEvt := &model.MetricsEvent{}
 	err := json.Unmarshal(evt.Event, metricsEvt)
 	assert.NoError(t, err)
@@ -326,7 +336,8 @@ func TestPushErrorEventWhenNetworkError(t *testing.T) {
 		t.Run(pt.desc, func(t *testing.T) {
 			p := newProcessorForTestPushEvent(t, 10)
 			p.PushErrorEvent(pt.err, model.RegisterEvents)
-			evt := <-p.evtQueue.eventCh()
+			evt, ok := p.evtQueue.pop()
+			assert.True(t, ok)
 			metricsEvt := &model.MetricsEvent{}
 			err := json.Unmarshal(evt.Event, metricsEvt)
 			assert.NoError(t, err)
@@ -355,7 +366,8 @@ func TestPushErrorEventWhenInternalSDKError(t *testing.T) {
 		t.Run(pt.desc, func(t *testing.T) {
 			p := newProcessorForTestPushEvent(t, 10)
 			p.PushErrorEvent(pt.err, model.RegisterEvents)
-			evt := <-p.evtQueue.eventCh()
+			evt, ok := p.evtQueue.pop()
+			assert.True(t, ok)
 			metricsEvt := &model.MetricsEvent{}
 			err := json.Unmarshal(evt.Event, metricsEvt)
 			assert.NoError(t, err)
@@ -429,7 +441,8 @@ func TestPushErrorEventWhenTimeoutErr(t *testing.T) {
 		t.Run(pt.desc, func(t *testing.T) {
 			p := newProcessorForTestPushEvent(t, 10)
 			p.PushErrorEvent(pt.err, model.RegisterEvents)
-			evt := <-p.evtQueue.eventCh()
+			evt, ok := p.evtQueue.pop()
+			assert.True(t, ok)
 			metricsEvt := &model.MetricsEvent{}
 			err := json.Unmarshal(evt.Event, metricsEvt)
 			assert.NoError(t, err)
@@ -458,7 +471,8 @@ func TestPushErrorEventWhenOtherStatus(t *testing.T) {
 		t.Run(pt.desc, func(t *testing.T) {
 			p := newProcessorForTestPushEvent(t, 10)
 			p.PushErrorEvent(pt.err, model.RegisterEvents)
-			evt := <-p.evtQueue.eventCh()
+			evt, ok := p.evtQueue.pop()
+			assert.True(t, ok)
 			metricsEvt := &model.MetricsEvent{}
 			err := json.Unmarshal(evt.Event, metricsEvt)
 			assert.NoError(t, err)
@@ -768,35 +782,43 @@ func TestClassifyError(t *testing.T) {
 func TestPushEvent(t *testing.T) {
 	t.Parallel()
 	tests := []struct {
-		desc               string
-		eventQueueCapacity int
-		encodedEvt         []byte
-		isErr              bool
+		desc              string
+		queueCapacity     int
+		pushCount         int
+		expectedErrOnPush int // 1-indexed: which push should fail (0 = none)
 	}{
 		{
-			desc:               "return error when failed to push event",
-			eventQueueCapacity: 0,
-			encodedEvt:         newEncodedEvaluationEvent(t, processorFeatureID),
-			isErr:              true,
+			desc:              "return error when queue is full",
+			queueCapacity:     1,
+			pushCount:         2,
+			expectedErrOnPush: 2,
 		},
 		{
-			desc:               "success",
-			eventQueueCapacity: 10,
-			encodedEvt:         newEncodedEvaluationEvent(t, processorFeatureID),
-			isErr:              false,
+			desc:              "success",
+			queueCapacity:     10,
+			pushCount:         1,
+			expectedErrOnPush: 0,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
-			p := newProcessorForTestPushEvent(t, tt.eventQueueCapacity)
-			err := p.PushEvent(tt.encodedEvt)
-			if tt.isErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				evt := <-p.evtQueue.eventCh()
-				evalationEvt := &model.EvaluationEvent{}
-				err := json.Unmarshal(evt.Event, evalationEvt)
+			t.Parallel()
+			p := newProcessorForTestPushEvent(t, tt.queueCapacity)
+			encodedEvt := newEncodedEvaluationEvent(t, processorFeatureID)
+			for i := 1; i <= tt.pushCount; i++ {
+				err := p.PushEvent(encodedEvt)
+				if tt.expectedErrOnPush == i {
+					assert.Error(t, err)
+				} else {
+					assert.NoError(t, err)
+				}
+			}
+			// Verify event can be popped and unmarshaled when no error expected
+			if tt.expectedErrOnPush == 0 {
+				evt, ok := p.evtQueue.pop()
+				assert.True(t, ok)
+				evaluationEvt := &model.EvaluationEvent{}
+				err := json.Unmarshal(evt.Event, evaluationEvt)
 				assert.NoError(t, err)
 			}
 		})
@@ -846,7 +868,6 @@ func TestFlushEvents(t *testing.T) {
 	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	ctx := context.TODO()
 	tests := []struct {
 		desc             string
 		setup            func(*processor, []*model.Event)
@@ -874,9 +895,9 @@ func TestFlushEvents(t *testing.T) {
 			expectedQueueLen: 4,
 		},
 		{
-			desc: "faled to re-push all events when failed to register events if queue is closed",
+			desc: "failed to re-push all events when failed to register events if draining",
 			setup: func(p *processor, events []*model.Event) {
-				p.evtQueue.close()
+				p.isDraining = true
 				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(gomock.Any(), gomock.Any(), gomock.Any()).Return(
 					nil,
 					0,
@@ -904,9 +925,9 @@ func TestFlushEvents(t *testing.T) {
 			expectedQueueLen: 1,
 		},
 		{
-			desc: "faled to re-push events when register events res contains retriable errors if queue is closed",
+			desc: "failed to re-push events when register events res contains retriable errors if draining",
 			setup: func(p *processor, events []*model.Event) {
-				p.evtQueue.close()
+				p.isDraining = true
 				p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(gomock.Any(), gomock.Any(), gomock.Any()).Return(
 					&model.RegisterEventsResponse{
 						Errors: map[string]*model.RegisterEventsResponseError{
@@ -942,58 +963,32 @@ func TestFlushEvents(t *testing.T) {
 			if tt.setup != nil {
 				tt.setup(p, tt.events)
 			}
-			p.flushEvents(ctx, tt.events)
-			assert.Len(t, p.evtQueue.eventCh(), tt.expectedQueueLen)
+			p.flushEvents(tt.events)
+			assert.Equal(t, tt.expectedQueueLen, p.evtQueue.len())
 		})
 	}
 }
 
-func TestClose(t *testing.T) {
+func TestDrain(t *testing.T) {
 	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	ctx := context.TODO()
-	tests := []struct {
-		desc    string
-		setup   func(*processor)
-		timeout time.Duration
-		isErr   bool
-	}{
-		{
-			desc:    "return error when ctx is canceled",
-			setup:   nil,
-			timeout: 1 * time.Millisecond,
-			isErr:   true,
-		},
-		{
-			desc: "success",
-			setup: func(p *processor) {
-				go p.startWorkers(ctx)
-			},
-			timeout: 1 * time.Minute,
-			isErr:   false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.desc, func(t *testing.T) {
-			p := newProcessorForTestWorker(t, mockCtrl)
-			if tt.setup != nil {
-				tt.setup(p)
-			}
-			ctx, cancel := context.WithTimeout(context.Background(), tt.timeout)
-			defer cancel()
-			err := p.Close(ctx)
-			if tt.isErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
-		})
-	}
+
+	t.Run("success when drain completes", func(t *testing.T) {
+		p := newProcessorForTestWorker(t, mockCtrl)
+		// Start the dispatcher
+		go p.runDispatcher()
+
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		err := p.Drain(ctx)
+		assert.NoError(t, err)
+	})
 }
 
 func newProcessorForTestWorker(t *testing.T, mockCtrl *gomock.Controller) *processor {
 	t.Helper()
+	ctx, cancel := context.WithCancel(context.Background())
 	return &processor{
 		evtQueue: newQueue(&queueConfig{
 			capacity: 10,
@@ -1007,7 +1002,321 @@ func newProcessorForTestWorker(t *testing.T, mockCtrl *gomock.Controller) *proce
 			EnableDebugLog: false,
 			ErrorLogger:    log.DiscardErrorLogger,
 		}),
-		closeCh:  make(chan struct{}),
-		sourceID: model.SourceIDGoServer,
+		ctx:       ctx,
+		cancel:    cancel,
+		drainCh:   make(chan struct{}),
+		done:      make(chan struct{}),
+		workerSem: make(chan struct{}, 3),
+		sourceID:  model.SourceIDGoServer,
+	}
+}
+
+func TestSubmitBatch(t *testing.T) {
+	t.Parallel()
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	t.Run("empty batch does nothing", func(t *testing.T) {
+		p := newProcessorForTestWorker(t, mockCtrl)
+		// Should not panic or do anything
+		p.submitBatch(nil)
+		p.submitBatch([]*model.Event{})
+	})
+
+	t.Run("spawns worker goroutine when semaphore available", func(t *testing.T) {
+		p := newProcessorForTestWorker(t, mockCtrl)
+		p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(gomock.Any(), gomock.Any(), gomock.Any()).Return(
+			&model.RegisterEventsResponse{Errors: make(map[string]*model.RegisterEventsResponseError)},
+			0,
+			nil,
+		)
+
+		batch := []*model.Event{{ID: "1"}, {ID: "2"}}
+		ok := p.trySubmitBatch(batch)
+		assert.True(t, ok)
+
+		// Wait for worker to complete
+		p.waitForWorkers()
+	})
+
+	t.Run("blocks until worker available", func(t *testing.T) {
+		p := newProcessorForTestWorker(t, mockCtrl)
+
+		// Fill up semaphore (simulate all workers busy)
+		for i := 0; i < cap(p.workerSem); i++ {
+			p.workerSem <- struct{}{}
+		}
+
+		// Expect worker goroutine to flush
+		p.apiClient.(*mockapi.MockClient).EXPECT().RegisterEvents(gomock.Any(), gomock.Any(), gomock.Any()).Return(
+			&model.RegisterEventsResponse{Errors: make(map[string]*model.RegisterEventsResponseError)},
+			0,
+			nil,
+		)
+
+		batch := []*model.Event{{ID: "1"}}
+		done := make(chan struct{})
+		go func() {
+			p.trySubmitBatch(batch) // Should block until worker available
+			close(done)
+		}()
+
+		// Should be blocked
+		select {
+		case <-done:
+			t.Fatal("trySubmitBatch should block when all workers busy")
+		case <-time.After(50 * time.Millisecond):
+			// Expected - still waiting for worker
+		}
+
+		// Release one permit (simulate worker finishing)
+		<-p.workerSem
+
+		// Now trySubmitBatch should unblock and spawn worker
+		select {
+		case <-done:
+			// Success - trySubmitBatch unblocked
+		case <-time.After(100 * time.Millisecond):
+			t.Fatal("trySubmitBatch should unblock when worker becomes available")
+		}
+
+		// Wait a bit for spawned worker goroutine to complete and release its permit
+		time.Sleep(50 * time.Millisecond)
+
+		// Release remaining 2 permits we held at start
+		for i := 0; i < cap(p.workerSem)-1; i++ {
+			<-p.workerSem
+		}
+	})
+
+	t.Run("returns false on hard shutdown during drain", func(t *testing.T) {
+		// Create processor with drain channel
+		ctx, cancel := context.WithCancel(context.Background())
+		drainCh := make(chan struct{})
+		p := &processor{
+			evtQueue: newQueue(&queueConfig{
+				capacity: 10,
+			}),
+			numFlushWorkers: 3,
+			flushInterval:   1 * time.Minute,
+			flushSize:       10,
+			flushTimeout:    10 * time.Second,
+			apiClient:       mockapi.NewMockClient(mockCtrl),
+			loggers: log.NewLoggers(&log.LoggersConfig{
+				EnableDebugLog: false,
+				ErrorLogger:    log.DiscardErrorLogger,
+			}),
+			ctx:       ctx,
+			cancel:    cancel,
+			drainCh:   drainCh,
+			done:      make(chan struct{}),
+			workerSem: make(chan struct{}, 3),
+			sourceID:  model.SourceIDGoServer,
+		}
+
+		// Fill up semaphore (simulate all workers busy)
+		for i := 0; i < cap(p.workerSem); i++ {
+			p.workerSem <- struct{}{}
+		}
+
+		// Close drain channel to trigger drain path
+		close(drainCh)
+
+		batch := []*model.Event{{ID: "1"}}
+		done := make(chan bool)
+		go func() {
+			result := p.trySubmitBatch(batch)
+			done <- result
+		}()
+
+		// Should be blocked waiting for worker permit
+		select {
+		case <-done:
+			t.Fatal("trySubmitBatch should block waiting for worker during drain")
+		case <-time.After(50 * time.Millisecond):
+			// Expected - blocked waiting for worker
+		}
+
+		// Trigger hard shutdown
+		cancel()
+
+		// Now trySubmitBatch should return false (batch lost)
+		select {
+		case result := <-done:
+			assert.False(t, result, "trySubmitBatch should return false on hard shutdown")
+		case <-time.After(100 * time.Millisecond):
+			t.Fatal("trySubmitBatch should unblock on hard shutdown")
+		}
+
+		// Release semaphore for cleanup
+		for i := 0; i < cap(p.workerSem); i++ {
+			<-p.workerSem
+		}
+	})
+}
+
+func TestWaitForWorkers(t *testing.T) {
+	t.Parallel()
+
+	t.Run("returns immediately when no workers", func(t *testing.T) {
+		p := &processor{
+			workerSem: make(chan struct{}, 3),
+		}
+		// Should not block
+		done := make(chan struct{})
+		go func() {
+			p.waitForWorkers()
+			close(done)
+		}()
+
+		select {
+		case <-done:
+			// Success
+		case <-time.After(100 * time.Millisecond):
+			t.Fatal("waitForWorkers should return immediately when no workers")
+		}
+	})
+
+	t.Run("waits for workers to complete", func(t *testing.T) {
+		p := &processor{
+			workerSem: make(chan struct{}, 3),
+		}
+
+		// Simulate worker holding permit
+		p.workerSem <- struct{}{}
+
+		done := make(chan struct{})
+		go func() {
+			p.waitForWorkers()
+			close(done)
+		}()
+
+		// Should be blocked
+		select {
+		case <-done:
+			t.Fatal("waitForWorkers should block while worker holds permit")
+		case <-time.After(50 * time.Millisecond):
+			// Expected - still waiting
+		}
+
+		// Release the permit (worker done)
+		<-p.workerSem
+
+		// Now should complete
+		select {
+		case <-done:
+			// Success
+		case <-time.After(100 * time.Millisecond):
+			t.Fatal("waitForWorkers should complete after worker releases permit")
+		}
+	})
+}
+
+// TestDispatcherBatchBehavior tests the actual runDispatcher function behavior:
+// - pollTicker only sends full batches (>= flushSize)
+// - flushTicker sends partial batches (< flushSize)
+// - shutdown drains all remaining events
+func TestDispatcherBatchBehavior(t *testing.T) {
+	t.Parallel()
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	tests := []struct {
+		desc            string
+		numEvents       int
+		flushSize       int
+		flushInterval   time.Duration
+		waitBeforeClose time.Duration // time to wait before closing queue
+		expectedBatches []int
+	}{
+		{
+			desc:            "poll sends full batches before shutdown drains partial",
+			numEvents:       25,
+			flushSize:       10,
+			flushInterval:   1 * time.Hour, // Long interval so flush won't trigger
+			waitBeforeClose: 200 * time.Millisecond,
+			expectedBatches: []int{10, 10, 5}, // Poll sends 10+10, shutdown drains 5
+		},
+		{
+			desc:            "flush sends partial batch",
+			numEvents:       5,
+			flushSize:       10,
+			flushInterval:   50 * time.Millisecond, // Short interval to trigger flush
+			waitBeforeClose: 200 * time.Millisecond,
+			expectedBatches: []int{5},
+		},
+		{
+			desc:            "shutdown drains all events immediately",
+			numEvents:       25,
+			flushSize:       10,
+			flushInterval:   1 * time.Hour,
+			waitBeforeClose: 0, // Close immediately
+			expectedBatches: []int{10, 10, 5},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.desc, func(t *testing.T) {
+			var sentBatches []int
+			var mu sync.Mutex
+
+			mockClient := mockapi.NewMockClient(mockCtrl)
+			mockClient.EXPECT().RegisterEvents(gomock.Any(), gomock.Any(), gomock.Any()).DoAndReturn(
+				func(_ context.Context, req *model.RegisterEventsRequest, _ time.Time) (*model.RegisterEventsResponse, int, error) {
+					mu.Lock()
+					sentBatches = append(sentBatches, len(req.Events))
+					mu.Unlock()
+					return &model.RegisterEventsResponse{Errors: make(map[string]*model.RegisterEventsResponseError)}, 0, nil
+				},
+			).AnyTimes()
+
+			// Create drain channel
+			ctx, cancel := context.WithCancel(context.Background())
+			drainCh := make(chan struct{})
+
+			p := &processor{
+				evtQueue:        newQueue(&queueConfig{capacity: 100}),
+				numFlushWorkers: 3,
+				flushInterval:   tt.flushInterval,
+				flushSize:       tt.flushSize,
+				flushTimeout:    10 * time.Second,
+				apiClient:       mockClient,
+				loggers: log.NewLoggers(&log.LoggersConfig{
+					EnableDebugLog: false,
+					ErrorLogger:    log.DiscardErrorLogger,
+				}),
+				ctx:       ctx,
+				cancel:    cancel,
+				drainCh:   drainCh,
+				done:      make(chan struct{}),
+				workerSem: make(chan struct{}, 3),
+				sourceID:  model.SourceIDGoServer,
+			}
+
+			// Push events
+			for i := 0; i < tt.numEvents; i++ {
+				p.evtQueue.push(&model.Event{ID: fmt.Sprintf("event-%d", i)})
+			}
+
+			// Start the actual dispatcher
+			go p.runDispatcher()
+
+			// Wait before closing (allows poll/flush to process)
+			if tt.waitBeforeClose > 0 {
+				time.Sleep(tt.waitBeforeClose)
+			}
+
+			// Close shutdown channel to trigger shutdown
+			close(drainCh)
+
+			// Wait for dispatcher to finish
+			<-p.done
+
+			// Verify (use ElementsMatch since batch order is non-deterministic due to concurrent workers)
+			mu.Lock()
+			assert.ElementsMatch(t, tt.expectedBatches, sentBatches)
+			mu.Unlock()
+			assert.Equal(t, 0, p.evtQueue.len(), "queue should be empty after shutdown")
+		})
 	}
 }

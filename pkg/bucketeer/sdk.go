@@ -114,6 +114,18 @@ type SDK interface {
 	//
 	// After calling this, the SDK should no longer be used.
 	Close(ctx context.Context) error
+
+	// EventStats returns current event processing statistics.
+	// This is useful for monitoring and debugging event delivery.
+	EventStats() EventStats
+}
+
+// EventStats contains event processing statistics.
+type EventStats struct {
+	EventsCreated int64 // Events successfully pushed to queue
+	EventsSent    int64 // Events successfully sent to server
+	EventsDropped int64 // Events dropped due to queue full
+	EventsRetried int64 // Events re-pushed after API error
 }
 
 type sdk struct {
@@ -157,6 +169,7 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		APIKey:      dopts.apiKey,
 		APIEndpoint: apiEndpoint,
 		Scheme:      dopts.scheme,
+		MaxConns:    dopts.numEventFlushWorkers,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("bucketeer: failed to new api client: %w", err)
@@ -171,8 +184,9 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		Tag:             dopts.tag,
 		SDKVersion:      dopts.sdkVersion,
 		SourceID:        model.SourceIDType(dopts.sourceID),
+		EnableStats:     dopts.enableEventStats,
 	}
-	processor := event.NewProcessor(ctx, processorConf)
+	processor := event.NewProcessor(processorConf)
 	if !dopts.enableLocalEvaluation {
 		// Evaluate the end user on the server
 		return &sdk{
@@ -667,14 +681,25 @@ func (s *sdk) TrackValue(ctx context.Context, user *user.User, GoalID string, va
 }
 
 func (s *sdk) Close(ctx context.Context) error {
-	if err := s.eventProcessor.Close(ctx); err != nil {
-		return fmt.Errorf("bucketeer: failed to close event processor: %v", err)
+	if err := s.eventProcessor.Drain(ctx); err != nil {
+		return fmt.Errorf("bucketeer: failed to drain event processor: %v", err)
 	}
 	if s.enableLocalEvaluation {
 		s.featureFlagCacheProcessor.Close()
 		s.segmentUserCacheProcessor.Close()
 	}
 	return nil
+}
+
+// EventStats returns current event processing statistics.
+func (s *sdk) EventStats() EventStats {
+	stats := s.eventProcessor.Stats()
+	return EventStats{
+		EventsCreated: stats.EventsCreated,
+		EventsSent:    stats.EventsSent,
+		EventsDropped: stats.EventsDropped,
+		EventsRetried: stats.EventsRetried,
+	}
 }
 
 type nopSDK struct{}
@@ -848,4 +873,8 @@ func (s *nopSDK) TrackValue(ctx context.Context, user *user.User, GoalID string,
 
 func (s *nopSDK) Close(ctx context.Context) error {
 	return nil
+}
+
+func (s *nopSDK) EventStats() EventStats {
+	return EventStats{}
 }

@@ -3,7 +3,6 @@ package api
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -57,17 +56,9 @@ func (c *client) sendHTTPRequestWithContext(ctx context.Context, url string, bod
 	}
 	req.Header.Add(authorizationKey, c.apiKey)
 	req.Header.Add("Content-Type", "application/json")
-	client := &http.Client{
-		Timeout: 60 * time.Second,
-	}
-	if c.scheme == "http" {
-		client.Transport = &http.Transport{
-			// This setting is for developing on local machines.
-			// In production, it's not recommended to specify c.scheme as "http".
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, //nolint:gosec
-		}
-	}
-	resp, err := client.Do(req)
+
+	// Use the shared HTTP client with connection pooling
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, 0, err
 	}

@@ -2,13 +2,16 @@ package e2e
 
 import (
 	"context"
+	"fmt"
+	"log"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
-
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"
 )
 
@@ -590,6 +593,154 @@ func TestObjectVariationDetails(t *testing.T) {
 	}
 }
 
+// TestHighVolume tests event processing under high load with different configurations.
+// It runs 4 subtests covering local/remote evaluation with/without explicit Close().
+//
+// Event counts:
+// - Remote: 3 per call (evaluation + latency metrics + size metrics)
+// - Local: 2 per call (evaluation + latency metrics) + 4 init metrics
+func TestHighVolume(t *testing.T) {
+	t.Parallel()
+
+	const (
+		numGoroutines     = 25
+		callsPerGoroutine = 100
+		numWorkers        = 50
+		queueCapacity     = 100000
+		flushSize         = 100
+		fastFlushInterval = 10 * time.Second
+	)
+
+	tests := []struct {
+		name            string
+		localEvaluation bool
+		callClose       bool
+	}{
+		{"RemoteWithClose", false, true},
+		{"RemoteWithoutClose", false, false},
+		{"LocalWithClose", true, true},
+		{"LocalWithoutClose", true, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+			defer cancel()
+
+			// Build SDK options
+			opts := []bucketeer.Option{
+				bucketeer.WithTag(tag),
+				bucketeer.WithAPIEndpoint(*apiEndpoint),
+				bucketeer.WithScheme(*scheme),
+				bucketeer.WithEventQueueCapacity(queueCapacity),
+				bucketeer.WithNumEventFlushWorkers(numWorkers),
+				bucketeer.WithEventFlushSize(flushSize),
+				bucketeer.WithEnableDebugLog(false),
+				bucketeer.WithWrapperSourceID(sourceID),
+				bucketeer.WithWrapperSDKVersion("1.6.0"),
+			}
+
+			if tt.localEvaluation {
+				opts = append(opts,
+					bucketeer.WithAPIKey(*apiKeyServer),
+					bucketeer.WithEnableLocalEvaluation(true),
+					bucketeer.WithCachePollingInterval(2*time.Minute),
+				)
+			} else {
+				opts = append(opts, bucketeer.WithAPIKey(*apiKey))
+			}
+
+			if !tt.callClose {
+				opts = append(opts, bucketeer.WithEventFlushInterval(fastFlushInterval))
+			}
+
+			sdk, err := bucketeer.NewSDK(ctx, opts...)
+			assert.NoError(t, err)
+
+			if tt.localEvaluation {
+				time.Sleep(5 * time.Second) // Wait for cache population
+			}
+
+			startTime := time.Now()
+
+			// Generate events concurrently
+			var wg sync.WaitGroup
+			for g := 0; g < numGoroutines; g++ {
+				wg.Add(1)
+				go func(goroutineID int) {
+					defer wg.Done()
+					user := newUser(t, fmt.Sprintf("%s-user-%d", tt.name, goroutineID))
+					for i := 0; i < callsPerGoroutine; i++ {
+						switch i % 3 {
+						case 0:
+							sdk.BoolVariation(ctx, user, featureIDBoolean, false)
+						case 1:
+							sdk.StringVariation(ctx, user, featureIDString, "default")
+						case 2:
+							sdk.IntVariation(ctx, user, featureIDInt, -1)
+						}
+					}
+				}(g)
+			}
+			wg.Wait()
+
+			// Calculate expected events
+			totalCalls := int64(numGoroutines * callsPerGoroutine)
+			var expectedEvents int64
+			if tt.localEvaluation {
+				expectedEvents = totalCalls*2 + 4 // 2 per call + 4 init metrics
+			} else {
+				expectedEvents = totalCalls * 3 // 3 per remote call
+			}
+
+			var finalStats bucketeer.EventStats
+			if tt.callClose {
+				statsBefore := sdk.EventStats()
+				t.Logf("Stats before Close: created=%d, sent=%d, dropped=%d, retried=%d",
+					statsBefore.EventsCreated, statsBefore.EventsSent,
+					statsBefore.EventsDropped, statsBefore.EventsRetried)
+
+				err = sdk.Close(ctx)
+				assert.NoError(t, err)
+				finalStats = sdk.EventStats()
+			} else {
+				defer sdk.Close(ctx)
+				// Poll until all events are sent
+				pollStart := time.Now()
+				for {
+					stats := sdk.EventStats()
+					if stats.EventsSent >= expectedEvents {
+						finalStats = stats
+						break
+					}
+					if time.Since(pollStart) > 60*time.Second {
+						t.Fatalf("Timeout: sent=%d, expected=%d", stats.EventsSent, expectedEvents)
+					}
+					time.Sleep(100 * time.Millisecond)
+				}
+			}
+
+			elapsed := time.Since(startTime)
+			t.Logf("Stats: created=%d, sent=%d, dropped=%d, retried=%d",
+				finalStats.EventsCreated, finalStats.EventsSent,
+				finalStats.EventsDropped, finalStats.EventsRetried)
+
+			assert.Zero(t, finalStats.EventsDropped, "expected no dropped events")
+			assert.Equal(t, expectedEvents, finalStats.EventsCreated)
+			if tt.callClose {
+				assert.Equal(t, expectedEvents, finalStats.EventsSent)
+			} else {
+				assert.GreaterOrEqual(t, finalStats.EventsSent, expectedEvents)
+			}
+
+			t.Logf("Processed %d calls in %s", totalCalls, elapsed)
+			log.Printf("=== TestHighVolume/%s elapsed: %s ===", tt.name, elapsed)
+		})
+	}
+}
+
 func newSDK(t *testing.T, ctx context.Context) bucketeer.SDK {
 	t.Helper()
 	sdk, err := bucketeer.NewSDK(
@@ -603,7 +754,7 @@ func newSDK(t *testing.T, ctx context.Context) bucketeer.SDK {
 		bucketeer.WithEventFlushSize(1),
 		bucketeer.WithEnableDebugLog(true),
 		bucketeer.WithWrapperSourceID(sourceID),
-		bucketeer.WithWrapperSDKVersion("1.5.5"),
+		bucketeer.WithWrapperSDKVersion("1.6.0"),
 	)
 	assert.NoError(t, err)
 	return sdk

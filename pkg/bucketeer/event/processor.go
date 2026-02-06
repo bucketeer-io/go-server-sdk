@@ -13,6 +13,7 @@ import (
 	"net/url"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -23,6 +24,14 @@ import (
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/uuid"
 )
+
+// ProcessorStats contains event processing statistics.
+type ProcessorStats struct {
+	EventsCreated int64 // Events successfully pushed to queue
+	EventsSent    int64 // Events successfully sent to server
+	EventsDropped int64 // Events dropped due to queue full
+	EventsRetried int64 // Events re-pushed after API error
+}
 
 // Processor defines the interface for processing events.
 //
@@ -47,14 +56,18 @@ type Processor interface {
 	// PushSizeMetricsEvent pushes the get evaluation size metrics event to the queue.
 	PushSizeMetricsEvent(sizeByte int, api model.APIID)
 
-	// Close tears down all Processor activities, after ensuring that all events have been delivered.
-	Close(ctx context.Context) error
+	// Drain gracefully shuts down the processor, flushing all queued events.
+	// If ctx expires before draining completes, it forces immediate shutdown.
+	Drain(ctx context.Context) error
 
 	// PushErrorEvent pushes the error event to the queue.
 	PushErrorEvent(err error, api model.APIID)
 
 	// PushEvent pushes events to the queue.
 	PushEvent(encoded []byte) error
+
+	// Stats returns current event processing statistics.
+	Stats() ProcessorStats
 }
 
 type processor struct {
@@ -65,11 +78,25 @@ type processor struct {
 	flushTimeout    time.Duration
 	apiClient       api.Client
 	loggers         *log.Loggers
-	closeCh         chan struct{}
-	workerWG        sync.WaitGroup
+	workerSem       chan struct{} // Semaphore: limits concurrent workers AND tracks completion
 	tag             string
 	sdkVersion      string
 	sourceID        model.SourceIDType
+
+	// Shutdown coordination
+	mu         sync.Mutex         // Protects isDraining and queue access
+	isDraining bool               // True after Drain() is called
+	drainCh    chan struct{}      // Closed to signal dispatcher to drain
+	done       chan struct{}      // Closed when dispatcher finishes
+	ctx        context.Context    // Internal context for hard shutdown
+	cancel     context.CancelFunc // Cancels ctx for forced shutdown
+
+	// Stats tracking
+	enableStats   bool
+	eventsCreated int64 // atomic
+	eventsSent    int64 // atomic
+	eventsDropped int64 // atomic
+	eventsRetried int64 // atomic
 }
 
 // ProcessorConfig is the config for Processor.
@@ -111,13 +138,19 @@ type ProcessorConfig struct {
 
 	// SourceID is the source ID of the SDK.
 	SourceID model.SourceIDType
+
+	// EnableStats enables event processing statistics tracking.
+	// When true, the processor tracks event counts (created, sent, dropped, retried).
+	EnableStats bool
 }
 
 // NewProcessor creates a new Processor.
-func NewProcessor(ctx context.Context, conf *ProcessorConfig) Processor {
+func NewProcessor(conf *ProcessorConfig) Processor {
 	q := newQueue(&queueConfig{
 		capacity: conf.QueueCapacity,
 	})
+	// Internal context for hard shutdown (force cancel)
+	ctx, cancel := context.WithCancel(context.Background())
 	flushTimeout := 10 * time.Second
 	p := &processor{
 		evtQueue:        q,
@@ -127,12 +160,17 @@ func NewProcessor(ctx context.Context, conf *ProcessorConfig) Processor {
 		flushTimeout:    flushTimeout,
 		apiClient:       conf.APIClient,
 		loggers:         conf.Loggers,
-		closeCh:         make(chan struct{}),
+		workerSem:       make(chan struct{}, conf.NumFlushWorkers),
+		drainCh:         make(chan struct{}),
+		done:            make(chan struct{}),
+		ctx:             ctx,
+		cancel:          cancel,
 		tag:             conf.Tag,
 		sdkVersion:      conf.SDKVersion,
 		sourceID:        conf.SourceID,
+		enableStats:     conf.EnableStats,
 	}
-	go p.startWorkers(ctx)
+	go p.runDispatcher()
 	return p
 }
 
@@ -378,60 +416,183 @@ func (p *processor) PushEvent(encoded []byte) error {
 		return fmt.Errorf("failed to model.New uuid v4: %w", err)
 	}
 	evt := model.NewEvent(id.String(), encoded)
-	if err := p.evtQueue.push(evt); err != nil {
-		return fmt.Errorf("failed to push event: %w", err)
+
+	if err := p.pushEvent(evt); err != nil {
+		if p.enableStats {
+			atomic.AddInt64(&p.eventsDropped, 1)
+		}
+		return err
+	}
+	if p.enableStats {
+		atomic.AddInt64(&p.eventsCreated, 1)
 	}
 	return nil
 }
 
-func (p *processor) Close(ctx context.Context) error {
-	p.evtQueue.close()
+// pushEvent takes the lock, pushes to queue, and converts bool to error.
+func (p *processor) pushEvent(evt *model.Event) error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.isDraining {
+		return errors.New("processor is draining")
+	}
+	if !p.evtQueue.push(evt) {
+		return errors.New("queue is full")
+	}
+	return nil
+}
+
+// Stats returns current event processing statistics.
+func (p *processor) Stats() ProcessorStats {
+	return ProcessorStats{
+		EventsCreated: atomic.LoadInt64(&p.eventsCreated),
+		EventsSent:    atomic.LoadInt64(&p.eventsSent),
+		EventsDropped: atomic.LoadInt64(&p.eventsDropped),
+		EventsRetried: atomic.LoadInt64(&p.eventsRetried),
+	}
+}
+
+// Drain gracefully shuts down the processor, flushing all queued events.
+// If ctx expires before draining completes, it forces immediate shutdown.
+func (p *processor) Drain(ctx context.Context) error {
+	p.drain() // Signal dispatcher to drain
 	select {
-	case <-p.closeCh:
-		return nil
+	case <-p.done:
+		return nil // Graceful shutdown completed
 	case <-ctx.Done():
-		return fmt.Errorf("bucketeer/event: ctx is canceled: %v", ctx.Err())
+		p.cancel() // Force dispatcher to stop
+		<-p.done   // Wait for dispatcher to finish
+		return fmt.Errorf("bucketeer/event: ctx forcefully canceled during shutdown: %v", ctx.Err())
 	}
 }
 
-func (p *processor) startWorkers(ctx context.Context) {
-	for i := 0; i < p.numFlushWorkers; i++ {
-		p.workerWG.Add(1)
-		go p.runWorkerProcessLoop(ctx)
+// drain signals the dispatcher to start draining and rejects new pushes.
+func (p *processor) drain() {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.isDraining {
+		return
 	}
-	p.workerWG.Wait()
-	close(p.closeCh)
+
+	p.isDraining = true
+	close(p.drainCh)
 }
 
-func (p *processor) runWorkerProcessLoop(ctx context.Context) {
-	defer func() {
-		p.loggers.Debug("bucketeer/event: runWorkerProcessLoop done")
-		p.workerWG.Done()
-	}()
-	events := make([]*model.Event, 0, p.flushSize)
-	ticker := time.NewTicker(p.flushInterval)
-	defer ticker.Stop()
+// pollInterval is the fixed interval for the dispatcher to poll the queue.
+// 1 second keeps CPU overhead minimal while the shutdown drain handles any
+// remaining events that haven't been polled yet.
+const pollInterval = 1 * time.Second
+
+// runDispatcher is the single goroutine that polls the queue and dispatches
+// batches to workers. This design:
+// - Uses only 1 polling goroutine instead of N workers
+// - Spawns worker goroutines on-demand via semaphore
+// - Under low load: 1 goroutine polling
+// - Under high load: 1 dispatcher + up to numFlushWorkers workers
+func (p *processor) runDispatcher() {
+	defer p.loggers.Debug("bucketeer/event: runDispatcher done")
+	defer close(p.done)
+
+	pollTicker := time.NewTicker(pollInterval)
+	defer pollTicker.Stop()
+
+	flushTicker := time.NewTicker(p.flushInterval)
+	defer flushTicker.Stop()
+
 	for {
+		var shouldDrain bool
+		var minFlushSize int
+
 		select {
-		case evt, ok := <-p.evtQueue.eventCh():
-			if !ok {
-				p.flushEvents(ctx, events)
-				return
+		case <-pollTicker.C:
+			minFlushSize = p.flushSize // Poll: only full batches
+		case <-flushTicker.C:
+			minFlushSize = 1 // Flush: accept partial batches
+		case <-p.drainCh:
+			minFlushSize = 1 // Drain: accept partial batches
+			shouldDrain = true
+		}
+
+		// Drain queue in batches
+		var submitted bool
+		for {
+			p.mu.Lock()
+			events := p.evtQueue.popMany(minFlushSize, p.flushSize)
+			p.mu.Unlock()
+			if len(events) == 0 {
+				break
 			}
-			events = append(events, evt)
-			if len(events) < p.flushSize {
-				continue
+			if !p.trySubmitBatch(events) {
+				break // Hard shutdown - stop dispatching
 			}
-			p.flushEvents(ctx, events)
-			events = make([]*model.Event, 0, p.flushSize)
-		case <-ticker.C:
-			p.flushEvents(ctx, events)
-			events = make([]*model.Event, 0, p.flushSize)
+			submitted = true
+		}
+
+		// Reset flush ticker if we sent events (but not during drain)
+		if submitted && !shouldDrain {
+			flushTicker.Reset(p.flushInterval)
+		}
+
+		if shouldDrain {
+			p.waitForWorkers()
+			return
 		}
 	}
 }
 
-func (p *processor) flushEvents(ctx context.Context, events []*model.Event) {
+// waitForWorkers blocks until all in-flight workers complete.
+// It works by acquiring all semaphore permits - when we hold all permits,
+// no workers can be running. No need to release since we're shutting down.
+func (p *processor) waitForWorkers() {
+	for i := 0; i < cap(p.workerSem); i++ {
+		p.workerSem <- struct{}{}
+	}
+}
+
+// trySubmitBatch tries to submit a batch to a worker.
+// Returns true if batch was submitted, false if hard shutdown (batch lost).
+func (p *processor) trySubmitBatch(batch []*model.Event) bool {
+	select {
+	case p.workerSem <- struct{}{}:
+		p.submitBatch(batch)
+		return true
+	case <-p.drainCh:
+		// Graceful shutdown - try to get a worker
+		select {
+		case p.workerSem <- struct{}{}:
+			p.submitBatch(batch)
+			return true
+		case <-p.ctx.Done():
+			// Hard shutdown - batch lost
+			return false
+		}
+	}
+}
+
+// submitBatch dispatches a batch to a worker goroutine.
+// Caller must have already acquired the semaphore permit.
+func (p *processor) submitBatch(batch []*model.Event) {
+	go func() {
+		defer func() { <-p.workerSem }()
+		p.flushEvents(batch)
+	}()
+}
+
+// tryPush attempts to push an event to the queue.
+// Returns true if successful, false if draining or queue is full.
+func (p *processor) tryPush(evt *model.Event) bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
+	if p.isDraining {
+		return false
+	}
+	return p.evtQueue.push(evt)
+}
+
+func (p *processor) flushEvents(events []*model.Event) {
 	if len(events) == 0 {
 		return
 	}
@@ -448,34 +609,57 @@ func (p *processor) flushEvents(ctx context.Context, events []*model.Event) {
 	}
 	deadline := time.Now().Add(deadlineDuration)
 
-	res, _, err := p.apiClient.RegisterEvents(ctx, model.NewRegisterEventsRequest(events, p.sourceID), deadline)
+	res, _, err := p.apiClient.RegisterEvents(p.ctx, model.NewRegisterEventsRequest(events, p.sourceID), deadline)
 	if err != nil {
 		p.loggers.Debugf("bucketeer/event: failed to register events: %v", err)
-		// Re-push all events to the event queue.
+		// Re-push all events to the event queue (if not draining)
+		var retriedCount int64
 		for _, evt := range events {
-			if err := p.evtQueue.push(evt); err != nil {
-				p.loggers.Errorf("bucketeer/event: failed to re-push event: %v", err)
+			if !p.tryPush(evt) {
+				p.loggers.Errorf("bucketeer/event: failed to re-push event")
+			} else {
+				retriedCount++
 			}
+		}
+		if p.enableStats {
+			atomic.AddInt64(&p.eventsRetried, retriedCount)
 		}
 		p.PushErrorEvent(err, model.RegisterEvents)
 		return
 	}
+
+	// Count successful sends and handle partial errors
+	var sentCount int64
+	var retriedCount int64
 	if len(res.Errors) > 0 {
 		p.loggers.Debugf("bucketeer/event: register events response contains errors, len: %d", len(res.Errors))
 		// Re-push events returned retriable error to the event queue.
 		for _, evt := range events {
 			resErr, ok := res.Errors[evt.ID]
 			if !ok {
+				// No error for this event, it was sent successfully
+				sentCount++
 				continue
 			}
 			if !resErr.Retriable {
 				p.loggers.Errorf("bucketeer/event: non retriable error: %s", resErr.Message)
+				// Non-retriable errors are counted as sent (won't be retried)
+				sentCount++
 				continue
 			}
-			if err := p.evtQueue.push(evt); err != nil {
-				p.loggers.Errorf("bucketeer/event: failed to re-push retriable event: %v", err)
+			if !p.tryPush(evt) {
+				p.loggers.Errorf("bucketeer/event: failed to re-push retriable event")
+			} else {
+				retriedCount++
 			}
 		}
+	} else {
+		// All events sent successfully
+		sentCount = int64(len(events))
+	}
+	if p.enableStats {
+		atomic.AddInt64(&p.eventsSent, sentCount)
+		atomic.AddInt64(&p.eventsRetried, retriedCount)
 	}
 }
 
