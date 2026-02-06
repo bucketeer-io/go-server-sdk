@@ -50,7 +50,7 @@ var defaultOptions = options{
 	eventQueueCapacity:    100_000,
 	numEventFlushWorkers:  50,
 	sourceID:              model.SourceIDGoServer.Int32(),
-	eventFlushInterval:    10 * time.Second,
+	eventFlushInterval:    30 * time.Second,
 	eventFlushSize:        100,
 	enableDebugLog:        false,
 	enableEventStats:      true,
@@ -76,6 +76,11 @@ func WithEnableLocalEvaluation(enable bool) Option {
 // WithCachePollingInterval sets the polling interval for cache updating. (Default: 1 min)
 //
 // Note: To use the cache you must set the `WithEnableLocalEvaluation` to true.
+//
+// Note: The SDK enforces a deadline of 90% of the polling interval for retry operations.
+// Very short intervals (e.g., <20s) may limit the number of actual retry attempts
+// if requests fail, even when MaxRetries is set to 3. The SDK will retry on the next
+// polling cycle.
 func WithCachePollingInterval(interval time.Duration) Option {
 	return func(opts *options) {
 		opts.cachePollingInterval = interval
@@ -169,10 +174,15 @@ func WithNumEventFlushWorkers(numEventFlushWorkers int) Option {
 	}
 }
 
-// WithEventFlushInterval sets a interval of flushing events. (Default: 10s)
+// WithEventFlushInterval sets an interval of flushing events. (Default: 30s)
 //
 // Each worker sends the events to Bucketeer service every time eventFlushInterval elapses or
 // its buffer exceeds eventFlushSize.
+//
+// Note: The SDK enforces a deadline of 80% of the flush interval for retry operations.
+// Very short intervals (e.g., <20s) may limit the number of actual retry attempts
+// if requests fail, even when MaxRetries is set to 3. However, failed events are
+// automatically re-queued and will be retried in the next flush cycle.
 func WithEventFlushInterval(eventFlushInterval time.Duration) Option {
 	return func(opts *options) {
 		opts.eventFlushInterval = eventFlushInterval

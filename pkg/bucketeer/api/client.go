@@ -139,7 +139,7 @@ func NewClient(conf *ClientConfig) (Client, error) {
 		apiKey:      conf.APIKey,
 		apiEndpoint: conf.APIEndpoint,
 		httpClient: &http.Client{
-			Timeout:   60 * time.Second,
+			Timeout:   5 * time.Second,
 			Transport: transport,
 		},
 		retryConfig: retry.Config{
