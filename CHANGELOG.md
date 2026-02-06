@@ -1,5 +1,29 @@
 # Changelog
 
+## [1.7.0](https://github.com/bucketeer-io/go-server-sdk/compare/v1.6.1...v1.7.0) (2026-02-06)
+
+
+### Features
+
+* add retry configuration options for http requests ([#183](https://github.com/bucketeer-io/go-server-sdk/issues/183)) ([c9d32bb](https://github.com/bucketeer-io/go-server-sdk/commit/c9d32bbb8f630b568dc5798bddd63ceb6f849978))
+* add event stats to expose event processing metrics ([#189](https://github.com/bucketeer-io/go-server-sdk/issues/189)) ([4d2c23a](https://github.com/bucketeer-io/go-server-sdk/commit/4d2c23a8c60a8a71a28e20d6ea4ddc19b89b1d07))
+
+### Improvements
+
+* replace channel queue with ring buffer for improved performance ([#189](https://github.com/bucketeer-io/go-server-sdk/issues/189)) ([4d2c23a](https://github.com/bucketeer-io/go-server-sdk/commit/4d2c23a8c60a8a71a28e20d6ea4ddc19b89b1d07))
+
+
+### Bug Fixes
+
+* archived flag not being deleted from local cache ([#181](https://github.com/bucketeer-io/go-server-sdk/issues/181)) ([0b08c02](https://github.com/bucketeer-io/go-server-sdk/commit/0b08c022487a41800777bed7ffd36612f6f5e110))
+* classify errors by type for metrics instead of string matching ([#188](https://github.com/bucketeer-io/go-server-sdk/issues/188)) ([786f0bf](https://github.com/bucketeer-io/go-server-sdk/commit/786f0bf44c819ac5b6cb33e83983058024caf197))
+
+
+### Miscellaneous
+
+* optimize http timeout and flush interval for server-side usage ([#190](https://github.com/bucketeer-io/go-server-sdk/issues/190)) ([0a8df9b](https://github.com/bucketeer-io/go-server-sdk/commit/0a8df9b2affec4f351fbe925313812a63025be3c))
+* changed default event flush interval to 30s
+
 ## [1.6.1](https://github.com/bucketeer-io/go-server-sdk/compare/v1.6.0...v1.6.1) (2026-01-20)
 
 
