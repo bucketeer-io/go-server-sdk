@@ -127,7 +127,6 @@ func NewClient(conf *ClientConfig) (Client, error) {
 	transport := &http.Transport{
 		MaxIdleConns:        conf.MaxConns,
 		MaxIdleConnsPerHost: conf.MaxConns, // Match the number of flush workers
-		IdleConnTimeout:     90 * time.Second,
 	}
 
 	// For local development with HTTP scheme, skip TLS verification.
