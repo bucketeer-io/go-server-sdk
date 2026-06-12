@@ -184,7 +184,7 @@ func TestCalculateBackoff(t *testing.T) {
 		}
 	})
 
-	t.Run("zero initial interval returns zero", func(t *testing.T) {
+	t.Run("zero initial interval falls back to default", func(t *testing.T) {
 		t.Parallel()
 		cfg := Config{
 			InitialInterval: 0,
@@ -193,7 +193,19 @@ func TestCalculateBackoff(t *testing.T) {
 		}
 
 		backoff := calculateBackoff(0, cfg)
-		assert.Equal(t, time.Duration(0), backoff)
+		assert.Greater(t, backoff, time.Duration(0))
+	})
+
+	t.Run("negative initial interval falls back to default", func(t *testing.T) {
+		t.Parallel()
+		cfg := Config{
+			InitialInterval: -1 * time.Second,
+			MaxInterval:     10 * time.Second,
+			Multiplier:      2.0,
+		}
+
+		backoff := calculateBackoff(0, cfg)
+		assert.Greater(t, backoff, time.Duration(0))
 	})
 
 	t.Run("default multiplier is 2.0 when not set", func(t *testing.T) {
