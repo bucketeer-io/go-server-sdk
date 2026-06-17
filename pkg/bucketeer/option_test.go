@@ -137,7 +137,7 @@ func TestWithRetryInitialInterval(t *testing.T) {
 			expected: 100 * time.Millisecond,
 		},
 		{
-			name:     "set to 0 disables initial wait",
+			name:     "set to 0",
 			input:    0,
 			expected: 0,
 		},

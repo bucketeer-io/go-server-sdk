@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+const DefaultInitialInterval = 1 * time.Second
+
 // Config holds retry configuration.
 type Config struct {
 	MaxRetries      int           // Maximum number of retry attempts
@@ -157,7 +159,7 @@ func Do(ctx context.Context, cfg Config, fn func() error) error {
 // calculateBackoff returns the next backoff interval with jitter.
 func calculateBackoff(attempt int, cfg Config) time.Duration {
 	if cfg.InitialInterval <= 0 {
-		return 0
+		cfg.InitialInterval = DefaultInitialInterval
 	}
 
 	// Exponential backoff: initialInterval * (multiplier ^ attempt)

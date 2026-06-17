@@ -110,8 +110,8 @@ func NewClient(conf *ClientConfig) (Client, error) {
 		maxRetries = 3
 	}
 	initialInterval := conf.RetryInitialInterval
-	if initialInterval == 0 {
-		initialInterval = 1 * time.Second
+	if initialInterval <= 0 {
+		initialInterval = retry.DefaultInitialInterval
 	}
 	maxInterval := conf.RetryMaxInterval
 	if maxInterval == 0 {
