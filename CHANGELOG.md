@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.1](https://github.com/bucketeer-io/go-server-sdk/compare/v1.7.0...v1.7.1) (2026-06-17)
+
+
+### Bug Fixes
+
+* prevent zero-delay retries when initial interval &lt;= 0 ([#191](https://github.com/bucketeer-io/go-server-sdk/issues/191)) ([b2b2243](https://github.com/bucketeer-io/go-server-sdk/commit/b2b224300bc75266305f739de6d038d6bfbe09c1))
+
 ## [1.7.0](https://github.com/bucketeer-io/go-server-sdk/compare/v1.6.1...v1.7.0) (2026-02-06)
 
 
