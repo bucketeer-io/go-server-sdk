@@ -29,6 +29,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        id: app-token
+        with:
+          client-id: ${{ secrets.RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+          owner: bucketeer-io
+          repositories: bucketeer-docs
+          permission-actions: write
       - name: Workflow Dispatch
         uses: benc-uk/workflow-dispatch@798e70c97009500150087d30d9f11c5444830385 # v1.2.2
         env:
@@ -42,7 +50,7 @@ jobs:
           FROM_REPOSITORY_URL: https://github.com/bucketeer-io/go-server-sdk
         with:
           repo: ${{ env.DOC_REPO }}
-          token: ${{ secrets.REPO_ACCESS_PAT }}
+          token: ${{ steps.app-token.outputs.token }}
           workflow: update-changelog.yaml
           ref: main
           inputs: '{"doc_filename": "${{ env.DOC_FILENAME }}", "doc_filepath": "${{ env.DOC_FILEPATH }}", "doc_title": "${{ env.DOC_TITLE }}", "doc_slug": "${{ env.DOC_SLUG }}", "changelog_url": "${{ env.CHANGELOG_URL }}", "from_repository_name": "${{ env.FROM_REPOSITORY_NAME }}", "from_repository_url": "${{ env.FROM_REPOSITORY_URL }}", "commit_url": "${{ needs.setup.outputs.COMMIT_URL }}", "release_tag": "${{ needs.setup.outputs.RELEASE_TAG }}"}'
