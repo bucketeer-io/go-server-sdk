@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/bucketeer-io/go-server-sdk/compare/v1.7.1...v1.8.0) (2026-08-07)
+
+
+### Features
+
+* support rule-based segments in local evaluation ([#194](https://github.com/bucketeer-io/go-server-sdk/issues/194)) ([1204692](https://github.com/bucketeer-io/go-server-sdk/commit/1204692b31c222feff63d9bcf560e9f531b5f556))
+
 ## [1.7.1](https://github.com/bucketeer-io/go-server-sdk/compare/v1.7.0...v1.7.1) (2026-06-17)
 
 
