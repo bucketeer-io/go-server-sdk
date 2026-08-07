@@ -7,8 +7,21 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"
 )
+
+// waitForLocalCacheReady polls the local evaluation path until the SDK's feature flag
+// and segment users caches are ready, so the tests proceed as soon as possible instead
+// of sleeping for a fixed duration. While either cache is not ready yet, the local
+// evaluation fails and the SDK returns the given default value, which no fixture
+// variation uses.
+func waitForLocalCacheReady(ctx context.Context, t *testing.T, sdk bucketeer.SDK, u *user.User, featureID string) {
+	t.Helper()
+	assert.Eventually(t, func() bool {
+		return sdk.StringVariation(ctx, u, featureID, "default") != "default"
+	}, 15*time.Second, 200*time.Millisecond, "timed out waiting for the local cache updates")
+}
 
 // TestLocalRuleBasedSegmentMultipleRules verifies the segment rule evaluation semantics
 // using the local evaluation path: rules are OR-ed, and the clauses within a rule are AND-ed.
@@ -72,7 +85,7 @@ func TestLocalRuleBasedSegmentMultipleRules(t *testing.T) {
 		assert.NoError(t, err)
 	}()
 
-	time.Sleep(10 * time.Second) // Wait for the cache updates
+	waitForLocalCacheReady(ctx, t, sdk, tests[0].user, featureIDRuleBasedSegment)
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
@@ -124,7 +137,7 @@ func TestLocalRuleBasedSegmentMixedListAndRules(t *testing.T) {
 		assert.NoError(t, err)
 	}()
 
-	time.Sleep(10 * time.Second) // Wait for the cache updates
+	waitForLocalCacheReady(ctx, t, sdk, tests[0].user, featureIDRuleBasedSegment)
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
@@ -181,7 +194,7 @@ func TestLocalRuleBasedSegmentWithAttributeClause(t *testing.T) {
 		assert.NoError(t, err)
 	}()
 
-	time.Sleep(10 * time.Second) // Wait for the cache updates
+	waitForLocalCacheReady(ctx, t, sdk, tests[0].user, featureIDSegmentAndAttribute)
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
@@ -221,7 +234,7 @@ func TestLocalListOnlySegmentBackwardCompatibility(t *testing.T) {
 		assert.NoError(t, err)
 	}()
 
-	time.Sleep(10 * time.Second) // Wait for the cache updates
+	waitForLocalCacheReady(ctx, t, sdk, tests[0].user, featureIDString)
 
 	for _, tt := range tests {
 		t.Run(tt.desc, func(t *testing.T) {
