@@ -19,5 +19,25 @@ jobs:
           permission-contents: write
           permission-pull-requests: write
       - uses: googleapis/release-please-action@f3969c04a4ec81d7a9aa4010d84ae6a7602f86a7 # v4.1.1
+        id: release
         with:
           token: ${{ steps.app-token.outputs.token }} # App token so the tag/release created by release-please can trigger other workflows
+
+      - uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        id: openfeature-token
+        with:
+          client-id: ${{ secrets.RELEASE_BOT_APP_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
+          owner: bucketeer-io
+          repositories: openfeature-go-server-sdk
+          permission-actions: write
+      - name: Dispatch dependency bump to openfeature-go-server-sdk
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        uses: benc-uk/workflow-dispatch@31e2b3319479a63f0ab15bf800eff9e913504e26 # v1.3.2
+        with:
+          repo: bucketeer-io/openfeature-go-server-sdk
+          token: ${{ steps.openfeature-token.outputs.token }}
+          workflow: bump-go-server-sdk.yml
+          ref: main
+          inputs: '{"version": "${{ steps.release.outputs.tag_name }}"}'
