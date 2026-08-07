@@ -52,13 +52,20 @@ func (e *evaluator) Evaluate(user *user.User, featureID string) (*model.Evaluati
 	// List and get all the segments if is configured in the targeting rules
 	evaluator := evaluation.NewEvaluator()
 	sIDs := evaluator.ListSegmentIDs(feature)
-	segments := make(map[string][]*ftproto.SegmentUser, len(sIDs))
+	segmentUsers := make(map[string][]*ftproto.SegmentUser, len(sIDs))
+	segments := make(map[string]*ftproto.Segment, len(sIDs))
 	for _, id := range sIDs {
-		segment, err := e.segmentUsersCache.Get(id)
+		su, err := e.segmentUsersCache.Get(id)
 		if err != nil {
 			return nil, err
 		}
-		segments[segment.SegmentId] = segment.Users
+		segmentUsers[su.SegmentId] = su.Users
+		// The cached SegmentUsers message also carries the segment's rules,
+		// so the user can be matched by attribute-based rules as well as by the user list.
+		segments[su.SegmentId] = &ftproto.Segment{
+			Id:    su.SegmentId,
+			Rules: su.Rules,
+		}
 	}
 	// Convert to evaluation's user proto message
 	u := &userproto.User{
@@ -69,6 +76,7 @@ func (e *evaluator) Evaluate(user *user.User, featureID string) (*model.Evaluati
 	userEvaluations, err := evaluator.EvaluateFeatures(
 		targetFeatures,
 		u,
+		segmentUsers,
 		segments,
 		e.tag,
 	)

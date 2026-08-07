@@ -249,6 +249,24 @@ func TestSegmentUsersDeleteAll(t *testing.T) {
 	}
 }
 
+// Ensures the segment rules survive the cache serialization (put/get round trip).
+func TestSegmentUsersCachePreservesRules(t *testing.T) {
+	t.Parallel()
+	segmentID := "segment-id"
+	segmentUsers := createSegmentUsers(t, segmentID, 3)
+	suc := newSegmentUsersCache(t)
+
+	err := suc.Put(segmentUsers)
+	assert.NoError(t, err)
+
+	cached, err := suc.Get(segmentID)
+	assert.NoError(t, err)
+	assert.True(t, proto.Equal(segmentUsers, cached))
+	assert.Len(t, cached.Rules, 2)
+	assert.Len(t, cached.Rules[0].Clauses, 2)
+	assert.Len(t, cached.Rules[1].Clauses, 1)
+}
+
 func createSegmentUsers(t *testing.T, segmentID string, size int) *ftproto.SegmentUsers {
 	t.Helper()
 	users := make([]*ftproto.SegmentUser, 0, size)
@@ -264,6 +282,36 @@ func createSegmentUsers(t *testing.T, segmentID string, size int) *ftproto.Segme
 		SegmentId: segmentID,
 		Users:     users,
 		UpdatedAt: 1,
+		Rules: []*ftproto.Rule{
+			{
+				Id: "rule-1",
+				Clauses: []*ftproto.Clause{
+					{
+						Id:        "clause-1",
+						Attribute: "country",
+						Operator:  ftproto.Clause_EQUALS,
+						Values:    []string{"japan"},
+					},
+					{
+						Id:        "clause-2",
+						Attribute: "age",
+						Operator:  ftproto.Clause_GREATER,
+						Values:    []string{"20"},
+					},
+				},
+			},
+			{
+				Id: "rule-2",
+				Clauses: []*ftproto.Clause{
+					{
+						Id:        "clause-3",
+						Attribute: "email",
+						Operator:  ftproto.Clause_STARTS_WITH,
+						Values:    []string{"test@"},
+					},
+				},
+			},
+		},
 	}
 }
 
