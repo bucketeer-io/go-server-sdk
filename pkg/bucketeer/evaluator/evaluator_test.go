@@ -188,6 +188,47 @@ var (
 		OffVariation: "variation-false-id",
 	}
 
+	// Feature 6 (targets a rule-based segment)
+	ft6 = &ftproto.Feature{
+		Id:      "feature-id-6",
+		Enabled: true,
+		Tags:    []string{"server"},
+		Variations: []*ftproto.Variation{
+			{
+				Id:    "variation-true-id",
+				Name:  "true-name",
+				Value: "true",
+			},
+			{
+				Id:    "variation-false-id",
+				Name:  "false-name",
+				Value: "false",
+			},
+		},
+		Rules: []*ftproto.Rule{
+			{
+				Clauses: []*ftproto.Clause{
+					{
+						Id:       "clause-id-6",
+						Operator: ftproto.Clause_SEGMENT,
+						Values:   []string{"segment-id-3"},
+					},
+				},
+				Strategy: &ftproto.Strategy{
+					FixedStrategy: &ftproto.FixedStrategy{
+						Variation: "variation-true-id",
+					},
+				},
+			},
+		},
+		DefaultStrategy: &ftproto.Strategy{
+			FixedStrategy: &ftproto.FixedStrategy{
+				Variation: "variation-false-id",
+			},
+		},
+		OffVariation: "variation-false-id",
+	}
+
 	// Segments
 	segment1 = &ftproto.SegmentUsers{
 		SegmentId: "segment-id-1",
@@ -213,9 +254,46 @@ var (
 		},
 	}
 
+	// Rule-based segment: user list plus attribute-based rules
+	segment3 = &ftproto.SegmentUsers{
+		SegmentId: "segment-id-3",
+		Users: []*ftproto.SegmentUser{
+			{
+				SegmentId: "segment-id-3",
+				State:     ftproto.SegmentUser_INCLUDED,
+				UserId:    "user-id-4",
+			},
+		},
+		Rules: []*ftproto.Rule{
+			{
+				Id: "segment-rule-id-1",
+				Clauses: []*ftproto.Clause{
+					{
+						Id:        "segment-clause-id-1",
+						Attribute: "country",
+						Operator:  ftproto.Clause_EQUALS,
+						Values:    []string{"japan"},
+					},
+					{
+						Id:        "segment-clause-id-2",
+						Attribute: "age",
+						Operator:  ftproto.Clause_GREATER,
+						Values:    []string{"20"},
+					},
+				},
+			},
+		},
+	}
+
 	// Users
 	user1 = &user.User{ID: "user-id-1"}
 	user2 = &user.User{ID: "user-id-2"}
+	// Matches segment3 by rules (attributes), not by the user list
+	user5 = &user.User{ID: "user-id-5", Data: map[string]string{"country": "japan", "age": "30"}}
+	// Matches segment3 by the user list only
+	user4 = &user.User{ID: "user-id-4"}
+	// Matches segment3 neither by the user list nor by the rules (missing the age attribute)
+	user6 = &user.User{ID: "user-id-6", Data: map[string]string{"country": "japan"}}
 )
 
 func TestEvaluate(t *testing.T) {
@@ -345,6 +423,69 @@ func TestEvaluate(t *testing.T) {
 				Reason:         &model.Reason{Type: model.ReasonRule},
 				VariationValue: "true",
 				VariationName:  "true-name",
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: rule-based segment matched by segment rules (user is not in the user list)",
+			setup: func(e *evaluator) {
+				e.featuresCache.(*mock.MockFeaturesCache).EXPECT().Get(ft6.Id).Return(ft6, nil)
+				e.segmentUsersCache.(*mock.MockSegmentUsersCache).EXPECT().Get(segment3.SegmentId).Return(segment3, nil)
+			},
+			user:      user5,
+			featureID: ft6.Id,
+			tag:       "server",
+			expected: &model.Evaluation{
+				ID:             "feature-id-6:0:user-id-5",
+				FeatureID:      "feature-id-6",
+				FeatureVersion: 0,
+				UserID:         "user-id-5",
+				VariationID:    "variation-true-id",
+				Reason:         &model.Reason{Type: model.ReasonRule},
+				VariationValue: "true",
+				VariationName:  "true-name",
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: rule-based segment matched by the user list (user doesn't match the rules)",
+			setup: func(e *evaluator) {
+				e.featuresCache.(*mock.MockFeaturesCache).EXPECT().Get(ft6.Id).Return(ft6, nil)
+				e.segmentUsersCache.(*mock.MockSegmentUsersCache).EXPECT().Get(segment3.SegmentId).Return(segment3, nil)
+			},
+			user:      user4,
+			featureID: ft6.Id,
+			tag:       "server",
+			expected: &model.Evaluation{
+				ID:             "feature-id-6:0:user-id-4",
+				FeatureID:      "feature-id-6",
+				FeatureVersion: 0,
+				UserID:         "user-id-4",
+				VariationID:    "variation-true-id",
+				Reason:         &model.Reason{Type: model.ReasonRule},
+				VariationValue: "true",
+				VariationName:  "true-name",
+			},
+			expectedErr: nil,
+		},
+		{
+			desc: "success: rule-based segment not matched (user matches neither the user list nor the rules)",
+			setup: func(e *evaluator) {
+				e.featuresCache.(*mock.MockFeaturesCache).EXPECT().Get(ft6.Id).Return(ft6, nil)
+				e.segmentUsersCache.(*mock.MockSegmentUsersCache).EXPECT().Get(segment3.SegmentId).Return(segment3, nil)
+			},
+			user:      user6,
+			featureID: ft6.Id,
+			tag:       "server",
+			expected: &model.Evaluation{
+				ID:             "feature-id-6:0:user-id-6",
+				FeatureID:      "feature-id-6",
+				FeatureVersion: 0,
+				UserID:         "user-id-6",
+				VariationID:    "variation-false-id",
+				Reason:         &model.Reason{Type: model.ReasonDefault},
+				VariationValue: "false",
+				VariationName:  "false-name",
 			},
 			expectedErr: nil,
 		},

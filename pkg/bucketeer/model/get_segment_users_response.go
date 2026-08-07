@@ -18,6 +18,7 @@ type SegmentUsers struct {
 	SegmentID string        `json:"segmentId"`
 	Users     []SegmentUser `json:"users"`
 	UpdatedAt string        `json:"updatedAt"`
+	Rules     []Rule        `json:"rules"`
 }
 
 type SegmentUser struct {
@@ -53,6 +54,7 @@ func convertSegmentUsersModel(s SegmentUsers) *feature.SegmentUsers {
 			}
 		}),
 		UpdatedAt: updatedAt,
+		Rules:     mapFields(s.Rules, convertRuleModel),
 	}
 	return pbSegmentUsers
 }

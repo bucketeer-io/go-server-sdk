@@ -45,6 +45,40 @@ const (
 	featureIDFloatVariation2      = 3.1
 
 	featureIDJson = "feature-go-server-e2e-json"
+
+	// Rule-based segment tests
+	//
+	// These tests require the following fixtures to be configured in the test environment
+	// (Bucketeer server 2.3.0 or later):
+	//
+	// Segment "go-server-e2e-rule-based" (mixed: uploaded user list AND rules):
+	//   - Uploaded included-user list: bucketeer-go-server-user-id-3
+	//   - Rule 1 (clauses are AND-ed):
+	//       country EQUALS "japan"
+	//       AND age GREATER "19"
+	//       AND age LESS "60"
+	//   - Rule 2 (clauses are AND-ed):
+	//       email STARTS_WITH "test@"
+	//       AND plan IN ["premium", "enterprise"]
+	//   (Rules are OR-ed: a user matching either rule is in the segment)
+	//
+	// Flag "feature-go-server-e2e-rule-based-segment" (string):
+	//   - Variations: value-1, value-2
+	//   - Targeting rule: user is included in segment "go-server-e2e-rule-based" -> value-2
+	//   - Default strategy: value-1
+	//
+	// Flag "feature-go-server-e2e-segment-attribute" (string):
+	//   - Variations: value-1, value-2
+	//   - Targeting rule (single rule, two AND-ed clauses):
+	//       user is included in segment "go-server-e2e-rule-based"
+	//       AND region EQUALS "tokyo"
+	//     -> value-2
+	//   - Default strategy: value-1
+	featureIDRuleBasedSegment        = "feature-go-server-e2e-rule-based-segment"
+	featureIDSegmentAndAttribute     = "feature-go-server-e2e-segment-attribute"
+	ruleBasedSegmentDefaultVariation = "value-1"
+	ruleBasedSegmentMatchedVariation = "value-2"
+	ruleBasedSegmentListedUserID     = "bucketeer-go-server-user-id-3" // Uploaded to the segment's user list on the console
 )
 
 var (
