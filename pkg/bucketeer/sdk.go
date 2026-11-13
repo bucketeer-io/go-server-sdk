@@ -555,7 +555,7 @@ func (s *sdk) getEvaluationLocally(
 	eval := evaluator.NewEvaluator(s.tag, s.featureFlagsCache, s.segmentUsersCache)
 	evaluation, err := eval.Evaluate(user, featureID)
 	if err != nil {
-		s.loggers.Errorf("bucketeer: failed to evaluate user locally: %w", err)
+		s.loggers.Errorf("bucketeer: failed to evaluate user locally: %v", err)
 		// This error must be reported as a SDK internal error
 		e := fmt.Errorf("internal error while evaluating user locally: %w", err)
 		s.eventProcessor.PushErrorEvent(e, model.SDKGetEvaluation)
