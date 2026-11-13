@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/bucketeer-io/go-server-sdk/compare/v1.8.0...v1.8.1) (2026-11-13)
+
+
+### Build System
+
+* bump Go to 1.26.11 for the November security release ([#197](https://github.com/bucketeer-io/go-server-sdk/issues/197)) ([fc98fb7](https://github.com/bucketeer-io/go-server-sdk/commit/fc98fb7f401e9ed53da51ebec02f81ffb3c719db))
+
 ## [1.8.0](https://github.com/bucketeer-io/go-server-sdk/compare/v1.7.1...v1.8.0) (2026-08-07)
 
 
