@@ -18,7 +18,7 @@ Please follow our contribution guide [here](https://docs.bucketeer.io/contributi
 
 #### Install the prerequisite tools
 
-- [Go 1.15.X](https://golang.org/dl/)
+- [Go 1.26.11](https://go.dev/dl/)
 - [mockgen](https://github.com/golang/mock)
 - [goimports](https://pkg.go.dev/golang.org/x/tools/cmd/goimports)
 - [golangci-lint](https://golangci-lint.run/usage/install/)

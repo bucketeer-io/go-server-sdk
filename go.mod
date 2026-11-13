@@ -1,6 +1,6 @@
 module github.com/bucketeer-io/go-server-sdk
 
-go 1.25.8
+go 1.26.11
 
 require (
 	github.com/bucketeer-io/bucketeer/v2 v2.3.0
