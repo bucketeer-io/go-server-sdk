@@ -13,6 +13,10 @@ type GetFeatureFlagsResponse struct {
 	ArchivedFeatureFlagIDs []string  `json:"archivedFeatureFlagIds"`
 	RequestedAt            string    `json:"requestedAt"`
 	ForceUpdate            bool      `json:"forceUpdate"`
+	// HoldoutGroups is the full list of the holdout groups that are serving in the environment.
+	// Unlike Features, it is never a diff. It is empty when no group is serving,
+	// and absent when the server doesn't support holdout groups.
+	HoldoutGroups []HoldoutGroup `json:"holdoutGroups"`
 }
 
 func ConvertFeatureFlagsResponse(response *GetFeatureFlagsResponse) *gwproto.GetFeatureFlagsResponse {
@@ -23,6 +27,7 @@ func ConvertFeatureFlagsResponse(response *GetFeatureFlagsResponse) *gwproto.Get
 		ArchivedFeatureFlagIds: response.ArchivedFeatureFlagIDs,
 		RequestedAt:            requestedAt,
 		ForceUpdate:            response.ForceUpdate,
+		HoldoutGroups:          mapFields(response.HoldoutGroups, convertHoldoutGroupModel),
 	}
 	return pbResp
 }

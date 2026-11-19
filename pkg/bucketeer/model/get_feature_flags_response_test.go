@@ -88,6 +88,28 @@ func TestConvertFeatureFlagsResponse(t *testing.T) {
 		ArchivedFeatureFlagIDs: []string{"archived-1"},
 		RequestedAt:            "1620000000",
 		ForceUpdate:            true,
+		HoldoutGroups: []HoldoutGroup{
+			{
+				ID:             "holdout-group-1",
+				EnvironmentID:  "environment-1",
+				AssignmentType: "HASH",
+				SamplingSeed:   "holdout-seed-1",
+				BucketStart:    97,
+				Percentage:     5,
+				Status:         "RUNNING",
+				UpdatedAt:      "1620000003",
+				Features: []HoldoutGroupFeature{
+					{
+						ID:                 "holdout-group-feature-1",
+						HoldoutGroupID:     "holdout-group-1",
+						FeatureID:          "feature-1",
+						EnvironmentID:      "environment-1",
+						HoldoutVariationID: "variation-1",
+						AddedAt:            "1620000002",
+					},
+				},
+			},
+		},
 	}
 
 	expected := &gwproto.GetFeatureFlagsResponse{
@@ -167,6 +189,28 @@ func TestConvertFeatureFlagsResponse(t *testing.T) {
 		ArchivedFeatureFlagIds: []string{"archived-1"},
 		RequestedAt:            1620000000,
 		ForceUpdate:            true,
+		HoldoutGroups: []*ftproto.HoldoutGroup{
+			{
+				Id:             "holdout-group-1",
+				EnvironmentId:  "environment-1",
+				AssignmentType: ftproto.HoldoutGroup_HASH,
+				SamplingSeed:   "holdout-seed-1",
+				BucketStart:    97,
+				Percentage:     5,
+				Status:         ftproto.HoldoutGroup_RUNNING,
+				UpdatedAt:      1620000003,
+				Features: []*ftproto.HoldoutGroupFeature{
+					{
+						Id:                 "holdout-group-feature-1",
+						HoldoutGroupId:     "holdout-group-1",
+						FeatureId:          "feature-1",
+						EnvironmentId:      "environment-1",
+						HoldoutVariationId: "variation-1",
+						AddedAt:            1620000002,
+					},
+				},
+			},
+		},
 	}
 
 	actual := ConvertFeatureFlagsResponse(response)

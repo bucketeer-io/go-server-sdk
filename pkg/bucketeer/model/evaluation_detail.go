@@ -24,6 +24,7 @@ const (
 	EvaluationReasonClient                         EvaluationReason = "CLIENT"
 	EvaluationReasonOffVariation                   EvaluationReason = "OFF_VARIATION"
 	EvaluationReasonPrerequisite                   EvaluationReason = "PREREQUISITE"
+	EvaluationReasonHoldout                        EvaluationReason = "HOLDOUT"
 	EvaluationReasonErrorNoEvaluations             EvaluationReason = "ERROR_NO_EVALUATIONS"
 	EvaluationReasonErrorFlagNotFound              EvaluationReason = "ERROR_FLAG_NOT_FOUND"
 	EvaluationReasonErrorWrongType                 EvaluationReason = "ERROR_WRONG_TYPE"
@@ -64,6 +65,8 @@ func convertEvaluationReason(reasonType ReasonType) EvaluationReason {
 		return EvaluationReasonOffVariation
 	case ReasonPrerequisite:
 		return EvaluationReasonPrerequisite
+	case ReasonHoldout:
+		return EvaluationReasonHoldout
 	case ReasonErrorNoEvaluations:
 		return EvaluationReasonErrorNoEvaluations
 	case ReasonErrorFlagNotFound:

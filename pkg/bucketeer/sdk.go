@@ -139,6 +139,7 @@ type sdk struct {
 	segmentUserCacheProcessor cacheprocessor.SegmentUserProcessor
 	featureFlagsCache         cache.FeaturesCache
 	segmentUsersCache         cache.SegmentUsersCache
+	holdoutGroupsCache        cache.HoldoutGroupsCache
 	loggers                   *log.Loggers
 }
 
@@ -237,6 +238,7 @@ func NewSDK(ctx context.Context, opts ...Option) (SDK, error) {
 		segmentUserCacheProcessor: sucp,
 		featureFlagsCache:         cache.NewFeaturesCache(cacheInMemory),
 		segmentUsersCache:         cache.NewSegmentUsersCache(cacheInMemory),
+		holdoutGroupsCache:        cache.NewHoldoutGroupsCache(cacheInMemory),
 		loggers:                   loggers,
 	}, nil
 }
@@ -552,7 +554,13 @@ func (s *sdk) getEvaluationLocally(
 		return nil, ErrCacheNotReady
 	}
 	reqStart := time.Now()
-	eval := evaluator.NewEvaluator(s.tag, s.featureFlagsCache, s.segmentUsersCache)
+	eval := evaluator.NewEvaluator(
+		s.tag,
+		s.featureFlagsCache,
+		s.segmentUsersCache,
+		s.holdoutGroupsCache,
+		s.loggers,
+	)
 	evaluation, err := eval.Evaluate(user, featureID)
 	if err != nil {
 		s.loggers.Errorf("bucketeer: failed to evaluate user locally: %v", err)

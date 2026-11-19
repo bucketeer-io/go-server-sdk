@@ -3,6 +3,9 @@ package model
 type Reason struct {
 	Type   ReasonType `json:"type,omitempty"`
 	RuleID string     `json:"ruleId,omitempty"`
+	// HoldoutGroupID is the ID of the holdout group that served the variation.
+	// It is set only when Type is ReasonHoldout.
+	HoldoutGroupID string `json:"holdoutGroupId,omitempty"`
 }
 
 type ReasonType string
@@ -23,6 +26,8 @@ const (
 	ReasonOffVariation ReasonType = "OFF_VARIATION"
 	// Evaluated using a prerequisite.
 	ReasonPrerequisite ReasonType = "PREREQUISITE"
+	// The user is held out by a holdout group, which is evaluated before the flag's own targeting.
+	ReasonHoldout ReasonType = "HOLDOUT"
 	// Error evaluations:
 	// No evaluations were performed.
 	ReasonErrorNoEvaluations ReasonType = "ERROR_NO_EVALUATIONS"

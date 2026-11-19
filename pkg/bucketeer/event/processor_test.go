@@ -16,7 +16,13 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"go.uber.org/mock/gomock"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
+
+	eventproto "github.com/bucketeer-io/bucketeer/v2/proto/event/client"
+	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/api"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/log"
@@ -53,6 +59,70 @@ func TestPushEvaluationEvent(t *testing.T) {
 	assert.Equal(t, model.ReasonErrorFlagNotFound, e.Reason.Type)
 	assert.Equal(t, e.SourceID, model.SourceIDGoServer)
 	assert.Equal(t, version.SDKVersion, e.SDKVersion)
+}
+
+// The evaluation event of a held-out user must have the HOLDOUT reason and the holdout group ID,
+// in the JSON the server decodes.
+func TestPushEvaluationEventHoldout(t *testing.T) {
+	t.Parallel()
+	patterns := []struct {
+		desc           string
+		reason         *model.Reason
+		expectedReason string
+		expected       *ftproto.Reason
+	}{
+		{
+			desc:           "holdout: the event has the reason and the group ID",
+			reason:         &model.Reason{Type: model.ReasonHoldout, HoldoutGroupID: "holdout-group-id"},
+			expectedReason: `{"type":"HOLDOUT","holdoutGroupId":"holdout-group-id"}`,
+			expected:       &ftproto.Reason{Type: ftproto.Reason_HOLDOUT, HoldoutGroupId: "holdout-group-id"},
+		},
+		{
+			desc:           "rule: the event has no group ID",
+			reason:         &model.Reason{Type: model.ReasonRule, RuleID: "rule-id"},
+			expectedReason: `{"type":"RULE","ruleId":"rule-id"}`,
+			expected:       &ftproto.Reason{Type: ftproto.Reason_RULE, RuleId: "rule-id"},
+		},
+		{
+			desc:           "default: the event has no group ID",
+			reason:         &model.Reason{Type: model.ReasonDefault},
+			expectedReason: `{"type":"DEFAULT"}`,
+			expected:       &ftproto.Reason{Type: ftproto.Reason_DEFAULT},
+		},
+	}
+	for _, pt := range patterns {
+		t.Run(pt.desc, func(t *testing.T) {
+			t.Parallel()
+			p := newProcessorForTestPushEvent(t, 10)
+			evaluation := newEvaluation(t, processorFeatureID, processorVariationID)
+			evaluation.Reason = pt.reason
+			p.PushEvaluationEvent(newUser(t, processorUserID), evaluation)
+			evt, ok := p.evtQueue.pop()
+			require.True(t, ok)
+
+			// The JSON the SDK sends
+			var payload struct {
+				Reason json.RawMessage `json:"reason"`
+			}
+			require.NoError(t, json.Unmarshal(evt.Event, &payload))
+			assert.JSONEq(t, pt.expectedReason, string(payload.Reason))
+
+			// The event the server gets from it
+			var raw map[string]json.RawMessage
+			require.NoError(t, json.Unmarshal(evt.Event, &raw))
+			assert.JSONEq(t, `"`+string(model.EvaluationEventType)+`"`, string(raw["@type"]))
+			// The server reads "@type" as the type of google.protobuf.Any. It is not a field of the event
+			delete(raw, "@type")
+			encoded, err := json.Marshal(raw)
+			require.NoError(t, err)
+			actual := &eventproto.EvaluationEvent{}
+			require.NoError(t, protojson.UnmarshalOptions{DiscardUnknown: true}.Unmarshal(encoded, actual))
+			assert.True(t, proto.Equal(pt.expected, actual.Reason), "expected: %v, actual: %v", pt.expected, actual.Reason)
+			assert.Equal(t, processorFeatureID, actual.FeatureId)
+			assert.Equal(t, processorVariationID, actual.VariationId)
+			assert.Equal(t, processorUserID, actual.User.GetId())
+		})
+	}
 }
 
 func TestPushGoalEvent(t *testing.T) {

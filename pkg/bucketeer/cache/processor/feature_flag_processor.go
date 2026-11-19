@@ -34,6 +34,7 @@ type FeatureFlagProcessor interface {
 type processor struct {
 	cache                   cache.Cache
 	featureFlagsCache       cache.FeaturesCache
+	holdoutGroupsCache      cache.HoldoutGroupsCache
 	pollingInterval         time.Duration
 	apiClient               api.Client
 	pushLatencyMetricsEvent func(duration time.Duration, api model.APIID)
@@ -95,6 +96,7 @@ func NewFeatureFlagProcessor(conf *FeatureFlagProcessorConfig) FeatureFlagProces
 	p := &processor{
 		cache:                   conf.Cache,
 		featureFlagsCache:       cache.NewFeaturesCache(conf.Cache),
+		holdoutGroupsCache:      cache.NewHoldoutGroupsCache(conf.Cache),
 		pollingInterval:         conf.PollingInterval,
 		apiClient:               conf.APIClient,
 		pushLatencyMetricsEvent: conf.PushLatencyMetricsEvent,
@@ -194,7 +196,13 @@ func (p *processor) updateCache(ctx context.Context) error {
 	p.loggers.Debugf("bucketeer/cache: GetFeatureFlags response: %+v, size: %d", pbResp, size)
 	// Delete all the local cache and save the new one
 	if pbResp.ForceUpdate {
-		if err := p.deleteAllAndSaveLocalCache(pbResp.FeatureFlagsId, pbResp.RequestedAt, pbResp.Features); err != nil {
+		err = p.deleteAllAndSaveLocalCache(
+			pbResp.FeatureFlagsId,
+			pbResp.RequestedAt,
+			pbResp.Features,
+			pbResp.HoldoutGroups,
+		)
+		if err != nil {
 			p.pushErrorEvent(p.newInternalError(err), model.GetFeatureFlags)
 			return err
 		}
@@ -207,6 +215,7 @@ func (p *processor) updateCache(ctx context.Context) error {
 		pbResp.RequestedAt,
 		pbResp.Features,
 		pbResp.ArchivedFeatureFlagIds,
+		pbResp.HoldoutGroups,
 	)
 	if err != nil {
 		p.pushErrorEvent(p.newInternalError(err), model.GetFeatureFlags)
@@ -222,6 +231,7 @@ func (p *processor) deleteAllAndSaveLocalCache(
 	featureFlagsID string,
 	requestedAt int64,
 	features []*ftproto.Feature,
+	holdoutGroups []*ftproto.HoldoutGroup,
 ) error {
 	// Delete all the old flags
 	if err := p.featureFlagsCache.DeleteAll(); err != nil {
@@ -232,6 +242,10 @@ func (p *processor) deleteAllAndSaveLocalCache(
 		if err := p.featureFlagsCache.Put(f); err != nil {
 			return err
 		}
+	}
+	// Replace the holdout groups
+	if err := p.putHoldoutGroups(holdoutGroups); err != nil {
+		return err
 	}
 	// Update the featureFlagsID
 	if err := p.putFeatureFlagsID(featureFlagsID); err != nil {
@@ -250,6 +264,7 @@ func (p *processor) updateLocalCache(
 	requestedAt int64,
 	features []*ftproto.Feature,
 	archivedFeatureFlagIds []string,
+	holdoutGroups []*ftproto.HoldoutGroup,
 ) error {
 	// Update the updated flags
 	for _, f := range features {
@@ -261,6 +276,10 @@ func (p *processor) updateLocalCache(
 	for _, fID := range archivedFeatureFlagIds {
 		p.featureFlagsCache.Delete(fID)
 	}
+	// Replace the holdout groups
+	if err := p.putHoldoutGroups(holdoutGroups); err != nil {
+		return err
+	}
 	// Update the featureFlagsID
 	if err := p.putFeatureFlagsID(featureFlagsID); err != nil {
 		return err
@@ -270,6 +289,17 @@ func (p *processor) updateLocalCache(
 		return err
 	}
 	return nil
+}
+
+// The holdout groups are never a diff. Every response carries the full list of the serving groups,
+// including the one that has no flag updates, so the cached list is replaced on every response.
+// An empty list means no group is serving, and it clears the cached list.
+// The list is also empty when the server doesn't support holdout groups.
+//
+// The list is saved before the featureFlagsID, like the flags,
+// so the ID is never stored for a state the cache doesn't hold.
+func (p *processor) putHoldoutGroups(holdoutGroups []*ftproto.HoldoutGroup) error {
+	return p.holdoutGroupsCache.Put(holdoutGroups)
 }
 
 func (p *processor) getFeatureFlagsID() (string, error) {
