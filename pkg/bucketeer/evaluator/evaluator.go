@@ -27,13 +27,36 @@ type evaluator struct {
 	loggers            *log.Loggers
 }
 
+// NewEvaluator creates an evaluator that doesn't apply the holdout groups.
+//
+// Its signature is kept for the callers written before the holdout groups.
+// Use NewEvaluatorWithHoldoutGroups to apply them.
 func NewEvaluator(
+	tag string,
+	featuresCache cache.FeaturesCache,
+	segmentUsersCache cache.SegmentUsersCache,
+) EvaluateLocally {
+	return NewEvaluatorWithHoldoutGroups(tag, featuresCache, segmentUsersCache, nil, nil)
+}
+
+// NewEvaluatorWithHoldoutGroups creates an evaluator that applies the holdout groups
+// of the holdoutGroupsCache. No group is applied when the cache is nil.
+//
+// The loggers report a holdout group whose segment is not cached yet.
+// Nothing is logged when they are nil.
+func NewEvaluatorWithHoldoutGroups(
 	tag string,
 	featuresCache cache.FeaturesCache,
 	segmentUsersCache cache.SegmentUsersCache,
 	holdoutGroupsCache cache.HoldoutGroupsCache,
 	loggers *log.Loggers,
 ) EvaluateLocally {
+	if loggers == nil {
+		loggers = log.NewLoggers(&log.LoggersConfig{
+			EnableDebugLog: false,
+			ErrorLogger:    log.DiscardErrorLogger,
+		})
+	}
 	return &evaluator{
 		tag:                tag,
 		featuresCache:      featuresCache,
@@ -77,7 +100,7 @@ func (e *evaluator) Evaluate(user *user.User, featureID string) (*model.Evaluati
 	// Get the holdout groups that are serving in the environment.
 	// The evaluation module serves the holdout variation to the held-out users
 	// before it looks at the flag itself.
-	holdoutGroups, err := e.holdoutGroupsCache.Get()
+	holdoutGroups, err := e.getHoldoutGroups()
 	if err != nil {
 		return nil, err
 	}
@@ -146,6 +169,15 @@ func (e *evaluator) Evaluate(user *user.User, featureID string) (*model.Evaluati
 		},
 	}
 	return evaluation, nil
+}
+
+// getHoldoutGroups returns the holdout groups that are serving.
+// An evaluator created without the holdout groups cache has none.
+func (e *evaluator) getHoldoutGroups() ([]*ftproto.HoldoutGroup, error) {
+	if e.holdoutGroupsCache == nil {
+		return nil, nil
+	}
+	return e.holdoutGroupsCache.Get()
 }
 
 // holdoutSegmentIDs returns the segments the evaluation module reads

@@ -472,7 +472,7 @@ func TestEvaluateHoldoutConcurrently(t *testing.T) {
 		newHoldoutGroup("holdout-group-id-hash", ftproto.HoldoutGroup_HASH, "variation-true-id", disabledID),
 		segmentGroup,
 	}))
-	evaluator := NewEvaluator("server", featuresCache, segmentUsersCache, holdoutGroupsCache, log.NewLoggers(
+	evaluator := NewEvaluatorWithHoldoutGroups("server", featuresCache, segmentUsersCache, holdoutGroupsCache, log.NewLoggers(
 		&log.LoggersConfig{ErrorLogger: log.DiscardErrorLogger},
 	))
 
@@ -616,6 +616,116 @@ func TestHoldoutSegmentIDsCoversTheEvaluationModule(t *testing.T) {
 				assert.Equal(t, expected.Evaluations[i].VariationId, actual.Evaluations[i].VariationId)
 				assert.Equal(t, expected.Evaluations[i].Reason.Type, actual.Evaluations[i].Reason.Type)
 			}
+		})
+	}
+}
+
+// NewEvaluator is exported, so its signature must not change:
+// the callers written before the holdout groups would stop compiling.
+var _ func(string, cache.FeaturesCache, cache.SegmentUsersCache) EvaluateLocally = NewEvaluator
+
+func TestNewEvaluatorConstructors(t *testing.T) {
+	t.Parallel()
+	hashGroup := newHoldoutGroup("holdout-group-id", ftproto.HoldoutGroup_HASH, "variation-false-id", "feature-id")
+	require.True(t, evaluation.IsHeldOut(hashGroup, &userproto.User{Id: userHeldOut.ID}, nil))
+	// The segment of the group is not cached, so the evaluator logs it
+	segmentGroup := newHoldoutGroup("holdout-group-id", ftproto.HoldoutGroup_SEGMENT, "variation-false-id", "feature-id")
+	feature := &ftproto.Feature{
+		Id:            "feature-id",
+		Enabled:       true,
+		Version:       1,
+		Tags:          []string{"server"},
+		VariationType: ftproto.Feature_BOOLEAN,
+		Variations: []*ftproto.Variation{
+			{Id: "variation-true-id", Value: "true"},
+			{Id: "variation-false-id", Value: "false"},
+		},
+		DefaultStrategy: &ftproto.Strategy{
+			Type:          ftproto.Strategy_FIXED,
+			FixedStrategy: &ftproto.FixedStrategy{Variation: "variation-true-id"},
+		},
+		OffVariation: "variation-false-id",
+	}
+	notHeldOut := &model.Evaluation{
+		ID:             "feature-id:1:" + userHeldOut.ID,
+		FeatureID:      "feature-id",
+		FeatureVersion: 1,
+		UserID:         userHeldOut.ID,
+		VariationID:    "variation-true-id",
+		VariationValue: "true",
+		Reason:         &model.Reason{Type: model.ReasonDefault},
+	}
+	heldOut := &model.Evaluation{
+		ID:             "feature-id:1:" + userHeldOut.ID,
+		FeatureID:      "feature-id",
+		FeatureVersion: 1,
+		UserID:         userHeldOut.ID,
+		VariationID:    "variation-false-id",
+		VariationValue: "false",
+		Reason:         &model.Reason{Type: model.ReasonHoldout, HoldoutGroupID: "holdout-group-id"},
+	}
+	loggers := log.NewLoggers(&log.LoggersConfig{ErrorLogger: log.DiscardErrorLogger})
+
+	patterns := []struct {
+		desc     string
+		group    *ftproto.HoldoutGroup
+		new      func(cache.FeaturesCache, cache.SegmentUsersCache, cache.HoldoutGroupsCache) EvaluateLocally
+		expected *model.Evaluation
+	}{
+		{
+			desc:  "NewEvaluator: the holdout groups are not applied",
+			group: hashGroup,
+			new: func(fc cache.FeaturesCache, sc cache.SegmentUsersCache, _ cache.HoldoutGroupsCache) EvaluateLocally {
+				return NewEvaluator("server", fc, sc)
+			},
+			expected: notHeldOut,
+		},
+		{
+			desc:  "NewEvaluatorWithHoldoutGroups: the holdout groups are applied",
+			group: hashGroup,
+			new: func(fc cache.FeaturesCache, sc cache.SegmentUsersCache, hc cache.HoldoutGroupsCache) EvaluateLocally {
+				return NewEvaluatorWithHoldoutGroups("server", fc, sc, hc, loggers)
+			},
+			expected: heldOut,
+		},
+		{
+			desc:  "NewEvaluatorWithHoldoutGroups: the holdout groups are applied without the loggers",
+			group: hashGroup,
+			new: func(fc cache.FeaturesCache, sc cache.SegmentUsersCache, hc cache.HoldoutGroupsCache) EvaluateLocally {
+				return NewEvaluatorWithHoldoutGroups("server", fc, sc, hc, nil)
+			},
+			expected: heldOut,
+		},
+		{
+			desc:  "NewEvaluatorWithHoldoutGroups: nothing is logged without the loggers",
+			group: segmentGroup,
+			new: func(fc cache.FeaturesCache, sc cache.SegmentUsersCache, hc cache.HoldoutGroupsCache) EvaluateLocally {
+				return NewEvaluatorWithHoldoutGroups("server", fc, sc, hc, nil)
+			},
+			expected: notHeldOut,
+		},
+		{
+			desc:  "NewEvaluatorWithHoldoutGroups: no holdout group is applied without the cache",
+			group: hashGroup,
+			new: func(fc cache.FeaturesCache, sc cache.SegmentUsersCache, _ cache.HoldoutGroupsCache) EvaluateLocally {
+				return NewEvaluatorWithHoldoutGroups("server", fc, sc, nil, loggers)
+			},
+			expected: notHeldOut,
+		},
+	}
+	for _, p := range patterns {
+		t.Run(p.desc, func(t *testing.T) {
+			t.Parallel()
+			inMemoryCache := cache.NewInMemoryCache()
+			featuresCache := cache.NewFeaturesCache(inMemoryCache)
+			require.NoError(t, featuresCache.Put(feature))
+			holdoutGroupsCache := cache.NewHoldoutGroupsCache(inMemoryCache)
+			require.NoError(t, holdoutGroupsCache.Put([]*ftproto.HoldoutGroup{p.group}))
+
+			evaluator := p.new(featuresCache, cache.NewSegmentUsersCache(inMemoryCache), holdoutGroupsCache)
+			actual, err := evaluator.Evaluate(&user.User{ID: userHeldOut.ID}, "feature-id")
+			require.NoError(t, err)
+			assert.Equal(t, p.expected, actual)
 		})
 	}
 }

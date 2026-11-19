@@ -554,7 +554,7 @@ func (s *sdk) getEvaluationLocally(
 		return nil, ErrCacheNotReady
 	}
 	reqStart := time.Now()
-	eval := evaluator.NewEvaluator(
+	eval := evaluator.NewEvaluatorWithHoldoutGroups(
 		s.tag,
 		s.featureFlagsCache,
 		s.segmentUsersCache,
