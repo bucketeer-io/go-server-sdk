@@ -106,7 +106,8 @@ func (c *segmentUsersCache) Put(segmentUsers *ftproto.SegmentUsers) error {
 }
 
 func (c *segmentUsersCache) Delete(id string) {
-	c.cache.Delete(id)
+	key := fmt.Sprintf("%s:%s", segmentUsersPrefix, id)
+	c.cache.Delete(key)
 }
 
 func (c *segmentUsersCache) DeleteAll() error {

@@ -492,3 +492,122 @@ func newMockSegmentUserProcessor(
 		MockProcessor: mockEventProcessor,
 	}
 }
+
+// The server resends the segment of a holdout group only when the SDK doesn't report it,
+// because the group can start long after the segment was last updated.
+// So a segment the server lists as deleted must not be reported again.
+func TestUpdateCacheDeletedSegmentIsNotReportedAgain(t *testing.T) {
+	t.Parallel()
+	controller := gomock.NewController(t)
+	defer controller.Finish()
+
+	newSegmentUsers := func(segmentID string, userIDs ...string) model.SegmentUsers {
+		segment := model.SegmentUsers{SegmentID: segmentID, UpdatedAt: "10"}
+		for _, userID := range userIDs {
+			segment.Users = append(segment.Users, model.SegmentUser{
+				ID:        segmentID + ":" + userID,
+				SegmentID: segmentID,
+				UserID:    userID,
+				State:     "INCLUDED",
+			})
+		}
+		return segment
+	}
+	cachedUserIDs := func(segmentUsersCache cache.SegmentUsersCache, segmentID string) []string {
+		segment, err := segmentUsersCache.Get(segmentID)
+		if err != nil {
+			assert.ErrorIs(t, err, cache.ErrNotFound)
+			return nil
+		}
+		userIDs := []string{}
+		for _, user := range segment.Users {
+			userIDs = append(userIDs, user.UserId)
+		}
+		return userIDs
+	}
+
+	steps := []struct {
+		desc string
+		// The segment IDs the SDK must report
+		expectedSegmentIDs []string
+		response           *model.GetSegmentUsersResponse
+		// The users cached for the segment of the holdout group. Nil when the segment is not cached
+		expectedHoldoutUserIDs []string
+	}{
+		{
+			desc:               "a flag rule and a holdout group reference a segment each",
+			expectedSegmentIDs: []string{},
+			response: &model.GetSegmentUsersResponse{
+				SegmentUsers: []model.SegmentUsers{
+					newSegmentUsers("segment-id-flag", "user-id-1"),
+					newSegmentUsers("segment-id-holdout", "user-id-2"),
+				},
+				DeletedSegmentIDs: []string{},
+				RequestedAt:       "20",
+				ForceUpdate:       true,
+			},
+			expectedHoldoutUserIDs: []string{"user-id-2"},
+		},
+		{
+			desc:               "the group stopped: its segment is deleted",
+			expectedSegmentIDs: []string{"segment-id-flag", "segment-id-holdout"},
+			response: &model.GetSegmentUsersResponse{
+				SegmentUsers:      []model.SegmentUsers{},
+				DeletedSegmentIDs: []string{"segment-id-holdout"},
+				RequestedAt:       "30",
+			},
+			expectedHoldoutUserIDs: nil,
+		},
+		{
+			desc: "another group started with the same segment, whose users changed in the meantime: " +
+				"the deleted segment is not reported, so the server sends it again",
+			expectedSegmentIDs: []string{"segment-id-flag"},
+			response: &model.GetSegmentUsersResponse{
+				SegmentUsers: []model.SegmentUsers{
+					newSegmentUsers("segment-id-holdout", "user-id-3"),
+				},
+				DeletedSegmentIDs: []string{},
+				RequestedAt:       "40",
+			},
+			expectedHoldoutUserIDs: []string{"user-id-3"},
+		},
+	}
+
+	apiClient := mockapi.NewMockClient(controller)
+	eventProcessor := mockevt.NewMockProcessor(controller)
+	eventProcessor.EXPECT().PushLatencyMetricsEvent(gomock.Any(), model.GetSegmentUsers).AnyTimes()
+	eventProcessor.EXPECT().PushSizeMetricsEvent(gomock.Any(), model.GetSegmentUsers).AnyTimes()
+	inMemoryCache := cache.NewInMemoryCache()
+	p := NewSegmentUserProcessor(&SegmentUserProcessorConfig{
+		Cache:                   inMemoryCache,
+		PollingInterval:         time.Minute,
+		APIClient:               apiClient,
+		PushLatencyMetricsEvent: eventProcessor.PushLatencyMetricsEvent,
+		PushSizeMetricsEvent:    eventProcessor.PushSizeMetricsEvent,
+		PushErrorEvent:          eventProcessor.PushErrorEvent,
+		Loggers: log.NewLoggers(&log.LoggersConfig{
+			EnableDebugLog: false,
+			ErrorLogger:    log.DiscardErrorLogger,
+		}),
+		Tag:        "tag",
+		SDKVersion: "1.0.0",
+		SourceID:   model.SourceIDGoServer,
+	}).(*segmentUserProcessor)
+	// The evaluator reads the same in-memory cache through its own cache instance
+	segmentUsersCache := cache.NewSegmentUsersCache(inMemoryCache)
+
+	for _, step := range steps {
+		apiClient.EXPECT().GetSegmentUsers(
+			gomock.Any(),
+			gomock.Cond(func(x any) bool {
+				req, ok := x.(*model.GetSegmentUsersRequest)
+				return ok && assert.ElementsMatch(t, step.expectedSegmentIDs, req.SegmentIDs, step.desc)
+			}),
+			gomock.Any(),
+		).Return(step.response, 1, nil)
+
+		assert.NoError(t, p.updateCache(context.Background()), step.desc)
+		assert.Equal(t, step.expectedHoldoutUserIDs, cachedUserIDs(segmentUsersCache, "segment-id-holdout"), step.desc)
+		assert.Equal(t, []string{"user-id-1"}, cachedUserIDs(segmentUsersCache, "segment-id-flag"), step.desc)
+	}
+}

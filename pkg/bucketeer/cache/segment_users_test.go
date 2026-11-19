@@ -267,6 +267,29 @@ func TestSegmentUsersCachePreservesRules(t *testing.T) {
 	assert.Len(t, cached.Rules[1].Clauses, 1)
 }
 
+// A deleted segment must leave the cache: the SDK reports the cached segment IDs to the server,
+// which resends a holdout group's segment only when the SDK doesn't report it.
+func TestSegmentUsersCacheDelete(t *testing.T) {
+	t.Parallel()
+	suc := newSegmentUsersCache(t)
+	assert.NoError(t, suc.Put(createSegmentUsers(t, "segment-id-1", 3)))
+	assert.NoError(t, suc.Put(createSegmentUsers(t, "segment-id-2", 3)))
+
+	suc.Delete("segment-id-1")
+
+	_, err := suc.Get("segment-id-1")
+	assert.ErrorIs(t, err, ErrNotFound)
+	ids, err := suc.GetSegmentIDs()
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"segment-id-2"}, ids)
+
+	// Deleting a segment that is not cached is a no-op
+	suc.Delete("segment-id-1")
+	cached, err := suc.Get("segment-id-2")
+	assert.NoError(t, err)
+	assert.Equal(t, "segment-id-2", cached.SegmentId)
+}
+
 func createSegmentUsers(t *testing.T, segmentID string, size int) *ftproto.SegmentUsers {
 	t.Helper()
 	users := make([]*ftproto.SegmentUser, 0, size)
