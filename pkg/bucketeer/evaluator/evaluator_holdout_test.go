@@ -134,8 +134,6 @@ func TestHoldoutUsers(t *testing.T) {
 
 func TestEvaluateHoldout(t *testing.T) {
 	t.Parallel()
-	controller := gomock.NewController(t)
-	defer controller.Finish()
 
 	const (
 		hashGroupID    = "holdout-group-id-hash"
@@ -384,7 +382,10 @@ func TestEvaluateHoldout(t *testing.T) {
 	for _, p := range patterns {
 		t.Run(p.desc, func(t *testing.T) {
 			t.Parallel()
-			evaluator, logs := newHoldoutEvaluator(t, controller, p.groups)
+			// The controller belongs to the subtest, and Finish is not deferred in the parent test.
+			// The parallel subtests run after the parent test function returns, so a Finish deferred
+			// there would run before the expectations are set, and the missing calls would pass.
+			evaluator, logs := newHoldoutEvaluator(t, gomock.NewController(t), p.groups)
 			p.setup(evaluator)
 			actual, err := evaluator.Evaluate(p.user, p.featureID)
 			assert.Equal(t, p.expected, actual)
