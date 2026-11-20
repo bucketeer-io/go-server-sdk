@@ -500,6 +500,7 @@ func newMockFeatureFlagProcessor(
 			pushErrorEvent:          mockEventProcessor.PushErrorEvent,
 			cache:                   cacheInMemory,
 			featureFlagsCache:       featureFlagsCache,
+			holdoutGroupsCache:      cache.NewHoldoutGroupsCache(cache.NewInMemoryCache()),
 			tag:                     tag,
 			sdkVersion:              sdkVersion,
 			sourceID:                model.SourceIDGoServer,

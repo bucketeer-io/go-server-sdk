@@ -133,6 +133,11 @@ func TestConvertEvaluationReason(t *testing.T) {
 			expectedReason: EvaluationReasonRule,
 		},
 		{
+			desc:           "reasonType: ReasonHoldout",
+			reasonType:     ReasonHoldout,
+			expectedReason: EvaluationReasonHoldout,
+		},
+		{
 			desc:           "reasonType: ReasonErrorNoEvaluations",
 			reasonType:     ReasonErrorNoEvaluations,
 			expectedReason: EvaluationReasonErrorNoEvaluations,

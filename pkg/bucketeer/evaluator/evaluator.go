@@ -10,6 +10,7 @@ import (
 	userproto "github.com/bucketeer-io/bucketeer/v2/proto/user"
 
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/cache"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/log"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"
 )
@@ -19,20 +20,49 @@ type EvaluateLocally interface {
 }
 
 type evaluator struct {
-	tag               string
-	featuresCache     cache.FeaturesCache
-	segmentUsersCache cache.SegmentUsersCache
+	tag                string
+	featuresCache      cache.FeaturesCache
+	segmentUsersCache  cache.SegmentUsersCache
+	holdoutGroupsCache cache.HoldoutGroupsCache
+	loggers            *log.Loggers
 }
 
+// NewEvaluator creates an evaluator that doesn't apply the holdout groups.
+//
+// Its signature is kept for the callers written before the holdout groups.
+// Use NewEvaluatorWithHoldoutGroups to apply them.
 func NewEvaluator(
 	tag string,
 	featuresCache cache.FeaturesCache,
 	segmentUsersCache cache.SegmentUsersCache,
 ) EvaluateLocally {
+	return NewEvaluatorWithHoldoutGroups(tag, featuresCache, segmentUsersCache, nil, nil)
+}
+
+// NewEvaluatorWithHoldoutGroups creates an evaluator that applies the holdout groups
+// of the holdoutGroupsCache. No group is applied when the cache is nil.
+//
+// The loggers report a holdout group whose segment is not cached yet.
+// Nothing is logged when they are nil.
+func NewEvaluatorWithHoldoutGroups(
+	tag string,
+	featuresCache cache.FeaturesCache,
+	segmentUsersCache cache.SegmentUsersCache,
+	holdoutGroupsCache cache.HoldoutGroupsCache,
+	loggers *log.Loggers,
+) EvaluateLocally {
+	if loggers == nil {
+		loggers = log.NewLoggers(&log.LoggersConfig{
+			EnableDebugLog: false,
+			ErrorLogger:    log.DiscardErrorLogger,
+		})
+	}
 	return &evaluator{
-		tag:               tag,
-		featuresCache:     featuresCache,
-		segmentUsersCache: segmentUsersCache,
+		tag:                tag,
+		featuresCache:      featuresCache,
+		segmentUsersCache:  segmentUsersCache,
+		holdoutGroupsCache: holdoutGroupsCache,
+		loggers:            loggers,
 	}
 }
 
@@ -67,6 +97,40 @@ func (e *evaluator) Evaluate(user *user.User, featureID string) (*model.Evaluati
 			Rules: su.Rules,
 		}
 	}
+	// Get the holdout groups that are serving in the environment.
+	// The evaluation module serves the holdout variation to the held-out users
+	// before it looks at the flag itself.
+	holdoutGroups, err := e.getHoldoutGroups()
+	if err != nil {
+		return nil, err
+	}
+	// A group with the SEGMENT assignment reads its members from a segment
+	// that no flag rule has to reference, so it is not listed above.
+	// Only the user list is needed. The segment rules are not consulted for the holdout membership.
+	for _, id := range holdoutSegmentIDs(holdoutGroups, targetFeatures) {
+		if _, ok := segmentUsers[id]; ok {
+			continue
+		}
+		su, err := e.segmentUsersCache.Get(id)
+		if err != nil {
+			if !errors.Is(err, cache.ErrNotFound) {
+				return nil, err
+			}
+			// The flags and the segment users are polled separately,
+			// so the group can be cached before its segment.
+			// The user is evaluated without the group, which means not held out,
+			// instead of failing the evaluation, which would return the default value.
+			e.loggers.Errorf(
+				"bucketeer/evaluator: the segment of the holdout group is not cached yet. "+
+					"The user is evaluated as not held out (featureID: %s, segmentID: %s, userID: %s)",
+				featureID,
+				id,
+				user.ID,
+			)
+			continue
+		}
+		segmentUsers[id] = su.Users
+	}
 	// Convert to evaluation's user proto message
 	u := &userproto.User{
 		Id:   user.ID,
@@ -79,6 +143,7 @@ func (e *evaluator) Evaluate(user *user.User, featureID string) (*model.Evaluati
 		segmentUsers,
 		segments,
 		e.tag,
+		holdoutGroups...,
 	)
 	if err != nil {
 		return nil, err
@@ -98,11 +163,57 @@ func (e *evaluator) Evaluate(user *user.User, featureID string) (*model.Evaluati
 		VariationValue: eval.VariationValue,
 		VariationName:  eval.VariationName,
 		Reason: &model.Reason{
-			Type:   model.ReasonType(eval.Reason.Type.String()),
-			RuleID: eval.Reason.RuleId,
+			Type:           model.ReasonType(eval.Reason.Type.String()),
+			RuleID:         eval.Reason.RuleId,
+			HoldoutGroupID: eval.Reason.HoldoutGroupId,
 		},
 	}
 	return evaluation, nil
+}
+
+// getHoldoutGroups returns the holdout groups that are serving.
+// An evaluator created without the holdout groups cache has none.
+func (e *evaluator) getHoldoutGroups() ([]*ftproto.HoldoutGroup, error) {
+	if e.holdoutGroupsCache == nil {
+		return nil, nil
+	}
+	return e.holdoutGroupsCache.Get()
+}
+
+// holdoutSegmentIDs returns the segments the evaluation module reads
+// to resolve the holdout membership of the user for the given features.
+//
+// The membership is resolved only when a group targets one of the evaluated features.
+// The other evaluations don't read the segment, so it is not loaded for them:
+// the cache decodes all the users of the segment every time it is read.
+func holdoutSegmentIDs(groups []*ftproto.HoldoutGroup, features []*ftproto.Feature) []string {
+	var targeting []*ftproto.HoldoutGroup
+	for _, group := range groups {
+		// Only a group with the SEGMENT assignment has a segment.
+		if group.GetAssignmentType() != ftproto.HoldoutGroup_SEGMENT {
+			continue
+		}
+		if holdoutGroupTargets(group, features) {
+			targeting = append(targeting, group)
+		}
+	}
+	return evaluation.HoldoutSegmentIDs(targeting)
+}
+
+// holdoutGroupTargets reports whether the group lists one of the features.
+//
+// It must never be narrower than the evaluation module,
+// otherwise a held-out user would be evaluated without the segment.
+// So it matches on the feature ID alone.
+func holdoutGroupTargets(group *ftproto.HoldoutGroup, features []*ftproto.Feature) bool {
+	for _, target := range group.GetFeatures() {
+		for _, feature := range features {
+			if target.GetFeatureId() == feature.Id {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (e *evaluator) getTargetFeatures(feature *ftproto.Feature) ([]*ftproto.Feature, error) {

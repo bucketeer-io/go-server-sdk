@@ -9,7 +9,9 @@ import (
 
 	ftproto "github.com/bucketeer-io/bucketeer/v2/proto/feature"
 
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/cache"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/cache/mock"
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/log"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/user"
 )
@@ -604,5 +606,11 @@ func newEvaluator(t *testing.T, tag string, controller *gomock.Controller) *eval
 		tag:               tag,
 		featuresCache:     ffcache,
 		segmentUsersCache: sucache,
+		// No holdout group is serving
+		holdoutGroupsCache: cache.NewHoldoutGroupsCache(cache.NewInMemoryCache()),
+		loggers: log.NewLoggers(&log.LoggersConfig{
+			EnableDebugLog: false,
+			ErrorLogger:    log.DiscardErrorLogger,
+		}),
 	}
 }

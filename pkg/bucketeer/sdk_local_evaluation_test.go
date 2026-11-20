@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 
+	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/cache"
 	mockcache "github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/cache/mock"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/log"
 	"github.com/bucketeer-io/go-server-sdk/pkg/bucketeer/model"
@@ -1404,6 +1405,8 @@ func newSDKLocalEvaluationWithMock(t *testing.T, mockCtrl *gomock.Controller) *s
 		segmentUserCacheProcessor: mockSU,
 		featureFlagsCache:         mockcache.NewMockFeaturesCache(mockCtrl),
 		segmentUsersCache:         mockcache.NewMockSegmentUsersCache(mockCtrl),
+		// No holdout group is serving
+		holdoutGroupsCache: cache.NewHoldoutGroupsCache(cache.NewInMemoryCache()),
 		loggers: log.NewLoggers(&log.LoggersConfig{
 			EnableDebugLog: false,
 			ErrorLogger:    log.DiscardErrorLogger,
