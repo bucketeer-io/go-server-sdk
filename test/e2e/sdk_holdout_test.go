@@ -323,12 +323,15 @@ func TestHoldoutLocalEvaluationMatchesServer(t *testing.T) {
 		}
 	}
 	t.Logf("local: %d of %d users differ from the server", mismatches, len(users))
+	// The dropped events are counted before the SDK is closed. Close drains the events before it stops
+	// the cache pollers, so a poll that ends in between pushes metrics events that are rejected
+	// and counted as dropped, although no evaluation event is lost
+	assert.Zero(t, sdk.EventStats().EventsDropped, "an evaluation event was dropped")
 	// The evaluation events, which carry the reason and the holdout group ID, are sent here.
 	// The server must accept all of them
 	require.NoError(t, sdk.Close(ctx))
 	stats := sdk.EventStats()
 	t.Logf("events: %+v", stats)
-	assert.Zero(t, stats.EventsDropped)
 	assert.Equal(t, stats.EventsCreated, stats.EventsSent)
 	assert.GreaterOrEqual(t, stats.EventsSent, int64(len(users)))
 

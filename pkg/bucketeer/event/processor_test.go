@@ -895,6 +895,26 @@ func TestPushEvent(t *testing.T) {
 	}
 }
 
+// A push that arrives after the drain has started is rejected and counted as dropped.
+// SDK.Close drains the events before it stops the cache pollers, so the count of dropped events
+// can grow while the SDK closes. The holdout e2e test reads it before closing for this reason.
+func TestPushEventWhileDrainingIsCountedAsDropped(t *testing.T) {
+	t.Parallel()
+	p := newProcessorForTestPushEvent(t, 10)
+	p.enableStats = true
+	encodedEvt := newEncodedEvaluationEvent(t, processorFeatureID)
+
+	require.NoError(t, p.PushEvent(encodedEvt))
+	assert.Equal(t, ProcessorStats{EventsCreated: 1}, p.Stats())
+
+	p.mu.Lock()
+	p.isDraining = true
+	p.mu.Unlock()
+	require.EqualError(t, p.PushEvent(encodedEvt), "processor is draining")
+	assert.Equal(t, ProcessorStats{EventsCreated: 1, EventsDropped: 1}, p.Stats())
+	assert.Equal(t, 1, p.evtQueue.len())
+}
+
 func newProcessorForTestPushEvent(t *testing.T, eventQueueCapacity int) *processor {
 	t.Helper()
 	return &processor{
